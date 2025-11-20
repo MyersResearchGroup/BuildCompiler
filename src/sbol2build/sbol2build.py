@@ -436,7 +436,7 @@ def part_digestion(
 
     # Make Interaction
     interaction = sbol2.Interaction(
-        uri=f"{reactant_displayId}_digestion_interaction",
+        uri=f"{reactant_displayId}_digestion",
         interaction_type="http://identifiers.org/biomodels.sbo/SBO:0000178",
     )
     interaction.participations = participations
@@ -693,7 +693,7 @@ def backbone_digestion(
 
     # Make Interaction
     interaction = sbol2.Interaction(
-        uri=f"{reactant_component_definition.displayId}_digestion_interaction",
+        uri=f"{reactant_component_definition.displayId}_digestion",
         interaction_type="http://identifiers.org/biomodels.sbo/SBO:0000178",
     )
     interaction.participations = participations
@@ -856,7 +856,6 @@ def ligation(
     composite_number = 1
     participations.append(modifier_participation)
 
-    # TODO: use componentinstances to append "subcomponents" to each definition that is a composite component. all composites share the "subcomponents"
     for composite in list_of_composites_per_assembly:  # a composite of the form [A,B,C]
         # calculate sequence
         composite_sequence_str = ""
@@ -878,7 +877,7 @@ def ligation(
             reactant_component = sbol2.FunctionalComponent(
                 uri=f"{part_extract.displayId}_reactant"
             )
-            reactant_component.definition = part_extract  # TODO do not make new components, instead derive product functionalcomponents from the assembly_plan moduledefinition to add to the ligation interaction/participation
+            reactant_component.definition = part_extract
             for fc in assembly_plan.functionalComponents:
                 if fc.definition == reactant_component.definition:
                     reactant_component = fc
@@ -938,7 +937,7 @@ def ligation(
                         start=len(composite_sequence_str) + fusion_site_length + 1,
                         end=len(composite_sequence_str)
                         + len(part_extract_sequence[:-4]),
-                    )  # TODO check if seq len is correct
+                    )
                     comp_anno = sbol2.SequenceAnnotation(
                         uri=f"{comp.displayId}_annotation"
                     )
@@ -988,7 +987,7 @@ def ligation(
 
         # Make Interaction
         interaction = sbol2.Interaction(
-            uri=f"{composite_component_definition.name}_ligation_interaction",
+            uri=f"{composite_component_definition.name}_ligation",
             interaction_type="http://identifiers.org/biomodels.sbo/SBO:0000695",
         )
         interaction.participations = participations
