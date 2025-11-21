@@ -1007,6 +1007,14 @@ def ligation(
         )
         assembly_activity.usages = [assembly_usage]
 
+        assembly_activity_plan = sbol2.Plan(
+            f"{composite_component_definition.name}_assembly_plan"
+        )  # TODO refine this plan
+        assembly_activity.plan = assembly_activity_plan
+
+        assembly_activity_agent = sbol2.Agent("BuildCompiler.org")
+        assembly_activity.agent = assembly_activity_agent
+
         composite_component_definition.wasGeneratedBy = assembly_activity
         document.add_list([assembly_activity, assembly_usage])
 
