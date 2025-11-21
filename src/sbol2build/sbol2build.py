@@ -993,6 +993,23 @@ def ligation(
         interaction.participations = participations
         assembly_plan.interactions.add(interaction)
 
+        # Make assembly activity
+        assembly_activity = sbol2.Activity(
+            f"assemble_{composite_component_definition.name}"
+        )
+        assembly_activity.name = "Golden Gate Assembly"
+        assembly_activity.types = "http://sbols.org/v2#build"
+
+        assembly_usage = sbol2.Usage(
+            uri=f"assemble_{composite_component_definition.name}_design",
+            entity=assembly_plan.identity,
+            role="http://sbols.org/v2#design",
+        )
+        assembly_activity.usages = [assembly_usage]
+
+        composite_component_definition.wasGeneratedBy = assembly_activity
+        document.add_list([assembly_activity, assembly_usage])
+
         products_list.append([composite_component_definition, composite_seq])
         composite_number += 1
     return products_list
