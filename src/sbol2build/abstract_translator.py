@@ -143,8 +143,58 @@ def extract_combinatorial_design_parts(
     return component_dict
 
 
+def get_top_level_component_definitions(doc: sbol2.Document):
+    """
+    Return all top-level ComponentDefinitions in an SBOL2 Document.
+
+    A top-level ComponentDefinition is one that exists in the document but is
+    not referenced as a subcomponent of any other ComponentDefinition.
+
+    Args:
+        doc:
+            The :class:`sbol2.Document` to search.
+
+    Returns:
+        List[:class:`sbol2.ComponentDefinition`]
+            A list of :class:`sbol2.ComponentDefinition`s that are not used as subcomponents
+            anywhere else in the document.
+    """
+    all_components = {cd.identity: cd for cd in doc.componentDefinitions}
+    referenced = set()
+
+    for cd in doc.componentDefinitions:
+        for comp in cd.components:
+            referenced.add(comp.definition)
+
+    return [
+        all_components[id_] for id_ in all_components.keys() if id_ not in referenced
+    ]
+
+
 def extract_toplevel_definition(doc: sbol2.Document) -> sbol2.ComponentDefinition:
-    return doc.componentDefinitions[0]
+    """
+    Retrieves the (single) top-level ComponentDefinition in the document. Raises error if != 1 top-level :class:`sbol2.ComponentDefinition` in :class:`sbol2.Document`
+
+    Args:
+        doc:
+            The :class:`sbol2.Document` in which to search for the top-level
+            :class:`sbol2.ComponentDefinition`.
+
+    Returns:
+        sbol2.ComponentDefinition:
+            The sole :class:`sbol2.ComponentDefinition` that is not used as a subcomponent
+            anywhere else in the document.
+
+    Raises:
+        ValueError:
+            If zero or more than one top-level ComponentDefinition is found.
+
+    """
+    top_levels = get_top_level_component_definitions(doc)
+    if len(top_levels) == 1:
+        return top_levels[0]
+
+    raise ValueError(f"Expected 1 top-level component, found {len(top_levels)}")
 
 
 def enumerate_design_variants(component_dict):
