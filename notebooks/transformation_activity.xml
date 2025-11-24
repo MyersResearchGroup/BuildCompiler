@@ -1811,6 +1811,12 @@
     <sbol:persistentIdentity rdf:resource="https://SBOL2Build.org/composite_1_assembly_plan"/>
     <sbol:version>1</sbol:version>
   </prov:Plan>
+  <prov:Plan rdf:about="https://SBOL2Build.org/Ecoli_DH5a_with_composite_1_transformation_plan/1">
+    <sbol:version>1</sbol:version>
+    <dcterms:description>TODO: generate accurate description of transformation</dcterms:description>
+    <sbol:displayId>Ecoli_DH5a_with_composite_1_transformation_plan</sbol:displayId>
+    <sbol:persistentIdentity rdf:resource="https://SBOL2Build.org/Ecoli_DH5a_with_composite_1_transformation_plan"/>
+  </prov:Plan>
   <prov:Agent rdf:about="https://SBOL2Build.org/buildcompiler/1">
     <sbol:persistentIdentity rdf:resource="https://SBOL2Build.org/buildcompiler"/>
     <sbol:version>1</sbol:version>
