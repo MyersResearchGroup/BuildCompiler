@@ -1007,16 +1007,29 @@ def ligation(
         )
         assembly_activity.usages = [assembly_usage]
 
+        assembly_activity_association = sbol2.Association(
+            f"assemble_{composite_component_definition.name}_association"
+        )
+
         assembly_activity_plan = sbol2.Plan(
             f"{composite_component_definition.name}_assembly_plan"
-        )  # TODO refine this plan
-        assembly_activity.plan = assembly_activity_plan
+        )  # TODO refine this plan and move to golden gate assembly func instead of ligation
+        assembly_activity_association.plan = assembly_activity_plan
 
-        assembly_activity_agent = sbol2.Agent("BuildCompiler.org")
-        assembly_activity.agent = assembly_activity_agent
+        assembly_activity_agent = sbol2.Agent("buildcompiler")
+        assembly_activity_association.agent = assembly_activity_agent
+
+        assembly_activity.associations = [assembly_activity_association]
 
         composite_component_definition.wasGeneratedBy = assembly_activity
-        document.add_list([assembly_activity, assembly_usage])
+
+        for obj in [
+            assembly_activity_plan,
+            assembly_activity_agent,
+            assembly_activity,
+            assembly_usage,
+        ]:
+            add_object_to_doc(obj, document)
 
         products_list.append([composite_component_definition, composite_seq])
         composite_number += 1
