@@ -993,44 +993,6 @@ def ligation(
         interaction.participations = participations
         assembly_plan.interactions.add(interaction)
 
-        # Make assembly activity
-        assembly_activity = sbol2.Activity(
-            f"assemble_{composite_component_definition.name}"
-        )
-        assembly_activity.name = "Golden Gate Assembly"
-        assembly_activity.types = "http://sbols.org/v2#build"
-
-        assembly_usage = sbol2.Usage(
-            uri=f"assemble_{composite_component_definition.name}_design",
-            entity=assembly_plan.identity,
-            role="http://sbols.org/v2#design",
-        )
-        assembly_activity.usages = [assembly_usage]
-
-        assembly_activity_association = sbol2.Association(
-            f"assemble_{composite_component_definition.name}_association"
-        )
-
-        assembly_activity_plan = sbol2.Plan(
-            f"{composite_component_definition.name}_assembly_plan"
-        )  # TODO refine this plan and move to golden gate assembly func instead of ligation
-        assembly_activity_association.plan = assembly_activity_plan
-
-        assembly_activity_agent = sbol2.Agent("buildcompiler")
-        assembly_activity_association.agent = assembly_activity_agent
-
-        assembly_activity.associations = [assembly_activity_association]
-
-        composite_component_definition.wasGeneratedBy = assembly_activity
-
-        for obj in [
-            assembly_activity_plan,
-            assembly_activity_agent,
-            assembly_activity,
-            assembly_usage,
-        ]:
-            add_object_to_doc(obj, document)
-
         products_list.append([composite_component_definition, composite_seq])
         composite_number += 1
     return products_list
@@ -1142,6 +1104,49 @@ class golden_gate_assembly_plan:
             self.extracted_parts, self.assembly_plan, self.document
         )
 
+        self._add_assembly_activity()
+
         append_extracts_to_doc(self.composites, self.document)
 
         return self.composites
+
+    def _add_assembly_activity(self):
+        for composite in self.composites:
+            composite_component_definition = composite[0]
+
+            assembly_activity = sbol2.Activity(
+                f"assemble_{composite_component_definition.name}"
+            )
+            assembly_activity.name = "Golden Gate Assembly"
+            assembly_activity.types = "http://sbols.org/v2#build"
+
+            assembly_usage = sbol2.Usage(
+                uri=f"assemble_{composite_component_definition.name}_design",
+                entity=self.assembly_plan.identity,
+                role="http://sbols.org/v2#design",
+            )
+            assembly_activity.usages = [assembly_usage]
+
+            assembly_activity_association = sbol2.Association(
+                f"assemble_{composite_component_definition.name}_association"
+            )
+
+            assembly_activity_plan = sbol2.Plan(
+                f"{composite_component_definition.name}_assembly_plan"
+            )  # TODO refine this plan
+            assembly_activity_association.plan = assembly_activity_plan
+
+            assembly_activity_agent = sbol2.Agent("buildcompiler")
+            assembly_activity_association.agent = assembly_activity_agent
+
+            assembly_activity.associations = [assembly_activity_association]
+
+            composite_component_definition.wasGeneratedBy = assembly_activity
+
+            for obj in [
+                assembly_activity_plan,
+                assembly_activity_agent,
+                assembly_activity,
+                assembly_usage,
+            ]:
+                add_object_to_doc(obj, self.document)
