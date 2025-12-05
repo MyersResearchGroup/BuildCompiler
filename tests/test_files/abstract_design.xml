@@ -1,0 +1,347 @@
+<?xml version="1.0" ?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:sbh="http://wiki.synbiohub.org/wiki/Terms/synbiohub#" xmlns:sbol="http://sbols.org/v2#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:prov="http://www.w3.org/ns/prov#" xmlns:om="http://www.ontology-of-units-of-measure.org/resource/om-2/" xmlns:SBOLCanvas="https://sbolcanvas.org/">
+  <sbol:ModuleDefinition rdf:about="https://sbolcanvas.org/basic_TU">
+    <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/basic_TU"/>
+    <sbol:displayId>basic_TU</sbol:displayId>
+    <sbol:functionalComponent>
+      <sbol:FunctionalComponent rdf:about="https://sbolcanvas.org/basic_TU/cYYPhACA_28">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/basic_TU/cYYPhACA_28"/>
+        <sbol:displayId>cYYPhACA_28</sbol:displayId>
+        <sbol:definition rdf:resource="https://sbolcanvas.org/cYYPhACA/1"/>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:direction rdf:resource="http://sbols.org/v2#inout"/>
+      </sbol:FunctionalComponent>
+    </sbol:functionalComponent>
+  </sbol:ModuleDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/ryangreer/gonzaloplasmids/J23101/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/J23101"/>
+    <sbol:displayId>J23101</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>J23101</dcterms:title>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/J23101/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/ryangreer"/>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000167"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/J23101_sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/ryangreer/gonzaloplasmids/GFP/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/GFP"/>
+    <sbol:displayId>GFP</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>GFP</dcterms:title>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/GFP/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/ryangreer"/>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000316"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/GFP_sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/ryangreer/gonzaloplasmids/B0015/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/B0015"/>
+    <sbol:displayId>B0015</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>B0015</dcterms:title>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/B0015/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/ryangreer"/>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000141"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/B0015_sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://sbolcanvas.org/cYYPhACA/1">
+    <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/cYYPhACA"/>
+    <sbol:displayId>cYYPhACA</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title> </dcterms:title>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000110"/>
+    <sbol:component>
+      <sbol:Component rdf:about="https://sbolcanvas.org/cYYPhACA/GFP_3/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/cYYPhACA/GFP_3"/>
+        <sbol:displayId>GFP_3</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/GFP/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="https://sbolcanvas.org/cYYPhACA/B0015_4/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/cYYPhACA/B0015_4"/>
+        <sbol:displayId>B0015_4</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/B0015/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="https://sbolcanvas.org/cYYPhACA/J23101_1/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/cYYPhACA/J23101_1"/>
+        <sbol:displayId>J23101_1</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/J23101/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="https://sbolcanvas.org/cYYPhACA/B0034_2/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/cYYPhACA/B0034_2"/>
+        <sbol:displayId>B0034_2</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/B0034/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://sbolcanvas.org/cYYPhACA/cYYPhACAAnnotation2/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/cYYPhACA/cYYPhACAAnnotation2"/>
+        <sbol:displayId>cYYPhACAAnnotation2</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="https://sbolcanvas.org/cYYPhACA/cYYPhACAAnnotation2/location2/1">
+            <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/cYYPhACA/cYYPhACAAnnotation2/location2"/>
+            <sbol:displayId>location2</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>57</sbol:start>
+            <sbol:end>773</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://sbolcanvas.org/cYYPhACA/GFP_3/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://sbolcanvas.org/cYYPhACA/cYYPhACAAnnotation0/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/cYYPhACA/cYYPhACAAnnotation0"/>
+        <sbol:displayId>cYYPhACAAnnotation0</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="https://sbolcanvas.org/cYYPhACA/cYYPhACAAnnotation0/location0/1">
+            <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/cYYPhACA/cYYPhACAAnnotation0/location0"/>
+            <sbol:displayId>location0</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>1</sbol:start>
+            <sbol:end>35</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://sbolcanvas.org/cYYPhACA/J23101_1/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://sbolcanvas.org/cYYPhACA/cYYPhACAAnnotation1/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/cYYPhACA/cYYPhACAAnnotation1"/>
+        <sbol:displayId>cYYPhACAAnnotation1</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="https://sbolcanvas.org/cYYPhACA/cYYPhACAAnnotation1/location1/1">
+            <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/cYYPhACA/cYYPhACAAnnotation1/location1"/>
+            <sbol:displayId>location1</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>36</sbol:start>
+            <sbol:end>56</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://sbolcanvas.org/cYYPhACA/B0034_2/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://sbolcanvas.org/cYYPhACA/cYYPhACAAnnotation3/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/cYYPhACA/cYYPhACAAnnotation3"/>
+        <sbol:displayId>cYYPhACAAnnotation3</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="https://sbolcanvas.org/cYYPhACA/cYYPhACAAnnotation3/location3/1">
+            <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/cYYPhACA/cYYPhACAAnnotation3/location3"/>
+            <sbol:displayId>location3</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>774</sbol:start>
+            <sbol:end>902</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://sbolcanvas.org/cYYPhACA/B0015_4/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="https://sbolcanvas.org/cYYPhACA/cYYPhACAConstraint1/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/cYYPhACA/cYYPhACAConstraint1"/>
+        <sbol:displayId>cYYPhACAConstraint1</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="https://sbolcanvas.org/cYYPhACA/J23101_1/1"/>
+        <sbol:object rdf:resource="https://sbolcanvas.org/cYYPhACA/B0034_2/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="https://sbolcanvas.org/cYYPhACA/cYYPhACAConstraint3/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/cYYPhACA/cYYPhACAConstraint3"/>
+        <sbol:displayId>cYYPhACAConstraint3</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="https://sbolcanvas.org/cYYPhACA/GFP_3/1"/>
+        <sbol:object rdf:resource="https://sbolcanvas.org/cYYPhACA/B0015_4/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="https://sbolcanvas.org/cYYPhACA/cYYPhACAConstraint2/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/cYYPhACA/cYYPhACAConstraint2"/>
+        <sbol:displayId>cYYPhACAConstraint2</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="https://sbolcanvas.org/cYYPhACA/B0034_2/1"/>
+        <sbol:object rdf:resource="https://sbolcanvas.org/cYYPhACA/GFP_3/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequence rdf:resource="https://sbolcanvas.org/cYYPhACA_sequence"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/ryangreer/gonzaloplasmids/B0034/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/B0034"/>
+    <sbol:displayId>B0034</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>B0034</dcterms:title>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/B0034/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/ryangreer"/>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000139"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/B0034_sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/ryangreer/gonzaloplasmids/GFP_sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/GFP_sequence"/>
+    <sbol:displayId>GFP_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/GFP_sequence/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/ryangreer"/>
+    <sbol:elements>gtgagcaagggcgaggagctgttcaccggggtggtgcccatcctggtcgagctggacggcgacgtaaacggccacaagttcagcgtgtccggcgagggcgagggcgatgccacctacggcaagctgaccctgaagttcatctgcaccaccggcaagctgcccgtgccctggcccaccctcgtgaccaccttcagctacggcgtgcagtgcttcagccgctaccccgaccacatgaagcagcacgacttcttcaagtccgccatgcccgaaggctacgtccaggagcgcaccatcttcttcaaggacgacggcaactacaagacccgcgccgaggtgaagttcgagggcgacaccctggtgaaccgcatcgagctgaagggcatcgacttcaaggaggacggcaacatcctggggcacaagctggagtacaactacaacagccacaacgtctatatcatggccgacaagcagaagaacggcatcaaggtgaacttcaagatccgccacaacatcgaggacggcagcgtgcagctcgccgaccactaccagcagaacacccccatcggcgacggccccgtgctgctgcccgacaaccactacctgagcacccagtccgccctgagcaaagaccccaacgagaagcgcgatcacatggtcctgctggagttcgtgaccgccgccgggatcactcacggcatggacgagctgtacaagtaa</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/ryangreer/gonzaloplasmids/J23101_sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/J23101_sequence"/>
+    <sbol:displayId>J23101_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/J23101_sequence/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/ryangreer"/>
+    <sbol:elements>tttacagctagctcagtcctaggtattatgctagc</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://sbolcanvas.org/cYYPhACA_sequence">
+    <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/cYYPhACA_sequence"/>
+    <sbol:displayId>cYYPhACA_sequence</sbol:displayId>
+    <sbol:elements>tttacagctagctcagtcctaggtattatgctagcagagaaagaggagaaatactagtgagcaagggcgaggagctgttcaccggggtggtgcccatcctggtcgagctggacggcgacgtaaacggccacaagttcagcgtgtccggcgagggcgagggcgatgccacctacggcaagctgaccctgaagttcatctgcaccaccggcaagctgcccgtgccctggcccaccctcgtgaccaccttcagctacggcgtgcagtgcttcagccgctaccccgaccacatgaagcagcacgacttcttcaagtccgccatgcccgaaggctacgtccaggagcgcaccatcttcttcaaggacgacggcaactacaagacccgcgccgaggtgaagttcgagggcgacaccctggtgaaccgcatcgagctgaagggcatcgacttcaaggaggacggcaacatcctggggcacaagctggagtacaactacaacagccacaacgtctatatcatggccgacaagcagaagaacggcatcaaggtgaacttcaagatccgccacaacatcgaggacggcagcgtgcagctcgccgaccactaccagcagaacacccccatcggcgacggccccgtgctgctgcccgacaaccactacctgagcacccagtccgccctgagcaaagaccccaacgagaagcgcgatcacatggtcctgctggagttcgtgaccgccgccgggatcactcacggcatggacgagctgtacaagtaa</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/ryangreer/gonzaloplasmids/B0034_sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/B0034_sequence"/>
+    <sbol:displayId>B0034_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/B0034_sequence/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/ryangreer"/>
+    <sbol:elements>agagaaagaggagaaatacta</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/ryangreer/gonzaloplasmids/B0015_sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/B0015_sequence"/>
+    <sbol:displayId>B0015_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/B0015_sequence/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/ryangreer"/>
+    <sbol:elements>ccaggcatcaaataaaacgaaaggctcagtcgaaagactgggcctttcgttttatctgttgtttgtcggtgaacgctctctactagagtcacactggctcaccttcgggtgggcctttctgcgtttata</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <SBOLCanvas:Layout rdf:about="https://sbolcanvas.org/J23101_Layout">
+    <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/J23101_Layout"/>
+    <sbol:displayId>J23101_Layout</sbol:displayId>
+    <SBOLCanvas:objectRef rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/J23101/1"/>
+  </SBOLCanvas:Layout>
+  <SBOLCanvas:Layout rdf:about="https://sbolcanvas.org/basic_TU_Layout">
+    <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/basic_TU_Layout"/>
+    <sbol:displayId>basic_TU_Layout</sbol:displayId>
+    <SBOLCanvas:objectRef rdf:resource="https://sbolcanvas.org/basic_TU"/>
+    <SBOLCanvas:nodeGlyph>
+      <SBOLCanvas:NodeGlyph rdf:about="https://sbolcanvas.org/basic_TU_Layout/NodeGlyph_28">
+        <SBOLCanvas:x>720.0</SBOLCanvas:x>
+        <SBOLCanvas:y>339.0</SBOLCanvas:y>
+        <SBOLCanvas:width>200.0</SBOLCanvas:width>
+        <SBOLCanvas:height>100.0</SBOLCanvas:height>
+        <SBOLCanvas:displayId>cYYPhACA_28</SBOLCanvas:displayId>
+      </SBOLCanvas:NodeGlyph>
+    </SBOLCanvas:nodeGlyph>
+    <SBOLCanvas:cYYPhACA_Reference rdf:resource="https://sbolcanvas.org/cYYPhACA_Layout"/>
+  </SBOLCanvas:Layout>
+  <SBOLCanvas:Layout rdf:about="https://sbolcanvas.org/GFP_Layout">
+    <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/GFP_Layout"/>
+    <sbol:displayId>GFP_Layout</sbol:displayId>
+    <SBOLCanvas:objectRef rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/GFP/1"/>
+  </SBOLCanvas:Layout>
+  <SBOLCanvas:Layout rdf:about="https://sbolcanvas.org/cYYPhACA_Layout">
+    <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/cYYPhACA_Layout"/>
+    <sbol:displayId>cYYPhACA_Layout</sbol:displayId>
+    <SBOLCanvas:objectRef rdf:resource="https://sbolcanvas.org/cYYPhACA/1"/>
+    <SBOLCanvas:nodeGlyph>
+      <SBOLCanvas:NodeGlyph rdf:about="https://sbolcanvas.org/cYYPhACA_Layout/NodeGlyph_28">
+        <SBOLCanvas:x>720.0</SBOLCanvas:x>
+        <SBOLCanvas:y>339.0</SBOLCanvas:y>
+        <SBOLCanvas:width>200.0</SBOLCanvas:width>
+        <SBOLCanvas:height>100.0</SBOLCanvas:height>
+        <SBOLCanvas:displayId>container</SBOLCanvas:displayId>
+      </SBOLCanvas:NodeGlyph>
+    </SBOLCanvas:nodeGlyph>
+    <SBOLCanvas:nodeGlyph>
+      <SBOLCanvas:NodeGlyph rdf:about="https://sbolcanvas.org/cYYPhACA_Layout/NodeGlyph_29">
+        <SBOLCanvas:x>0.0</SBOLCanvas:x>
+        <SBOLCanvas:y>50.0</SBOLCanvas:y>
+        <SBOLCanvas:width>200.0</SBOLCanvas:width>
+        <SBOLCanvas:height>1.0</SBOLCanvas:height>
+        <SBOLCanvas:displayId>backbone</SBOLCanvas:displayId>
+      </SBOLCanvas:NodeGlyph>
+    </SBOLCanvas:nodeGlyph>
+    <SBOLCanvas:nodeGlyph>
+      <SBOLCanvas:NodeGlyph rdf:about="https://sbolcanvas.org/cYYPhACA_Layout/NodeGlyph_30">
+        <SBOLCanvas:x>0.0</SBOLCanvas:x>
+        <SBOLCanvas:y>0.0</SBOLCanvas:y>
+        <SBOLCanvas:width>50.0</SBOLCanvas:width>
+        <SBOLCanvas:height>100.0</SBOLCanvas:height>
+        <SBOLCanvas:displayId>J23101_1</SBOLCanvas:displayId>
+      </SBOLCanvas:NodeGlyph>
+    </SBOLCanvas:nodeGlyph>
+    <SBOLCanvas:J23101_Reference rdf:resource="https://sbolcanvas.org/J23101_Layout"/>
+    <SBOLCanvas:nodeGlyph>
+      <SBOLCanvas:NodeGlyph rdf:about="https://sbolcanvas.org/cYYPhACA_Layout/NodeGlyph_31">
+        <SBOLCanvas:x>50.0</SBOLCanvas:x>
+        <SBOLCanvas:y>0.0</SBOLCanvas:y>
+        <SBOLCanvas:width>50.0</SBOLCanvas:width>
+        <SBOLCanvas:height>100.0</SBOLCanvas:height>
+        <SBOLCanvas:displayId>B0034_2</SBOLCanvas:displayId>
+      </SBOLCanvas:NodeGlyph>
+    </SBOLCanvas:nodeGlyph>
+    <SBOLCanvas:B0034_Reference rdf:resource="https://sbolcanvas.org/B0034_Layout"/>
+    <SBOLCanvas:nodeGlyph>
+      <SBOLCanvas:NodeGlyph rdf:about="https://sbolcanvas.org/cYYPhACA_Layout/NodeGlyph_32">
+        <SBOLCanvas:x>100.0</SBOLCanvas:x>
+        <SBOLCanvas:y>0.0</SBOLCanvas:y>
+        <SBOLCanvas:width>50.0</SBOLCanvas:width>
+        <SBOLCanvas:height>100.0</SBOLCanvas:height>
+        <SBOLCanvas:displayId>GFP_3</SBOLCanvas:displayId>
+      </SBOLCanvas:NodeGlyph>
+    </SBOLCanvas:nodeGlyph>
+    <SBOLCanvas:GFP_Reference rdf:resource="https://sbolcanvas.org/GFP_Layout"/>
+    <SBOLCanvas:nodeGlyph>
+      <SBOLCanvas:NodeGlyph rdf:about="https://sbolcanvas.org/cYYPhACA_Layout/NodeGlyph_33">
+        <SBOLCanvas:x>150.0</SBOLCanvas:x>
+        <SBOLCanvas:y>0.0</SBOLCanvas:y>
+        <SBOLCanvas:width>50.0</SBOLCanvas:width>
+        <SBOLCanvas:height>100.0</SBOLCanvas:height>
+        <SBOLCanvas:displayId>B0015_4</SBOLCanvas:displayId>
+      </SBOLCanvas:NodeGlyph>
+    </SBOLCanvas:nodeGlyph>
+    <SBOLCanvas:B0015_Reference rdf:resource="https://sbolcanvas.org/B0015_Layout"/>
+  </SBOLCanvas:Layout>
+  <SBOLCanvas:Layout rdf:about="https://sbolcanvas.org/B0015_Layout">
+    <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/B0015_Layout"/>
+    <sbol:displayId>B0015_Layout</sbol:displayId>
+    <SBOLCanvas:objectRef rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/B0015/1"/>
+  </SBOLCanvas:Layout>
+  <SBOLCanvas:Layout rdf:about="https://sbolcanvas.org/B0034_Layout">
+    <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/B0034_Layout"/>
+    <sbol:displayId>B0034_Layout</sbol:displayId>
+    <SBOLCanvas:objectRef rdf:resource="https://synbiohub.org/user/ryangreer/gonzaloplasmids/B0034/1"/>
+  </SBOLCanvas:Layout>
+</rdf:RDF>

@@ -1,1 +1,1 @@
-from .sbol2build import *
+from .sbol2build import *  # noqa: F403

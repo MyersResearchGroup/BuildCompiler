@@ -17,3 +17,39 @@ It was developed to support build functionality and workflows in [SynBioSuite](h
 ## Documentation
 
  Please visit the documentation with API reference and tutorials at Read the Docs: [sbol2build.rtfd.io](https://sbol2build.readthedocs.io)
+
+## Environment Setup
+
+If you are interested in contributing to **BuildPlanner**, please set up your local development environment with the same tools used in CI and linting.
+
+### 1. Install [uv](https://docs.astral.sh/uv/)
+
+`uv` manages all Python dependencies (including dev tools) with a lockfile for reproducibility.
+
+#### Linux/Bash
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+#### Mac OSX with Homebrew
+```bash
+brew install uv
+```
+### 2. Sync dependencies
+```bash
+uv sync --all-groups
+```
+This will create a virtual environment with the dependiencies. Activate using:
+```bash
+source .venv/bin/activate
+```
+
+### 3. Install pre-commit hooks
+We use pre-commit to automatically run the Ruff linter before every commit.
+Install and enable the hooks with:
+```bash
+uv run pre-commit install
+```
+
+
+#### Running tests:
+`uv run python -m unittest discover -s tests`

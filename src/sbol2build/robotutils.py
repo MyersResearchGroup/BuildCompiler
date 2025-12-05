@@ -2,9 +2,12 @@ import sbol2
 import json
 
 def assembly_plan_RDF_to_JSON(file):
-    sbol2.Config.setOption('sbol_typed_uris', False)
-    doc = sbol2.Document()
-    doc.read(file)
+    if type(file)==sbol2.Document:
+        doc = file
+    else:
+        sbol2.Config.setOption('sbol_typed_uris', False)
+        doc = sbol2.Document()
+        doc.read(file)
 
     # Known SO roles
     PRODUCT_ROLE = 'http://identifiers.org/so/SO:0000804'

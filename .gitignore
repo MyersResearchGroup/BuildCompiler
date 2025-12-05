@@ -1,0 +1,32 @@
+
+.vscode/*.env
+*.venv
+.env
+venv/
+__pycache__/
+
+dist/
+build/
+*.egg-info/
+src/sbol2build.egg-info/
+docs/_build/
+
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.dll
+*.o
+*.a
+
+# --- Pre-commit / dependency management ---
+# .pre-commit-config.yaml
+# uv.lock
+
+notebooks/tutorial_notebook.ipynb
+untracked_examples/
+
+tests/__pycache__/
+
+.DS_Store
+Thumbs.db

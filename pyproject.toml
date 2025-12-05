@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sbol2build"
-version = "0.0.b1"
+version = "0.0.b3"
 description = "SBOL2Build: python package for construction of SBOL objects during build planning"
 readme = "README.md"
 requires-python = ">=3.7"
@@ -38,3 +38,8 @@ test = [
 [project.urls]
 "Homepage" = "https://github.com/MyersResearchGroup/SBOL2Build"
 "Bug Tracker" = "https://github.com/MyersResearchGroup/SBOL2Build/issues"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.0",
+]

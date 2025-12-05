@@ -1,0 +1,498 @@
+<?xml version="1.0" ?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:sbh="http://wiki.synbiohub.org/wiki/Terms/synbiohub#" xmlns:sbol="http://sbols.org/v2#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:ns0="https://wiki.synbiohub.org/wiki/Terms/synbiohub#" xmlns:prov="http://www.w3.org/ns/prov#" xmlns:obo="http://purl.obolibrary.org/obo/" xmlns:om="http://www.ontology-of-units-of-measure.org/resource/om-2/" xmlns:SBOLCanvas="https://sbolcanvas.org/">
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_A/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_A"/>
+    <sbol:displayId>Fusion_Site_A</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>Fusion_Site_A</dcterms:title>
+    <dcterms:description>MoClo standard fusion site A</dcterms:description>
+    <ns0:sourceOrganism rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_562"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_A/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0001953"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_A_sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100"/>
+    <sbol:displayId>J23100</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>J23100</dcterms:title>
+    <dcterms:description>MoClo Basic Part: Constitutive promoter - Anderson series - high strength</dcterms:description>
+    <ns0:sourceOrganism rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_562"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000167"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100_sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/amp_region/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/amp_region"/>
+    <sbol:displayId>amp_region</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:description>Ampicillin resistance gene from the pSB1A2 plasmid.</dcterms:description>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/amp_region/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000804"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/amp_region_seq/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://sbolcanvas.org/pJ23100_abDigest/1">
+    <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/pJ23100_abDigest"/>
+    <sbol:displayId>pJ23100_abDigest</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title> please work</dcterms:title>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:type rdf:resource="http://identifiers.org/so/SO:0000988"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000110"/>
+    <sbol:component>
+      <sbol:Component rdf:about="https://sbolcanvas.org/pJ23100_abDigest/Fusion_Site_A_2/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/Fusion_Site_A_2"/>
+        <sbol:displayId>Fusion_Site_A_2</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_A/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="https://sbolcanvas.org/pJ23100_abDigest/dva_backbone_core_5/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/dva_backbone_core_5"/>
+        <sbol:displayId>dva_backbone_core_5</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="https://sbolcanvas.org/pJ23100_abDigest/J23100_3/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/J23100_3"/>
+        <sbol:displayId>J23100_3</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="https://sbolcanvas.org/pJ23100_abDigest/Fusion_Site_B_4/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/Fusion_Site_B_4"/>
+        <sbol:displayId>Fusion_Site_B_4</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_B/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestAnnotation2/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestAnnotation2"/>
+        <sbol:displayId>pJ23100_abDigestAnnotation2</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestAnnotation2/location2/1">
+            <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestAnnotation2/location2"/>
+            <sbol:displayId>location2</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>40</sbol:start>
+            <sbol:end>43</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/Fusion_Site_B_4/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestAnnotation3/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestAnnotation3"/>
+        <sbol:displayId>pJ23100_abDigestAnnotation3</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestAnnotation3/location3/1">
+            <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestAnnotation3/location3"/>
+            <sbol:displayId>location3</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>44</sbol:start>
+            <sbol:end>2143</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/dva_backbone_core_5/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestAnnotation1/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestAnnotation1"/>
+        <sbol:displayId>pJ23100_abDigestAnnotation1</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestAnnotation1/location1/1">
+            <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestAnnotation1/location1"/>
+            <sbol:displayId>location1</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>5</sbol:start>
+            <sbol:end>39</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/J23100_3/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestAnnotation0/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestAnnotation0"/>
+        <sbol:displayId>pJ23100_abDigestAnnotation0</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestAnnotation0/location0/1">
+            <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestAnnotation0/location0"/>
+            <sbol:displayId>location0</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>1</sbol:start>
+            <sbol:end>4</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/Fusion_Site_A_2/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestConstraint2/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestConstraint2"/>
+        <sbol:displayId>pJ23100_abDigestConstraint2</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/J23100_3/1"/>
+        <sbol:object rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/Fusion_Site_B_4/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestConstraint1/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestConstraint1"/>
+        <sbol:displayId>pJ23100_abDigestConstraint1</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/Fusion_Site_A_2/1"/>
+        <sbol:object rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/J23100_3/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestConstraint3/1">
+        <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/pJ23100_abDigestConstraint3"/>
+        <sbol:displayId>pJ23100_abDigestConstraint3</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/Fusion_Site_B_4/1"/>
+        <sbol:object rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/dva_backbone_core_5/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequence rdf:resource="https://sbolcanvas.org/pJ23100_abDigest_sequence"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_B/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_B"/>
+    <sbol:displayId>Fusion_Site_B</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>Fusion_Site_B</dcterms:title>
+    <dcterms:description>MoClo standard fusion site B</dcterms:description>
+    <ns0:sourceOrganism rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_562"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_B/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0001953"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_B_sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core"/>
+    <sbol:displayId>dva_backbone_core</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:description>This is the backbone core for Destination Vector Ampicillin (DVA) plasmids. Based on the pSB1A2 plasmid and contains an ampicillin resistance gene and a high copy number origin of replication.</dcterms:description>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000755"/>
+    <sbol:component>
+      <sbol:Component rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/Component_amp/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/Component_amp"/>
+        <sbol:displayId>Component_amp</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <obo:OBI_0001617>26479688</obo:OBI_0001617>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/amp_region/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/Component_ori/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/Component_ori"/>
+        <sbol:displayId>Component_ori</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <obo:OBI_0001617>26479688</obo:OBI_0001617>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/origin_of_replication_pSB1A2/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/origin_of_replication_pSB1A2_annotation/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/origin_of_replication_pSB1A2_annotation"/>
+        <sbol:displayId>origin_of_replication_pSB1A2_annotation</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <obo:OBI_0001617>26479688</obo:OBI_0001617>
+        <sbol:location>
+          <sbol:Range rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/origin_of_replication_pSB1A2_annotation/ori/1">
+            <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/origin_of_replication_pSB1A2_annotation/ori"/>
+            <sbol:displayId>ori</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/1"/>
+            <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+            <obo:OBI_0001617>26479688</obo:OBI_0001617>
+            <sbol:start>272</sbol:start>
+            <sbol:end>860</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#reverseComplement"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/Component_ori/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/amp_region_annotation/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/amp_region_annotation"/>
+        <sbol:displayId>amp_region_annotation</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <obo:OBI_0001617>26479688</obo:OBI_0001617>
+        <sbol:location>
+          <sbol:Range rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/amp_region_annotation/amp/1">
+            <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/amp_region_annotation/amp"/>
+            <sbol:displayId>amp</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/1"/>
+            <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+            <obo:OBI_0001617>26479688</obo:OBI_0001617>
+            <sbol:start>1031</sbol:start>
+            <sbol:end>1996</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#reverseComplement"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/Component_amp/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core_seq/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/origin_of_replication_pSB1A2/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/origin_of_replication_pSB1A2"/>
+    <sbol:displayId>origin_of_replication_pSB1A2</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:description>Origin of replication from the pSB1A2/pSB1K3 plasmid. pSB1A2 is a high copy number plasmid. The replication origin is a pUC19-derived pMB1 (copy number of 100-300 per cell</dcterms:description>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/origin_of_replication_pSB1A2/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000296"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/origin_of_replication_seq/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:Sequence rdf:about="https://sbolcanvas.org/pJ23100_abDigest_sequence">
+    <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/pJ23100_abDigest_sequence"/>
+    <sbol:displayId>pJ23100_abDigest_sequence</sbol:displayId>
+    <sbol:elements>GGAGTTGACGGCTAGCTCAGTCCTAGGTACAGTGCTAGCTACTagagacctactagtagcggccgctgcaggcttcctcgctcactgactcgctgcgctcggtcgttcggctgcggcgagcggtatcagctcactcaaaggcggtaatacggttatccacagaatcaggggataacgcaggaaagaacatgtgagcaaaaggccagcaaaaggccaggaaccgtaaaaaggccgcgttgctggcgtttttccacaggctccgcccccctgacgagcatcacaaaaatcgacgctcaagtcagaggtggcgaaacccgacaggactataaagataccaggcgtttccccctggaagctccctcgtgcgctctcctgttccgaccctgccgcttaccggatacctgtccgcctttctcccttcgggaagcgtggcgctttctcatagctcacgctgtaggtatctcagttcggtgtaggtcgttcgctccaagctgggctgtgtgcacgaaccccccgttcagcccgaccgctgcgccttatccggtaactatcgtcttgagtccaacccggtaagacacgacttatcgccactggcagcagccactggtaacaggattagcagagcgaggtatgtaggcggtgctacagagttcttgaagtggtggcctaactacggctacactagaagaacagtatttggtatctgcgctctgctgaagccagttaccttcggaaaaagagttggtagctcttgatccggcaaacaaaccaccgctggtagcggtggtttttttgtttgcaagcagcagattacgcgcagaaaaaaaggatctcaagaagatcctttgatcttttctacggggtctgacgctcagtggaacgaaaactcacgttaagggattttggtcatgagattatcaaaaaggatcttcacctagatccttttaaattaaaaatgaagttttaaatcaatctaaagtatatatgagtaaacttggtctgacagttaccaatgcttaatcagtgaggcacctatctcagcgatctgtctatttcgttcatccatagttgcctgactccccgtcgtgtagataactacgatacgggagggcttaccatctggccccagtgctgcaatgataccgcgcgacccacgctcaccggctccagatttatcagcaataaaccagccagccggaagggccgagcgcagaagtggtcctgcaactttatccgcctccatccagtctattaattgttgccgggaagctagagtaagtagttcgccagttaatagtttgcgcaacgttgttgccattgctacaggcatcgtggtgtcacgctcgtcgtttggtatggcttcattcagctccggttcccaacgatcaaggcgagttacatgatcccccatgttgtgcaaaaaagcggttagctccttcggtcctccgatcgttgtcagaagtaagttggccgcagtgttatcactcatggttatggcagcactgcataattctcttactgtcatgccatccgtaagatgcttttctgtgactggtgagtactcaaccaagtcattctgagaatagtgtatgcggcgaccgagttgctcttgcccggcgtcaatacgggataataccgcgccacatagcagaactttaaaagtgctcatcattggaaaacgttcttcggggcgaaaactctcaaggatcttaccgctgttgagatccagttcgatgtaacccactcgtgcacccaactgatcttcagcatcttttactttcaccagcgtttctgggtgagcaaaaacaggaaggcaaaatgccgcaaaaaagggaataagggcgacacggaaatgttgaatactcatactcttcctttttcaatattattgaagcatttatcagggttattgtctcatgagcggatacatatttgaatgtatttagaaaaataaacaaataggggttccgcgcacatttccccgaaaagtgccacctgacgtctaagaaaccattattatcatgacattaacctataaaaataggcgtatcacgaggcagaatttcagataaaaaaaatccttagctttcgctaaggatgatttctggaattcgcggccgcttctagagactagtgggtctca</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_B_sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_B_sequence"/>
+    <sbol:displayId>Fusion_Site_B_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>Fusion_Site_B Sequence</dcterms:title>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_B_sequence/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbol:elements>TACT</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/origin_of_replication_seq/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/origin_of_replication_seq"/>
+    <sbol:displayId>origin_of_replication_seq</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/origin_of_replication_seq/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:elements>ttgagatcctttttttctgcgcgtaatctgctgcttgcaaacaaaaaaaccaccgctaccagcggtggtttgtttgccggatcaagagctaccaactctttttccgaaggtaactggcttcagcagagcgcagataccaaatactgttcttctagtgtagccgtagttaggccaccacttcaagaactctgtagcaccgcctacatacctcgctctgctaatcctgttaccagtggctgctgccagtggcgataagtcgtgtcttaccgggttggactcaagacgatagttaccggataaggcgcagcggtcgggctgaacggggggttcgtgcacacagcccagcttggagcgaacgacctacaccgaactgagatacctacagcgtgagctatgagaaagcgccacgcttcccgaagggagaaaggcggacaggtatccggtaagcggcagggtcggaacaggagagcgcacgagggagcttccagggggaaacgcctggtatctttatagtcctgtcgggtttcgccacctctgacttgagcgtcgatttttgtgatgctcgtcaggggggcggagcctgtggaaa</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/amp_region_seq/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/amp_region_seq"/>
+    <sbol:displayId>amp_region_seq</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/amp_region_seq/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:elements>cgcggaacccctatttgtttatttttctaaatacattcaaatatgtatccgctcatgagacaataaccctgataaatgcttcaataatattgaaaaaggaagagtatgagtattcaacatttccgtgtcgcccttattcccttttttgcggcattttgccttcctgtttttgctcacccagaaacgctggtgaaagtaaaagatgctgaagatcagttgggtgcacgagtgggttacatcgaactggatctcaacagcggtaagatccttgagagttttcgccccgaagaacgttttccaatgatgagcacttttaaagttctgctatgtggcgcggtattatcccgtattgacgccgggcaagagcaactcggtcgccgcatacactattctcagaatgacttggttgagtactcaccagtcacagaaaagcatcttacggatggcatgacagtaagagaattatgcagtgctgccataaccatgagtgataacactgcggccaacttacttctgacaacgatcggaggaccgaaggagctaaccgcttttttgcacaacatgggggatcatgtaactcgccttgatcgttgggaaccggagctgaatgaagccataccaaacgacgagcgtgacaccacgatgcctgtagcaatggcaacaacgttgcgcaaactattaactggcgaactacttactctagcttcccggcaacaattaatagactggatggaggcggataaagttgcaggaccacttctgcgctcggcccttccggctggctggtttattgctgataaatctggagccggtgagcgtgggtcgcgcggtatcattgcagcactggggccagatggtaagccctcccgtatcgtagttatctacacgacggggagtcaggcaactatggatgaacgaaatagacagatcgctgagataggtgcctcactgattaagcattggtaa</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100_sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100_sequence"/>
+    <sbol:displayId>J23100_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>J23100 Sequence</dcterms:title>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100_sequence/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbol:elements>TTGACGGCTAGCTCAGTCCTAGGTACAGTGCTAGC</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_A_sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_A_sequence"/>
+    <sbol:displayId>Fusion_Site_A_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>Fusion_Site_A Sequence</dcterms:title>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_A_sequence/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbol:elements>GGAG</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core_seq/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core_seq"/>
+    <sbol:displayId>dva_backbone_core_seq</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core_seq/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:elements>agagacctactagtagcggccgctgcaggcttcctcgctcactgactcgctgcgctcggtcgttcggctgcggcgagcggtatcagctcactcaaaggcggtaatacggttatccacagaatcaggggataacgcaggaaagaacatgtgagcaaaaggccagcaaaaggccaggaaccgtaaaaaggccgcgttgctggcgtttttccacaggctccgcccccctgacgagcatcacaaaaatcgacgctcaagtcagaggtggcgaaacccgacaggactataaagataccaggcgtttccccctggaagctccctcgtgcgctctcctgttccgaccctgccgcttaccggatacctgtccgcctttctcccttcgggaagcgtggcgctttctcatagctcacgctgtaggtatctcagttcggtgtaggtcgttcgctccaagctgggctgtgtgcacgaaccccccgttcagcccgaccgctgcgccttatccggtaactatcgtcttgagtccaacccggtaagacacgacttatcgccactggcagcagccactggtaacaggattagcagagcgaggtatgtaggcggtgctacagagttcttgaagtggtggcctaactacggctacactagaagaacagtatttggtatctgcgctctgctgaagccagttaccttcggaaaaagagttggtagctcttgatccggcaaacaaaccaccgctggtagcggtggtttttttgtttgcaagcagcagattacgcgcagaaaaaaaggatctcaagaagatcctttgatcttttctacggggtctgacgctcagtggaacgaaaactcacgttaagggattttggtcatgagattatcaaaaaggatcttcacctagatccttttaaattaaaaatgaagttttaaatcaatctaaagtatatatgagtaaacttggtctgacagttaccaatgcttaatcagtgaggcacctatctcagcgatctgtctatttcgttcatccatagttgcctgactccccgtcgtgtagataactacgatacgggagggcttaccatctggccccagtgctgcaatgataccgcgcgacccacgctcaccggctccagatttatcagcaataaaccagccagccggaagggccgagcgcagaagtggtcctgcaactttatccgcctccatccagtctattaattgttgccgggaagctagagtaagtagttcgccagttaatagtttgcgcaacgttgttgccattgctacaggcatcgtggtgtcacgctcgtcgtttggtatggcttcattcagctccggttcccaacgatcaaggcgagttacatgatcccccatgttgtgcaaaaaagcggttagctccttcggtcctccgatcgttgtcagaagtaagttggccgcagtgttatcactcatggttatggcagcactgcataattctcttactgtcatgccatccgtaagatgcttttctgtgactggtgagtactcaaccaagtcattctgagaatagtgtatgcggcgaccgagttgctcttgcccggcgtcaatacgggataataccgcgccacatagcagaactttaaaagtgctcatcattggaaaacgttcttcggggcgaaaactctcaaggatcttaccgctgttgagatccagttcgatgtaacccactcgtgcacccaactgatcttcagcatcttttactttcaccagcgtttctgggtgagcaaaaacaggaaggcaaaatgccgcaaaaaagggaataagggcgacacggaaatgttgaatactcatactcttcctttttcaatattattgaagcatttatcagggttattgtctcatgagcggatacatatttgaatgtatttagaaaaataaacaaataggggttccgcgcacatttccccgaaaagtgccacctgacgtctaagaaaccattattatcatgacattaacctataaaaataggcgtatcacgaggcagaatttcagataaaaaaaatccttagctttcgctaaggatgatttctggaattcgcggccgcttctagagactagtgggtctca</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <SBOLCanvas:Layout rdf:about="https://sbolcanvas.org/Fusion_Site_B_Layout">
+    <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/Fusion_Site_B_Layout"/>
+    <sbol:displayId>Fusion_Site_B_Layout</sbol:displayId>
+    <SBOLCanvas:objectRef rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_B/1"/>
+  </SBOLCanvas:Layout>
+  <SBOLCanvas:Layout rdf:about="https://sbolcanvas.org/J23100_Layout">
+    <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/J23100_Layout"/>
+    <sbol:displayId>J23100_Layout</sbol:displayId>
+    <SBOLCanvas:objectRef rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100/1"/>
+  </SBOLCanvas:Layout>
+  <SBOLCanvas:Layout rdf:about="https://sbolcanvas.org/amp_region_Layout">
+    <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/amp_region_Layout"/>
+    <sbol:displayId>amp_region_Layout</sbol:displayId>
+    <SBOLCanvas:objectRef rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/amp_region/1"/>
+  </SBOLCanvas:Layout>
+  <SBOLCanvas:Layout rdf:about="https://sbolcanvas.org/origin_of_replication_pSB1A2_Layout">
+    <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/origin_of_replication_pSB1A2_Layout"/>
+    <sbol:displayId>origin_of_replication_pSB1A2_Layout</sbol:displayId>
+    <SBOLCanvas:objectRef rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/origin_of_replication_pSB1A2/1"/>
+  </SBOLCanvas:Layout>
+  <SBOLCanvas:Layout rdf:about="https://sbolcanvas.org/dva_backbone_core_Layout">
+    <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/dva_backbone_core_Layout"/>
+    <sbol:displayId>dva_backbone_core_Layout</sbol:displayId>
+    <SBOLCanvas:objectRef rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dva_backbone_core/1"/>
+    <SBOLCanvas:nodeGlyph>
+      <SBOLCanvas:NodeGlyph rdf:about="https://sbolcanvas.org/dva_backbone_core_Layout/NodeGlyph_31">
+        <SBOLCanvas:x>0.0</SBOLCanvas:x>
+        <SBOLCanvas:y>0.0</SBOLCanvas:y>
+        <SBOLCanvas:width>50.0</SBOLCanvas:width>
+        <SBOLCanvas:height>100.0</SBOLCanvas:height>
+        <SBOLCanvas:displayId>container</SBOLCanvas:displayId>
+      </SBOLCanvas:NodeGlyph>
+    </SBOLCanvas:nodeGlyph>
+    <SBOLCanvas:nodeGlyph>
+      <SBOLCanvas:NodeGlyph rdf:about="https://sbolcanvas.org/dva_backbone_core_Layout/NodeGlyph_32">
+        <SBOLCanvas:x>0.0</SBOLCanvas:x>
+        <SBOLCanvas:y>0.0</SBOLCanvas:y>
+        <SBOLCanvas:width>0.0</SBOLCanvas:width>
+        <SBOLCanvas:height>0.0</SBOLCanvas:height>
+        <SBOLCanvas:displayId>backbone</SBOLCanvas:displayId>
+      </SBOLCanvas:NodeGlyph>
+    </SBOLCanvas:nodeGlyph>
+    <SBOLCanvas:nodeGlyph>
+      <SBOLCanvas:NodeGlyph rdf:about="https://sbolcanvas.org/dva_backbone_core_Layout/NodeGlyph_33">
+        <SBOLCanvas:x>0.0</SBOLCanvas:x>
+        <SBOLCanvas:y>0.0</SBOLCanvas:y>
+        <SBOLCanvas:width>50.0</SBOLCanvas:width>
+        <SBOLCanvas:height>100.0</SBOLCanvas:height>
+        <SBOLCanvas:displayId>Component_ori</SBOLCanvas:displayId>
+      </SBOLCanvas:NodeGlyph>
+    </SBOLCanvas:nodeGlyph>
+    <SBOLCanvas:origin_of_replication_pSB1A2_Reference rdf:resource="https://sbolcanvas.org/origin_of_replication_pSB1A2_Layout"/>
+    <SBOLCanvas:nodeGlyph>
+      <SBOLCanvas:NodeGlyph rdf:about="https://sbolcanvas.org/dva_backbone_core_Layout/NodeGlyph_34">
+        <SBOLCanvas:x>0.0</SBOLCanvas:x>
+        <SBOLCanvas:y>0.0</SBOLCanvas:y>
+        <SBOLCanvas:width>50.0</SBOLCanvas:width>
+        <SBOLCanvas:height>100.0</SBOLCanvas:height>
+        <SBOLCanvas:displayId>Component_amp</SBOLCanvas:displayId>
+      </SBOLCanvas:NodeGlyph>
+    </SBOLCanvas:nodeGlyph>
+    <SBOLCanvas:amp_region_Reference rdf:resource="https://sbolcanvas.org/amp_region_Layout"/>
+  </SBOLCanvas:Layout>
+  <SBOLCanvas:Layout rdf:about="https://sbolcanvas.org/pJ23100_abDigest_Layout">
+    <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/pJ23100_abDigest_Layout"/>
+    <sbol:displayId>pJ23100_abDigest_Layout</sbol:displayId>
+    <SBOLCanvas:objectRef rdf:resource="https://sbolcanvas.org/pJ23100_abDigest/1"/>
+    <SBOLCanvas:nodeGlyph>
+      <SBOLCanvas:NodeGlyph rdf:about="https://sbolcanvas.org/pJ23100_abDigest_Layout/NodeGlyph_44">
+        <SBOLCanvas:x>455.0</SBOLCanvas:x>
+        <SBOLCanvas:y>334.5</SBOLCanvas:y>
+        <SBOLCanvas:width>152.0</SBOLCanvas:width>
+        <SBOLCanvas:height>100.0</SBOLCanvas:height>
+        <SBOLCanvas:displayId>container</SBOLCanvas:displayId>
+      </SBOLCanvas:NodeGlyph>
+    </SBOLCanvas:nodeGlyph>
+    <SBOLCanvas:nodeGlyph>
+      <SBOLCanvas:NodeGlyph rdf:about="https://sbolcanvas.org/pJ23100_abDigest_Layout/NodeGlyph_45">
+        <SBOLCanvas:x>0.0</SBOLCanvas:x>
+        <SBOLCanvas:y>50.0</SBOLCanvas:y>
+        <SBOLCanvas:width>152.0</SBOLCanvas:width>
+        <SBOLCanvas:height>1.0</SBOLCanvas:height>
+        <SBOLCanvas:displayId>backbone</SBOLCanvas:displayId>
+      </SBOLCanvas:NodeGlyph>
+    </SBOLCanvas:nodeGlyph>
+    <SBOLCanvas:nodeGlyph>
+      <SBOLCanvas:NodeGlyph rdf:about="https://sbolcanvas.org/pJ23100_abDigest_Layout/NodeGlyph_47">
+        <SBOLCanvas:x>1.0</SBOLCanvas:x>
+        <SBOLCanvas:y>0.0</SBOLCanvas:y>
+        <SBOLCanvas:width>50.0</SBOLCanvas:width>
+        <SBOLCanvas:height>100.0</SBOLCanvas:height>
+        <SBOLCanvas:displayId>Fusion_Site_A_2</SBOLCanvas:displayId>
+      </SBOLCanvas:NodeGlyph>
+    </SBOLCanvas:nodeGlyph>
+    <SBOLCanvas:Fusion_Site_A_Reference rdf:resource="https://sbolcanvas.org/Fusion_Site_A_Layout"/>
+    <SBOLCanvas:nodeGlyph>
+      <SBOLCanvas:NodeGlyph rdf:about="https://sbolcanvas.org/pJ23100_abDigest_Layout/NodeGlyph_48">
+        <SBOLCanvas:x>51.0</SBOLCanvas:x>
+        <SBOLCanvas:y>0.0</SBOLCanvas:y>
+        <SBOLCanvas:width>50.0</SBOLCanvas:width>
+        <SBOLCanvas:height>100.0</SBOLCanvas:height>
+        <SBOLCanvas:displayId>J23100_3</SBOLCanvas:displayId>
+      </SBOLCanvas:NodeGlyph>
+    </SBOLCanvas:nodeGlyph>
+    <SBOLCanvas:J23100_Reference rdf:resource="https://sbolcanvas.org/J23100_Layout"/>
+    <SBOLCanvas:nodeGlyph>
+      <SBOLCanvas:NodeGlyph rdf:about="https://sbolcanvas.org/pJ23100_abDigest_Layout/NodeGlyph_49">
+        <SBOLCanvas:x>101.0</SBOLCanvas:x>
+        <SBOLCanvas:y>0.0</SBOLCanvas:y>
+        <SBOLCanvas:width>50.0</SBOLCanvas:width>
+        <SBOLCanvas:height>100.0</SBOLCanvas:height>
+        <SBOLCanvas:displayId>Fusion_Site_B_4</SBOLCanvas:displayId>
+      </SBOLCanvas:NodeGlyph>
+    </SBOLCanvas:nodeGlyph>
+    <SBOLCanvas:Fusion_Site_B_Reference rdf:resource="https://sbolcanvas.org/Fusion_Site_B_Layout"/>
+    <SBOLCanvas:nodeGlyph>
+      <SBOLCanvas:NodeGlyph rdf:about="https://sbolcanvas.org/pJ23100_abDigest_Layout/NodeGlyph_50">
+        <SBOLCanvas:x>151.0</SBOLCanvas:x>
+        <SBOLCanvas:y>0.0</SBOLCanvas:y>
+        <SBOLCanvas:width>1.0</SBOLCanvas:width>
+        <SBOLCanvas:height>100.0</SBOLCanvas:height>
+        <SBOLCanvas:displayId>dva_backbone_core_5</SBOLCanvas:displayId>
+      </SBOLCanvas:NodeGlyph>
+    </SBOLCanvas:nodeGlyph>
+    <SBOLCanvas:dva_backbone_core_Reference rdf:resource="https://sbolcanvas.org/dva_backbone_core_Layout"/>
+  </SBOLCanvas:Layout>
+  <SBOLCanvas:Layout rdf:about="https://sbolcanvas.org/Fusion_Site_A_Layout">
+    <sbol:persistentIdentity rdf:resource="https://sbolcanvas.org/Fusion_Site_A_Layout"/>
+    <sbol:displayId>Fusion_Site_A_Layout</sbol:displayId>
+    <SBOLCanvas:objectRef rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_A/1"/>
+  </SBOLCanvas:Layout>
+</rdf:RDF>
