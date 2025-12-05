@@ -1,0 +1,24 @@
+[
+    {
+        "Product": "https://synbiohub.org/user/Gon/abstracttoassemblyplan/composite_2/1",
+        "Backbone": "https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/1",
+        "PartsList": [
+            "https://synbiohub.org/user/Gon/CIDARMoCloParts/B0032/1",
+            "https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100/1",
+            "https://synbiohub.org/user/Gon/CIDARMoCloParts/E0030_yfp/1",
+            "https://synbiohub.org/user/Gon/CIDARMoCloParts/B0015/1"
+        ],
+        "Restriction Enzyme": "https://synbiohub.org/user/Gon/abstracttoassemblyplan/BsaI/1"
+    },
+    {
+        "Product": "https://synbiohub.org/user/Gon/abstracttoassemblyplan/composite_1/1",
+        "Backbone": "https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/1",
+        "PartsList": [
+            "https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100/1",
+            "https://synbiohub.org/user/Gon/CIDARMoCloParts/B0034/1",
+            "https://synbiohub.org/user/Gon/CIDARMoCloParts/B0015/1",
+            "https://synbiohub.org/user/Gon/CIDARMoCloParts/E0030_yfp/1"
+        ],
+        "Restriction Enzyme": "https://synbiohub.org/user/Gon/abstracttoassemblyplan/BsaI/1"
+    }
+]
