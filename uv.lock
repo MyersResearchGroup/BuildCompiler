@@ -1993,7 +1993,7 @@ wheels = [
 
 [[package]]
 name = "sbol2build"
-version = "0.0b1"
+version = "0.0b3"
 source = { editable = "." }
 dependencies = [
     { name = "biopython", version = "1.81", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.8'" },
