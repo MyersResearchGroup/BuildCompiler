@@ -1,7 +1,7 @@
 # BuildCompiler
-SBOL2Build is a Python library for assisting in the planning, documentation, and distribution of DNA assembly plans using the Synthetic Biology Open Language 2.3 data standard.
+ BuildCompiler is an open-source tool that bridges the Design and Build stages of the DBTL cycle by compiling SBOL-encoded genetic designs into executable DNA assembly and transformation workflows.
 
-It was developed to support build functionality and workflows in [SynBioSuite](https://synbiosuite.org), based off the [SBOL Best Practices](https://github.com/SynBioDex/SBOL-examples/tree/main/SBOL/best-practices/BP011/).
+It was developed to support build functionality in comand line and cloud workflows in [SynBioSuite](https://synbiosuite.org), based off the [SBOL Best Practices](https://github.com/SynBioDex/SBOL-examples/tree/main/SBOL/best-practices/BP011/).
 
 <img src="https://github.com/MyersResearchGroup/BuildCompiler/blob/main/images/buildcompiler_logo.png#gh-light-mode-only" alt="BuildCompiler light logo" width="300"/>
 <img src="https://github.com/MyersResearchGroup/BuildCompiler/blob/main/images/buildcompiler_logo.png#gh-dark-mode-only" alt="BuildCompiler night logo" width="300"/> 
@@ -13,7 +13,7 @@ It was developed to support build functionality and workflows in [SynBioSuite](h
 ![gh-action badge](https://github.com/MyersResearchGroup/sbol2build/workflows/Python%20package/badge.svg)
 
 ## Installing BuildCompiler: 
-```pip install sbol2build```
+```pip install buildcompiler```
 
 ## Documentation
 
@@ -21,7 +21,7 @@ It was developed to support build functionality and workflows in [SynBioSuite](h
 
 ## Environment Setup
 
-If you are interested in contributing to **BuildPlanner**, please set up your local development environment with the same tools used in CI and linting.
+If you are interested in contributing to **BuildCompiler**, please set up your local development environment with the same tools used in CI and linting.
 
 ### 1. Install [uv](https://docs.astral.sh/uv/)
 
