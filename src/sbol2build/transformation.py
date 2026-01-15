@@ -64,6 +64,7 @@ def bacterial_transformation(
         transformation_activity.associations = [transformation_activity_association]
 
         new_strain.wasGeneratedBy = transformation_activity
+        new_strain.roles = ["http://purl.obolibrary.org/obo/NCIT_C14419"]
 
         transformation_doc.add_list(
             [
