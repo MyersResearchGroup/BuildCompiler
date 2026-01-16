@@ -1,9 +1,9 @@
 import sbol2
 from typing import Union, List
 import zipfile
-from abstract_translator import translate_abstract_to_plasmids
-from sbol2build import golden_gate_assembly_plan
-from robotutils import assembly_plan_RDF_to_JSON, run_opentrons_script_with_json_to_zip
+from .abstract_translator import translate_abstract_to_plasmids
+from .sbol2build import golden_gate_assembly_plan
+from .robotutils import assembly_plan_RDF_to_JSON, run_opentrons_script_with_json_to_zip
 
 
 # function which input is an abstract design and  output build specifications by creating an assembly plan, and a zip file with a run_sbol2assembly.py, an automated_assembly_log.txt, assemblyplan_output.JSON, and assembly_protocol.xlsx
