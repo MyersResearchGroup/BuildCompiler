@@ -7,8 +7,8 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-def assembly_plan_RDF_to_JSON(file):
-    if type(file)==sbol2.Document:
+def assembly_plan_RDF_to_JSON(file, output_path: str | Path | None = None):
+    if isinstance(file, sbol2.Document):
         doc = file
     else:
         sbol2.Config.setOption('sbol_typed_uris', False)
@@ -77,7 +77,8 @@ def assembly_plan_RDF_to_JSON(file):
     for entry in product_dicts:
         entry['Restriction Enzyme'] = globalEnzyme
 
-    with open('output.json', 'w') as json_file:
+    json_output_path = Path(output_path) if output_path is not None else Path("output.json")
+    with json_output_path.open('w', encoding='utf-8') as json_file:
         json.dump(product_dicts, json_file, indent=4)
 
     return product_dicts

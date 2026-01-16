@@ -2,7 +2,7 @@ import sbol2
 import json
 
 def assembly_plan_RDF_to_JSON(file):
-    if type(file)==sbol2.Document:
+    if isinstance(file, sbol2.Document):
         doc = file
     else:
         sbol2.Config.setOption('sbol_typed_uris', False)

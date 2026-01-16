@@ -1,5 +1,5 @@
 import sbol2
-from typing import Union, List
+from typing import Union
 import zipfile
 from .abstract_translator import translate_abstract_to_plasmids
 from .sbol2build import golden_gate_assembly_plan
@@ -38,7 +38,10 @@ def assembly_compiler(abstract_design: Union[sbol2.Component, sbol2.Combinatoria
                                               document= document)
     
     # Generate build specifications JSON
-    build_specs_JSON = assembly_plan_RDF_to_JSON(assembly_plan)
+    assembly_plan_RDF_to_JSON(
+        assembly_plan,
+        output_path=f"{files_path}/assemblyplan_output.json",
+    )
     
     # Create zip file with required files
     zip_file = run_opentrons_script_with_json_to_zip(opentrons_script_path= files_path + "/run_sbol2assembly_libre.py",
