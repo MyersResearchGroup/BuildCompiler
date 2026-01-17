@@ -1,6 +1,5 @@
 import sbol2
 import json
-import os
 import shutil
 import subprocess
 import tempfile
@@ -131,11 +130,15 @@ def run_opentrons_script_with_json_to_zip(
 
         # Run inside temp dir so relative-path outputs land in tmpdir (and get zipped)
 
-            # Run script (which has opentrons script hardcoded) using JSON file
-        log = subprocess.run(["opentrons_simulate", opentrons_script_path, json_file_path], capture_output=True).stdout
+        # Run script (which has opentrons script hardcoded) using JSON file
+        log = subprocess.run(
+            ["opentrons_simulate", str(tmp_script), str(tmp_json)],
+            capture_output=True,
+            cwd=tmpdir,
+        ).stdout
         
         # Save log to a file in the temporary directory
-        with open(os.path.join(tmpdir, "build_log.txt"), "wb") as log_file: 
+        with open(tmpdir / "build_log.txt", "wb") as log_file: 
             log_file.write(log)
 
         # Always include logs in the zip
