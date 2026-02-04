@@ -14,7 +14,7 @@ class Plasmid:
         self.definition = definition
         self.strain_definition = strain_definition
         self.fusion_sites = self.match_fusion_sites(doc)
-        self.name = definition.name + "".join(f"_{s}" for s in self.fusion_sites)
+        self.name = definition.displayId + "".join(f"_{s}" for s in self.fusion_sites)
         self.antibiotic_resistance = None
 
     def match_fusion_sites(self, doc: sbol2.document) -> List[str]:
@@ -36,8 +36,9 @@ class Plasmid:
             f"Plasmid:\n"
             f"  Name: {self.name}\n"
             f"  Definition: {self.definition.identity}\n"
+            f"  Strain: {getattr(self.strain_definition, 'identity', 'None')}\n"
             f"  Fusion Sites: {self.fusion_sites or 'Not found'}"
-            f"  Antibiotic Resistance: {self.antibiotic_resistance}"
+            f"  Antibiotic Resistance: {self.antibiotic_resistance}\n"
         )
 
     def __eq__(self, other):
