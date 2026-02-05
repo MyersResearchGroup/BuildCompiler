@@ -1,7 +1,7 @@
 import sbol2
 import itertools
 from typing import Dict, List
-from .constants import FUSION_SITES
+from .constants import FUSION_SITES, KAN, AMP
 
 
 class Plasmid:
@@ -13,11 +13,11 @@ class Plasmid:
     ):
         self.definition = definition
         self.strain_definition = strain_definition
-        self.fusion_sites = self.match_fusion_sites(doc)
+        self.fusion_sites = self._match_fusion_sites(doc)
         self.name = definition.displayId + "".join(f"_{s}" for s in self.fusion_sites)
         self.antibiotic_resistance = None
 
-    def match_fusion_sites(self, doc: sbol2.document) -> List[str]:
+    def _match_fusion_sites(self, doc: sbol2.document) -> List[str]:
         fusion_site_definitions = extract_fusion_sites(self.definition, doc)
         fusion_sites = []
         for site in fusion_site_definitions:
@@ -30,6 +30,78 @@ class Plasmid:
 
         fusion_sites.sort()
         return fusion_sites
+
+    def _get_antibiotic_resistance(self) -> str:
+        desc = self.definition.description
+
+        if KAN in desc:
+            return KAN
+        elif AMP in desc:
+            return AMP
+        else:
+            return None
+
+    def __repr__(self) -> str:
+        return (
+            f"Plasmid:\n"
+            f"  Name: {self.name}\n"
+            f"  Definition: {self.definition.identity}\n"
+            f"  Strain: {getattr(self.strain_definition, 'identity', 'None')}\n"
+            f"  Fusion Sites: {self.fusion_sites or 'Not found'}"
+            f"  Antibiotic Resistance: {self.antibiotic_resistance}\n"
+        )
+
+    def __eq__(self, other):
+        if not isinstance(other, Plasmid):
+            return False
+        return self.definition == other.definition
+
+    def __hash__(self):
+        return hash(self.definition)
+
+
+class Backbone:
+    def __init__(
+        self,
+        definition: sbol2.ComponentDefinition,
+        strain_definition: sbol2.ModuleDefinition,
+        doc: sbol2.document,
+    ):
+        self.definition = definition
+        self.strain_definition = strain_definition
+        self.fusion_sites = self._match_fusion_sites(doc)
+        self.name = definition.displayId + "".join(f"_{s}" for s in self.fusion_sites)
+        self.antibiotic_resistance = self._get_antibiotic_resistance(doc)
+
+    def _match_fusion_sites(self, doc: sbol2.document) -> List[str]:
+        fusion_site_definitions = extract_fusion_sites(self.definition, doc)
+        fusion_sites = []
+        for site in fusion_site_definitions:
+            sequence_obj = doc.getSequence(site.sequences[0])
+            sequence = sequence_obj.elements
+
+            for key, seq in FUSION_SITES.items():
+                if seq == sequence.upper():
+                    fusion_sites.append(key)
+
+        fusion_sites.sort()
+        return fusion_sites
+
+    def _get_antibiotic_resistance(self, doc: sbol2.Document) -> str:
+        for component in self.definition.components:
+            if (
+                "http://purl.obolibrary.org/obo/NCIT_C17449" in component.roles
+            ):  # antibiotic resistance role
+                desc = component.description
+
+                if KAN in desc:
+                    return KAN
+                elif AMP in desc:
+                    return AMP
+                else:
+                    return "Unknown"
+
+        return None
 
     def __repr__(self) -> str:
         return (
