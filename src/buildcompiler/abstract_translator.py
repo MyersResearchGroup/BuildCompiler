@@ -1,7 +1,14 @@
 import sbol2
 import itertools
 from typing import Dict, List
-from .constants import FUSION_SITES, KAN, AMP
+from .constants import (
+    ENGINEERED_PLASMID,
+    FUSION_SITES,
+    KAN,
+    AMP,
+    ANTIBIOTIC_RESISTANCE,
+    RESTRICTION_ENZYME_ASSEMBLY_SCAR,
+)
 
 
 class Plasmid:
@@ -31,70 +38,16 @@ class Plasmid:
         fusion_sites.sort()
         return fusion_sites
 
-    def _get_antibiotic_resistance(self) -> str:
-        desc = self.definition.description
-
-        if KAN in desc:
-            return KAN
-        elif AMP in desc:
-            return AMP
-        else:
-            return None
-
-    def __repr__(self) -> str:
-        return (
-            f"Plasmid:\n"
-            f"  Name: {self.name}\n"
-            f"  Definition: {self.definition.identity}\n"
-            f"  Strain: {getattr(self.strain_definition, 'identity', 'None')}\n"
-            f"  Fusion Sites: {self.fusion_sites or 'Not found'}"
-            f"  Antibiotic Resistance: {self.antibiotic_resistance}\n"
-        )
-
-    def __eq__(self, other):
-        if not isinstance(other, Plasmid):
-            return False
-        return self.definition == other.definition
-
-    def __hash__(self):
-        return hash(self.definition)
-
-
-class Backbone:
-    def __init__(
-        self,
-        definition: sbol2.ComponentDefinition,
-        strain_definition: sbol2.ModuleDefinition,
-        doc: sbol2.document,
-    ):
-        self.definition = definition
-        self.strain_definition = strain_definition
-        self.fusion_sites = self._match_fusion_sites(doc)
-        self.name = definition.displayId + "".join(f"_{s}" for s in self.fusion_sites)
-        self.antibiotic_resistance = self._get_antibiotic_resistance(doc)
-
-    def _match_fusion_sites(self, doc: sbol2.document) -> List[str]:
-        fusion_site_definitions = extract_fusion_sites(self.definition, doc)
-        fusion_sites = []
-        for site in fusion_site_definitions:
-            sequence_obj = doc.getSequence(site.sequences[0])
-            sequence = sequence_obj.elements
-
-            for key, seq in FUSION_SITES.items():
-                if seq == sequence.upper():
-                    fusion_sites.append(key)
-
-        fusion_sites.sort()
-        return fusion_sites
-
     def _get_antibiotic_resistance(self, doc: sbol2.Document) -> str:
-        for component in self.definition.components:
-            if (
-                "http://purl.obolibrary.org/obo/NCIT_C17449" in component.roles
-            ):  # antibiotic resistance role
+        for component in (
+            self.definition.components
+        ):  # go a level deeper, within the backbone core component
+            if ANTIBIOTIC_RESISTANCE in component.roles:
                 desc = component.description
 
-                if KAN in desc:
+                if (
+                    KAN in desc
+                ):  # TODO check for amp_* or kan_* in displayId to identify type antibiotic resistance
                     return KAN
                 elif AMP in desc:
                     return AMP
@@ -138,7 +91,7 @@ def extract_fusion_sites(
     fusion_sites = []
     for component in plasmid.components:
         definition = doc.getComponentDefinition(component.definition)
-        if "http://identifiers.org/so/SO:0001953" in definition.roles:
+        if RESTRICTION_ENZYME_ASSEMBLY_SCAR in definition.roles:
             fusion_sites.append(definition)
 
     return fusion_sites
@@ -269,7 +222,7 @@ def construct_plasmid_dict(
     plasmid_dict = {}
     for part in part_list:
         for plasmid in plasmid_collection.componentDefinitions:
-            if "http://identifiers.org/so/SO:0000637" in plasmid.roles:
+            if ENGINEERED_PLASMID in plasmid.roles:
                 for component in plasmid.components:
                     if (
                         component.definition == str(part)
