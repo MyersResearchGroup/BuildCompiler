@@ -12,6 +12,11 @@ FUSION_SITES = {
 KAN = "Kanamycin"
 AMP = "Ampicillin"
 
+ANTIBIOTIC_MAP = {
+    "kan": KAN,
+    "amp": AMP,
+}
+
 ENGINEERED_PLASMID = "http://identifiers.org/so/SO:0000637"
 PLASMID_CLONING_VECTOR = "https://identifiers.org/ncit/NCIT:C1919"
 ANTIBIOTIC_RESISTANCE = "https://identifiers.org/ncit/NCIT:C17449"

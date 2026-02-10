@@ -1,11 +1,11 @@
 import sbol2
 import itertools
+import re
 from typing import Dict, List
 from .constants import (
+    ANTIBIOTIC_MAP,
     ENGINEERED_PLASMID,
     FUSION_SITES,
-    KAN,
-    AMP,
     ANTIBIOTIC_RESISTANCE,
     RESTRICTION_ENZYME_ASSEMBLY_SCAR,
 )
@@ -22,7 +22,7 @@ class Plasmid:
         self.strain_definition = strain_definition
         self.fusion_sites = self._match_fusion_sites(doc)
         self.name = definition.displayId + "".join(f"_{s}" for s in self.fusion_sites)
-        self.antibiotic_resistance = None
+        self.antibiotic_resistance = self._get_antibiotic_resistance(doc)
 
     def _match_fusion_sites(self, doc: sbol2.document) -> List[str]:
         fusion_site_definitions = extract_fusion_sites(self.definition, doc)
@@ -42,16 +42,17 @@ class Plasmid:
         for component in (
             self.definition.components
         ):  # go a level deeper, within the backbone core component
-            if ANTIBIOTIC_RESISTANCE in component.roles:
-                desc = component.description
-
-                if (
-                    KAN in desc
-                ):  # TODO check for amp_* or kan_* in displayId to identify type antibiotic resistance
-                    return KAN
-                elif AMP in desc:
-                    return AMP
-                else:
+            definition = doc.get(component.definition)
+            for subcomponent in definition.components:
+                subcomponent_def = doc.get(subcomponent.definition)
+                if ANTIBIOTIC_RESISTANCE in subcomponent_def.roles:
+                    match = re.search(
+                        r"\b(" + "|".join(ANTIBIOTIC_MAP) + r")_",
+                        subcomponent_def.displayId,
+                        re.IGNORECASE,
+                    )
+                    if match:
+                        return ANTIBIOTIC_MAP[match.group(1).lower()]
                     return "Unknown"
 
         return None
