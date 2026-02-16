@@ -1,10 +1,11 @@
 import sbol2
 import re
-from typing import Union, List
+from typing import Union, List, Dict
 from .abstract_translator import extract_fusion_sites, get_or_pull
 from .constants import (
     ANTIBIOTIC_MAP,
     FUSION_SITES,
+    RESTRICTION_ENZYME_ASSEMBLY_SCAR,
     ANTIBIOTIC_RESISTANCE,
     ENGINEERED_PLASMID,
     PLASMID_CLONING_VECTOR,
@@ -241,3 +242,91 @@ class BuildCompiler:
                 self.plasmids.append(Plasmid(definition, None, doc))
             elif PLASMID_CLONING_VECTOR in definition.roles:
                 self.backbones.append(Plasmid(definition, None, doc))
+
+    def _get_input_plasmids(self):
+        """
+        with AR=ampicillin.
+        """
+        # input_plasmids = []
+
+        # for plas in self.plasmids:
+        #     if plas.antibiotic_resistance == AMP and is_single_TU(plas):
+        #         input_plasmids.append(plas)
+
+        parts = self._extract_design_parts()
+        plasmid_dictionary = self._construct_plasmid_dict(parts)
+        return plasmid_dictionary
+
+    def _get_backbone(self):
+        """
+        with AR=kanamycin.
+        """
+        pass
+
+    def _extract_design_parts(self) -> List[sbol2.ComponentDefinition]:
+        """
+        Returns definitions of parts in a design in sequential order.
+
+        Args:
+            design: :class:`sbol2.ComponentDefinition` to extract parts from.
+            doc: :class:`sbol2.Document` containing all component definitions.
+
+        Returns:
+            A list of component definitions in sequential order.
+        """
+        component_list = [c for c in self.design.getInSequentialOrder()]
+        return [
+            get_or_pull(sbol2.Document, self.sbh, component.definition)
+            for component in component_list
+        ]
+
+    def _extract_fusion_sites(
+        self,
+        plasmid: sbol2.ComponentDefinition,
+    ) -> List[sbol2.ComponentDefinition]:
+        """
+        Returns all fusion site component definitions from a plasmid.
+
+        Args:
+            plasmid: :class:`sbol2.ComponentDefinition` representing the plasmid.
+
+        Returns:
+            A list of fusion site component definitions.
+        """
+        fusion_sites = []
+        for component in plasmid.components:
+            definition = get_or_pull(sbol2.Document(), self.sbh, component.definition)
+            if RESTRICTION_ENZYME_ASSEMBLY_SCAR in definition.roles:
+                fusion_sites.append(definition)
+
+        return fusion_sites
+
+    def _construct_plasmid_dict(
+        self, part_list: List[sbol2.ComponentDefinition]
+    ) -> Dict[str, List[Plasmid]]:
+        """
+        For each part in the given list, this function searches for plasmids that contain the part as a component.
+
+        Args:
+            part_list:
+                List of :class:`sbol2.ComponentDefinition` objects representing
+                the parts to match.
+
+        Returns:
+            Dict[str, List[Plasmid]]:
+                A dictionary mapping each part display ID to a list of corresponding
+                `Plasmid` objects found in the collection.
+        """
+        plasmid_dict = {}
+        for part in part_list:
+            for plasmid in self.plasmids:
+                if ENGINEERED_PLASMID in plasmid.roles:
+                    for component in plasmid.components:
+                        if (
+                            component.definition == str(part)
+                        ):  # TODO make sure this is not a composite plasmid, i.e. plasmid just contains singular part of interest
+                            plasmid_dict.setdefault(part.displayId, [])
+
+                            plasmid_dict[part.displayId].append(plasmid)
+
+        return plasmid_dict

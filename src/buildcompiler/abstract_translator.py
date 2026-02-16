@@ -135,6 +135,16 @@ def copy_sequences(component_definition, target_doc, collection_doc):
                 seq_obj.copy(target_doc)
 
 
+def get_or_pull(doc, sbh, uri):
+    """
+    Get an SBOL object from a Document.
+    If missing, pull it from SynBioHub and retry.
+    """
+    if uri not in doc:
+        sbh.pull(uri, doc)
+    return doc.get(uri)
+
+
 def extract_combinatorial_design_parts(
     design: sbol2.ComponentDefinition, doc: sbol2.Document, plasmid_doc
 ) -> Dict[str, List[sbol2.ComponentDefinition]]:
