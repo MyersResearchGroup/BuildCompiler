@@ -5,48 +5,108 @@ from .abstract_translator import translate_abstract_to_plasmids
 from .sbol2build import golden_gate_assembly_plan
 from .robotutils import assembly_plan_RDF_to_JSON, run_opentrons_script_with_json_to_zip
 
+Plasmid = "Plasmid"  # Placeholder for the actual Plasmid class definition
 
-# function which input is an abstract design and  output build specifications by creating an assembly plan, and a zip file with a run_sbol2assembly.py, an automated_assembly_log.txt, assemblyplan_output.JSON, and assembly_protocol.xlsx
 
-def assembly_compiler(abstract_design: Union[sbol2.Component, sbol2.CombinatorialDerivation], 
-                        plasmid_collection: str,
-                        plasmid_acceptor_backbone: sbol2.Document,
-                        document: sbol2.Document,
-                        files_path: str) -> zipfile.ZipFile:
+class BuildCompiler:
+    """Orchestrates the full build workflow for an SBOL design.
+
+    This class owns the build state (indexed plasmids/backbones) and provides a
+    high-level API to execute the full workflow: collection indexing, domestication,
+    lvl1 and lvl2 assembly, transformation, and plating.
+
+    :ivar design: SBOL design (ComponentDefinition, ModuleDefinition, or CombinatorialDerivation).
+    :type design: sbol2.ComponentDefinition | sbol2.ModuleDefinition | sbol2.CombinatorialDerivation
+    :ivar plasmids: Indexed plasmids linked to strains/collections.
+    :type plasmids: list[Plasmid]
     """
-    Compiles an abstract design into build specifications.
-    
-    Args:
-        abstract_design (Union[sbol2.Component, sbol2.CombinatorialDerivation]): The abstract design to be compiled.
-        specifications (sbol2.Component): The component to store the build specifications.
-    Returns:
-        zipfile.ZipFile: A zip file containing the build specifications and assembly plan.
-    """
-    restriction_enzyme = "BsaI"
-    # Translate abstract design to plasmids
-    list_of_plasmids = translate_abstract_to_plasmids(abstract_design_doc = abstract_design,
-                                                      plasmid_collection = plasmid_collection,
-                                                      backbone_doc= plasmid_acceptor_backbone)       
-    
+
+    def __init__(self, abstract_design: Union[sbol2.ComponentDefinition, sbol2.ModuleDefinition, sbol2.CombinatorialDerivation], *,sbol_doc: sbol2.Document):
+        self.abstract_design = abstract_design
+        self.sbol_doc = sbol_doc
+        self.collections = None
+        self.indexed_plasmids = list[Plasmid]
+        self.indexced_backbones = list[Plasmid]
 
 
-    # Create assembly plan
-    assembly_plan = golden_gate_assembly_plan(name = "Assembly_Plan",
-                                              parts_in_backbone= list_of_plasmids,
-                                              plasmid_acceptor_backbone= plasmid_acceptor_backbone,
-                                              restriction_enzyme= restriction_enzyme,
-                                              document= document)
-    
-    # Generate build specifications JSON
-    assembly_plan_RDF_to_JSON(
-        assembly_plan,
-        output_path=f"{files_path}/assemblyplan_output.json",
-    )
-    
-    # Create zip file with required files
-    zip_file = run_opentrons_script_with_json_to_zip(opentrons_script_path= files_path + "/run_sbol2assembly_libre.py",
-                                                     json_file_path= files_path + "/assemblyplan_output.json",
-                                                     zip_name= "buildcompiler.zip",
-                                                     overwrite= True)
+    def index_collections(self, collections: list[sbol2.Collection]) -> dict[str, sbol2.Collection]:  
+        """Index input collections into plasmids and backbones.
 
-    return assembly_plan, zip_file
+        Parses the provided collections (which may contain plasmids, backbones, or strains)
+        and normalizes them into internal Plasmid/Backbone records that remain linked to
+        their originating strain definitions.
+
+        :param collections: Iterable of user-provided collections/documents.
+        :type collections: Iterable
+        :returns: None. Updates ``self.indexed_plasmids`` in place.
+        :rtype: None
+        :raises ValueError: If collection elements cannot be interpreted as plasmids.
+        """
+        self.collections = collections
+
+        #TODO: Iterate thorugh the Collections and create a set of indexed plasmids, linking them to their originating definitions.
+        # Updates indexed_plasmids 
+
+  
+        return "Success"
+    
+    def domestication(self,) -> list[sbol2.ComponentDefinition]:
+        """Domesticate the indexed plasmids for Golden Gate assembly.
+
+        For each indexed plasmid, this method identifies the necessary domestication
+        steps (e.g., removing internal BsaI sites) and generates the corresponding
+        domesticated sequences as new ComponentDefinitions in the SBOL document.
+
+        :returns: List of domesticated ComponentDefinitions ready for assembly.
+        :rtype: list[sbol2.ComponentDefinition]
+        """
+
+        #TODO: Check which parts from the abstract design are not present in the indexed plasmids with the appropiate fusion sites and need to be domesticated.
+        #TODO: Create a SBOL representation of the domestication process, updating the SBOL Document.
+        #TODO: Generate a protocol for the domestication process.
+        protocol = "To be implemented by PUDU"
+        #TODO: Updates indexed plasmids with domesticated versions.
+
+        
+        return protocol
+    
+    def assembly_lvl1(self,) -> list[sbol2.ComponentDefinition]:
+        """Assemble level-1 plasmids for each gene/transcriptional unit.
+
+        Uses indexed plasmids/backbones and the current design to assemble
+        lvl1 plasmids in the correct order.
+
+        :returns: List of assembled lvl1 plasmids.
+        :rtype: list[Plasmid]
+        :raises LookupError: If compatible plasmids or backbones cannot be found.
+        """
+
+        #TODO: Identify parts from the abstract design needed for lvl1 assembly and find compatible indexed plasmids/backbones.
+        # if bacbckbone provided then use it.Then look for parts constraind by the backbone fusion sites.
+        # else, run an algorithm to try a backbone from 4 the choices. If it fails on the 4 raise an error.
+        #TODO: Create a SBOL representation of the assembly process, updating the SBOL Document.
+        # Using he selected parts create the representation, you need Plasmids, BsaI and T4 Ligase.
+        #TODO: Updates indexed plasmids with assembled versions.
+        #TODO: Generate a protocol for the assembly process.
+        protocol = "To be implemented by PUDU"
+
+        return protocol
+    
+    def assembly_lvl2(self,) -> list[sbol2.ComponentDefinition]:
+        """Assemble level-2 plasmids for the full design.
+
+        Uses the assembled lvl1 plasmids and the current design to assemble
+        lvl2 plasmids in the correct order.
+
+        :returns: List of assembled lvl2 plasmids.
+        :rtype: list[Plasmid]
+        :raises LookupError: If compatible plasmids or backbones cannot be found.
+        """ 
+
+        #TODO: Identify parts from the abstract design needed for lvl2 assembly and find compatible indexed plasmids/backbones.
+        #TODO: Create a SBOL representation of the assembly process, updating the SBOL Document.
+        #TODO: Generate a protocol for the assembly process.
+        protocol = "To be implemented by PUDU"
+        #TODO: Updates indexed plasmids with assembled versions.
+
+        return protocol
