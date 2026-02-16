@@ -1,11 +1,80 @@
 import sbol2
-from typing import Union
-import zipfile
-from .abstract_translator import translate_abstract_to_plasmids
-from .sbol2build import golden_gate_assembly_plan
-from .robotutils import assembly_plan_RDF_to_JSON, run_opentrons_script_with_json_to_zip
+import re
+from typing import Union, List
+from .abstract_translator import extract_fusion_sites, get_or_pull
+from .constants import (
+    ANTIBIOTIC_MAP,
+    FUSION_SITES,
+    ANTIBIOTIC_RESISTANCE,
+    ENGINEERED_PLASMID,
+    PLASMID_CLONING_VECTOR,
+    ORGANISM_STRAIN,
+)
 
-Plasmid = "Plasmid"  # Placeholder for the actual Plasmid class definition
+
+class Plasmid:
+    def __init__(
+        self,
+        definition: sbol2.ComponentDefinition,
+        strain_definition: sbol2.ModuleDefinition,
+        doc: sbol2.document,
+    ):
+        self.definition = definition
+        self.strain_definition = strain_definition
+        self.fusion_sites = self._match_fusion_sites(doc)
+        self.name = definition.displayId + "".join(f"_{s}" for s in self.fusion_sites)
+        self.antibiotic_resistance = self._get_antibiotic_resistance(doc)
+
+    def _match_fusion_sites(self, doc: sbol2.document) -> List[str]:
+        fusion_site_definitions = extract_fusion_sites(self.definition, doc)
+        fusion_sites = []
+        for site in fusion_site_definitions:
+            sequence_obj = doc.getSequence(site.sequences[0])
+            sequence = sequence_obj.elements
+
+            for key, seq in FUSION_SITES.items():
+                if seq == sequence.upper():
+                    fusion_sites.append(key)
+
+        fusion_sites.sort()
+        return fusion_sites
+
+    def _get_antibiotic_resistance(self, doc: sbol2.Document) -> str:
+        for component in (
+            self.definition.components
+        ):  # go a level deeper, within the backbone core component
+            definition = doc.get(component.definition)
+            for subcomponent in definition.components:
+                subcomponent_def = doc.get(subcomponent.definition)
+                if ANTIBIOTIC_RESISTANCE in subcomponent_def.roles:
+                    match = re.search(
+                        r"\b(" + "|".join(ANTIBIOTIC_MAP) + r")_",
+                        subcomponent_def.displayId,
+                        re.IGNORECASE,
+                    )
+                    if match:
+                        return ANTIBIOTIC_MAP[match.group(1).lower()]
+                    return "Unknown"
+
+        return None
+
+    def __repr__(self) -> str:
+        return (
+            f"Plasmid:\n"
+            f"  Name: {self.name}\n"
+            f"  Definition: {self.definition.identity}\n"
+            f"  Strain: {getattr(self.strain_definition, 'identity', 'None')}\n"
+            f"  Fusion Sites: {self.fusion_sites or 'Not found'}"
+            f"  Antibiotic Resistance: {self.antibiotic_resistance}\n"
+        )
+
+    def __eq__(self, other):
+        if not isinstance(other, Plasmid):
+            return False
+        return self.definition == other.definition
+
+    def __hash__(self):
+        return hash(self.definition)
 
 
 class BuildCompiler:
@@ -21,36 +90,78 @@ class BuildCompiler:
     :type plasmids: list[Plasmid]
     """
 
-    def __init__(self, abstract_design: Union[sbol2.ComponentDefinition, sbol2.ModuleDefinition, sbol2.CombinatorialDerivation], *,sbol_doc: sbol2.Document):
+    def __init__(
+        self,
+        abstract_design: Union[
+            sbol2.ComponentDefinition,
+            sbol2.ModuleDefinition,
+            sbol2.CombinatorialDerivation,
+        ],
+        sbh_registry: str,
+        auth_token: str,
+        sbol_doc: sbol2.Document,
+    ):
         self.abstract_design = abstract_design
         self.sbol_doc = sbol_doc
         self.collections = None
         self.indexed_plasmids = list[Plasmid]
-        self.indexced_backbones = list[Plasmid]
+        self.indexed_backbones = list[Plasmid]
 
+    # def index_collections(
+    #     self, collections: list[sbol2.Collection]
+    # ) -> dict[
+    #     str, sbol2.Collection
+    # ]:  # TODO add support for collection object and sbh URI?
+    #     """Index input collections into plasmids and backbones.
 
-    def index_collections(self, collections: list[sbol2.Collection]) -> dict[str, sbol2.Collection]:  
-        """Index input collections into plasmids and backbones.
+    #     Parses the provided collections (which may contain plasmids, backbones, or strains)
+    #     and normalizes them into internal Plasmid/Backbone records that remain linked to
+    #     their originating strain definitions.
 
-        Parses the provided collections (which may contain plasmids, backbones, or strains)
-        and normalizes them into internal Plasmid/Backbone records that remain linked to
-        their originating strain definitions.
+    #     :param collections: Iterable of user-provided collections/documents.
+    #     :type collections: Iterable
+    #     :returns: None. Updates ``self.indexed_plasmids`` in place.
+    #     :rtype: None
+    #     :raises ValueError: If collection elements cannot be interpreted as plasmids.
+    #     """
+    #     self.collections = collections
 
-        :param collections: Iterable of user-provided collections/documents.
-        :type collections: Iterable
-        :returns: None. Updates ``self.indexed_plasmids`` in place.
-        :rtype: None
-        :raises ValueError: If collection elements cannot be interpreted as plasmids.
-        """
-        self.collections = collections
+    #     # TODO: Iterate thorugh the Collections and create a set of indexed plasmids, linking them to their originating definitions.
+    #     # Updates indexed_plasmids
 
-        #TODO: Iterate thorugh the Collections and create a set of indexed plasmids, linking them to their originating definitions.
-        # Updates indexed_plasmids 
+    #     return "Success"
 
-  
-        return "Success"
-    
-    def domestication(self,) -> list[sbol2.ComponentDefinition]:
+    def index_collections(self, collections: List[str]):
+        for uri in collections:
+            temp_doc = sbol2.Document()
+            self.sbh.pull(uri, temp_doc)
+
+            for implementation in temp_doc.implementations:
+                built_object = get_or_pull(temp_doc, self.sbh, implementation.built)
+                if (
+                    type(built_object) is sbol2.ModuleDefinition
+                    and ORGANISM_STRAIN in built_object.roles
+                ):
+                    self._extract_plasmids_from_strain(built_object, temp_doc)
+                elif (
+                    type(built_object) is sbol2.ComponentDefinition
+                    and len(built_object.components) > 1
+                ):
+                    if ENGINEERED_PLASMID in built_object.roles:
+                        self.plasmids.append(Plasmid(built_object, None, temp_doc))
+                    elif PLASMID_CLONING_VECTOR in built_object.roles:
+                        self.backbones.append(Plasmid(built_object, None, temp_doc))
+
+            for strain in temp_doc.moduleDefinitions:
+                if ORGANISM_STRAIN in strain.roles:
+                    self._extract_plasmids_from_strain(strain, temp_doc)
+
+            for definition in temp_doc.componentDefinitions:
+                self._sort_plasmid_components(definition, temp_doc)
+
+    def domestication(
+        self,
+    ) -> list[sbol2.ComponentDefinition]:
         """Domesticate the indexed plasmids for Golden Gate assembly.
 
         For each indexed plasmid, this method identifies the necessary domestication
@@ -61,16 +172,17 @@ class BuildCompiler:
         :rtype: list[sbol2.ComponentDefinition]
         """
 
-        #TODO: Check which parts from the abstract design are not present in the indexed plasmids with the appropiate fusion sites and need to be domesticated.
-        #TODO: Create a SBOL representation of the domestication process, updating the SBOL Document.
-        #TODO: Generate a protocol for the domestication process.
+        # TODO: Check which parts from the abstract design are not present in the indexed plasmids with the appropiate fusion sites and need to be domesticated.
+        # TODO: Create a SBOL representation of the domestication process, updating the SBOL Document.
+        # TODO: Generate a protocol for the domestication process.
         protocol = "To be implemented by PUDU"
-        #TODO: Updates indexed plasmids with domesticated versions.
+        # TODO: Updates indexed plasmids with domesticated versions.
 
-        
         return protocol
-    
-    def assembly_lvl1(self,) -> list[sbol2.ComponentDefinition]:
+
+    def assembly_lvl1(
+        self,
+    ) -> list[sbol2.ComponentDefinition]:
         """Assemble level-1 plasmids for each gene/transcriptional unit.
 
         Uses indexed plasmids/backbones and the current design to assemble
@@ -81,18 +193,20 @@ class BuildCompiler:
         :raises LookupError: If compatible plasmids or backbones cannot be found.
         """
 
-        #TODO: Identify parts from the abstract design needed for lvl1 assembly and find compatible indexed plasmids/backbones.
+        # TODO: Identify parts from the abstract design needed for lvl1 assembly and find compatible indexed plasmids/backbones.
         # if bacbckbone provided then use it.Then look for parts constraind by the backbone fusion sites.
         # else, run an algorithm to try a backbone from 4 the choices. If it fails on the 4 raise an error.
-        #TODO: Create a SBOL representation of the assembly process, updating the SBOL Document.
+        # TODO: Create a SBOL representation of the assembly process, updating the SBOL Document.
         # Using he selected parts create the representation, you need Plasmids, BsaI and T4 Ligase.
-        #TODO: Updates indexed plasmids with assembled versions.
-        #TODO: Generate a protocol for the assembly process.
+        # TODO: Updates indexed plasmids with assembled versions.
+        # TODO: Generate a protocol for the assembly process.
         protocol = "To be implemented by PUDU"
 
         return protocol
-    
-    def assembly_lvl2(self,) -> list[sbol2.ComponentDefinition]:
+
+    def assembly_lvl2(
+        self,
+    ) -> list[sbol2.ComponentDefinition]:
         """Assemble level-2 plasmids for the full design.
 
         Uses the assembled lvl1 plasmids and the current design to assemble
@@ -101,12 +215,29 @@ class BuildCompiler:
         :returns: List of assembled lvl2 plasmids.
         :rtype: list[Plasmid]
         :raises LookupError: If compatible plasmids or backbones cannot be found.
-        """ 
+        """
 
-        #TODO: Identify parts from the abstract design needed for lvl2 assembly and find compatible indexed plasmids/backbones.
-        #TODO: Create a SBOL representation of the assembly process, updating the SBOL Document.
-        #TODO: Generate a protocol for the assembly process.
+        # TODO: Identify parts from the abstract design needed for lvl2 assembly and find compatible indexed plasmids/backbones.
+        # TODO: Create a SBOL representation of the assembly process, updating the SBOL Document.
+        # TODO: Generate a protocol for the assembly process.
         protocol = "To be implemented by PUDU"
-        #TODO: Updates indexed plasmids with assembled versions.
+        # TODO: Updates indexed plasmids with assembled versions.
 
         return protocol
+
+    def _extract_plasmids_from_strain(
+        self, strain: sbol2.ModuleDefinition, doc: sbol2.Document
+    ):
+        for plasmid in strain.functionalComponents:
+            plasmid_definition = get_or_pull(doc, self.sbh, plasmid.definition)
+            if ENGINEERED_PLASMID in plasmid_definition.roles:
+                self.plasmids.append(Plasmid(plasmid_definition, strain, doc))
+
+    def _sort_plasmid_components(
+        self, definition: sbol2.ComponentDefinition, doc: sbol2.Document
+    ):
+        if len(definition.components) > 1:
+            if ENGINEERED_PLASMID in definition.roles:
+                self.plasmids.append(Plasmid(definition, None, doc))
+            elif PLASMID_CLONING_VECTOR in definition.roles:
+                self.backbones.append(Plasmid(definition, None, doc))
