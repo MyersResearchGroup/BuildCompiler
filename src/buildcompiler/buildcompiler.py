@@ -9,6 +9,7 @@ from .abstract_translator import (
 from .constants import (
     ANTIBIOTIC_MAP,
     FUSION_SITES,
+    AMP,
     KAN,
     PART_ROLES,
     RESTRICTION_ENZYME_ASSEMBLY_SCAR,
@@ -114,8 +115,8 @@ class BuildCompiler:
 
         self.sbol_doc = sbol_doc
         self.collections = None
-        self.indexed_plasmids = list[Plasmid]
-        self.indexed_backbones = list[Plasmid]
+        self.indexed_plasmids = []
+        self.indexed_backbones = []
 
     # def index_collections(
     #     self, collections: list[sbol2.Collection]
@@ -194,9 +195,7 @@ class BuildCompiler:
 
         return protocol
 
-    def assembly_lvl1(
-        self,
-    ) -> list[sbol2.ComponentDefinition]:
+    def assembly_lvl1(self, backbone: Plasmid) -> list[sbol2.ComponentDefinition]:
         """Assemble level-1 plasmids for each gene/transcriptional unit.
 
         Uses indexed plasmids/backbones and the current design to assemble
@@ -211,16 +210,16 @@ class BuildCompiler:
         # if backbone provided then use it.Then look for parts constraind by the backbone fusion sites.
         # else, run an algorithm to try a backbone from 4 the choices. If it fails on the 4 raise an error.
 
-        self.backbone = (
-            None  # TODO figure out where user will provide backbone (if at all)
-        )
+        plasmid_dict = self._get_input_plasmids(antibiotic_resistance=AMP)
 
-        plasmid_dict = self._get_input_plasmids()
-
-        if not self.backbone:
-            self.backbone, compatible_plasmids = self._get_backbone(
+        if not backbone:
+            backbone, compatible_plasmids = self._get_backbone(
                 plasmid_dict, antibiotic_resistance=KAN
             )
+        else:
+            compatible_plasmids = get_compatible_plasmids(plasmid_dict, self.backbone)
+
+        return compatible_plasmids
 
         # TODO: Create a SBOL representation of the assembly process, updating the SBOL Document.
         # Using he selected parts create the representation, you need Plasmids, BsaI and T4 Ligase.
@@ -268,7 +267,9 @@ class BuildCompiler:
             elif PLASMID_CLONING_VECTOR in definition.roles:
                 self.indexed_backbones.append(Plasmid(definition, None, doc))
 
-    def _get_input_plasmids(self) -> Dict[str, List[Plasmid]]:
+    def _get_input_plasmids(
+        self, antibiotic_resistance: str
+    ) -> Dict[str, List[Plasmid]]:
         """
         with AR=ampicillin.
         """
@@ -301,7 +302,7 @@ class BuildCompiler:
                         plasmid_dict, backbone
                     )
                     print(
-                        f"Success with backbone: {backbone} and plasmids: {compatible_plasmids}"
+                        f"Success with backbone: {backbone.name} and plasmids: {[plas.name for plas in compatible_plasmids]}"
                     )
                     return backbone, compatible_plasmids
                 except ValueError as e:
@@ -321,9 +322,9 @@ class BuildCompiler:
         Returns:
             A list of component definitions in sequential order.
         """
-        component_list = [c for c in self.design.getInSequentialOrder()]
+        component_list = [c for c in self.abstract_design.getInSequentialOrder()]
         return [
-            get_or_pull(sbol2.Document, self.sbh, component.definition)
+            get_or_pull(self.sbol_doc, self.sbh, component.definition)
             for component in component_list
         ]
 
@@ -349,7 +350,7 @@ class BuildCompiler:
         return fusion_sites
 
     def _construct_plasmid_dict(
-        self, part_list: List[sbol2.ComponentDefinition]
+        self, part_list: List[sbol2.ComponentDefinition], antibiotic_resistance: str
     ) -> Dict[str, List[Plasmid]]:
         """
         For each part in the given list, this function searches for plasmids that contain the part as a component.
@@ -367,14 +368,14 @@ class BuildCompiler:
         plasmid_dict = {}
         for part in part_list:
             for plasmid in self.indexed_plasmids:
-                if ENGINEERED_PLASMID in plasmid.roles:
-                    for component in plasmid.components:
+                if ENGINEERED_PLASMID in plasmid.definition.roles:
+                    for component in plasmid.definition.components:
                         if (
                             component.definition == str(part)
-                            and self._is_single_part(plasmid)
-                        ):  # TODO make sure this is not a composite plasmid, i.e. plasmid just contains singular part of interest
+                            and self._is_single_part(plasmid.definition)
+                            and plasmid.antibiotic_resistance == antibiotic_resistance
+                        ):
                             plasmid_dict.setdefault(part.displayId, [])
-
                             plasmid_dict[part.displayId].append(plasmid)
 
         return plasmid_dict
@@ -382,7 +383,7 @@ class BuildCompiler:
     def _is_single_part(self, plasmid: sbol2.ComponentDefinition) -> bool:
         num_components = len(plasmid.components)
 
-        if num_components != 4:
+        if num_components != 4:  # TODO subject to change for more complex L0s?
             return False
         else:
             component_definitions = [
