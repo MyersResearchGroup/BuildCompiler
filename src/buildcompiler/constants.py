@@ -9,6 +9,13 @@ FUSION_SITES = {
     "H": "ACTA",
 }
 
+PART_ROLES = {
+    "http://identifiers.org/so/SO:0000167",  # promoter
+    "http://identifiers.org/so/SO:0000139",  # RBS
+    "http://identifiers.org/so/SO:0000316",  # CDS
+    "http://identifiers.org/so/SO:0000141",  # terminator
+}
+
 KAN = "Kanamycin"
 AMP = "Ampicillin"
 
