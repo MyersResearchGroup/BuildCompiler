@@ -282,6 +282,8 @@ def get_compatible_plasmids(
     match_idx = 0
 
     for i, key in enumerate(plasmid_dict):
+        found = False
+
         for plasmid in plasmid_dict[key]:
             if (
                 i == len(plasmid_dict) - 1
@@ -292,20 +294,24 @@ def get_compatible_plasmids(
                     f"matched final component {plasmid.name} with {match_to.name} and {backbone.name} on fusion sites ({plasmid.fusion_sites[0]}, {plasmid.fusion_sites[1]})!"
                 )
                 selected_plasmids.append(plasmid)
+                found = True
                 break
             elif (
                 i < len(plasmid_dict) - 1
                 and plasmid.fusion_sites[0] == match_to.fusion_sites[match_idx]
-            ):  # TODO add error handling if no compatible plasmid found
+            ):
                 print(
                     f"matched {plasmid.name} with {match_to.name} on fusion site {plasmid.fusion_sites[0]}!"
                 )
                 selected_plasmids.append(plasmid)
+                found = True
                 match_to = plasmid
                 match_idx = 1
                 break
             # TODO edge case where second fusion site does not match terminator fusion site will not be caught by current logic
-            # 10/14: rethink implementation, will likely need to be different for combinatorial designs
+
+        if not found:
+            raise ValueError(f"No compatible plasmid found for part {key}")
 
     return selected_plasmids
 
