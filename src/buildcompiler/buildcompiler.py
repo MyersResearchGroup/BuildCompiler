@@ -280,7 +280,7 @@ class BuildCompiler:
         #         input_plasmids.append(plas)
 
         parts = self._extract_design_parts()
-        plasmid_dictionary = self._construct_plasmid_dict(parts)
+        plasmid_dictionary = self._construct_plasmid_dict(parts, antibiotic_resistance)
         return plasmid_dictionary
 
     def _get_backbone(
@@ -397,7 +397,6 @@ class BuildCompiler:
                         (index - 1) % num_components
                     ]
                     next_component = component_definitions[(index + 1) % num_components]
-                    print(previous_component, comp, next_component)
 
                     if (
                         RESTRICTION_ENZYME_ASSEMBLY_SCAR in previous_component.roles
