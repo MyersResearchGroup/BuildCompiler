@@ -198,7 +198,7 @@ def is_circular(obj: sbol2.ComponentDefinition) -> bool:
 def part_digestion(
     reactant: Union[sbol2.ComponentDefinition, sbol2.ModuleDefinition],
     restriction_enzymes: List[sbol2.ComponentDefinition],
-    assembly_plan: sbol2.ModuleDefinition,
+    assembly_activity: sbol2.Activity,
     document: sbol2.Document,
     **kwargs,
 ) -> Tuple[
@@ -237,7 +237,7 @@ def part_digestion(
         raise ValueError(
             f"The reactant needs to have precisely one sequence. The input reactant has {len(reactant.sequences)} sequences"
         )
-    participations = []
+    # participations = []
     extracts_list = []
     restriction_enzymes_pydna = []
 
@@ -245,25 +245,36 @@ def part_digestion(
         enzyme = Restriction.__dict__[re.name]
         restriction_enzymes_pydna.append(enzyme)
 
-        enzyme_component = sbol2.FunctionalComponent(uri=f"{re.name}_enzyme")
-        enzyme_component.definition = re
-        enzyme_component.displayID = f"{re.name}_enzyme"
-        enzyme_in_module = False
+        # enzyme_component = sbol2.FunctionalComponent(uri=f"{re.name}_enzyme")
+        # enzyme_component.definition = re
+        # enzyme_component.displayID = f"{re.name}_enzyme"
 
-        for comp in assembly_plan.functionalComponents:
-            if comp.displayId == enzyme_component.displayID:
-                enzyme_component = comp
-                enzyme_in_module = True
+        enzyme_implmentation = sbol2.Implementation(uri=f"{re.name}_enzyme")
+        enzyme_implmentation.built = re
+        enzyme_in_activity = False
 
-        if not enzyme_in_module:
-            assembly_plan.functionalComponents.add(enzyme_component)
+        for usage in assembly_activity.usages:
+            entity_URI = usage.entity
+            entity = document.get(entity_URI)
 
-        modifier_participation = sbol2.Participation(uri="restriction")
-        modifier_participation.participant = enzyme_component
-        modifier_participation.roles = [
-            "http://identifiers.org/biomodels.sbo/SBO:0000019"
-        ]
-        participations.append(modifier_participation)
+            if entity.displayId == re.displayID:  # if comp.displayd in activity?
+                enzyme_in_activity = True
+
+        if not enzyme_in_activity:
+            assembly_activity.usages.add(
+                sbol2.Usage(
+                    uri=f"{re.name}_enzyme",
+                    entity=enzyme_implmentation,
+                    role="http://sbols.org/v2#build",
+                )
+            )
+
+        # modifier_participation = sbol2.Participation(uri="restriction")
+        # modifier_participation.participant = enzyme_component
+        # modifier_participation.roles = [
+        #     "http://identifiers.org/biomodels.sbo/SBO:0000019"
+        # ]
+        # participations.append(modifier_participation)
 
     # Inform topology to PyDNA, if not found assuming linear.
     if is_circular(reactant_component_definition):
@@ -413,36 +424,36 @@ def part_digestion(
     prod_component_definition.addType("http://identifiers.org/so/SO:0000987")  # linear
 
     # Add reference to part in backbone
-    reactant_component = sbol2.FunctionalComponent(uri=f"{reactant_displayId}_reactant")
-    reactant_component.definition = reactant_component_definition
-    assembly_plan.functionalComponents.add(reactant_component)
+    # reactant_component = sbol2.FunctionalComponent(uri=f"{reactant_displayId}_reactant")
+    # reactant_component.definition = reactant_component_definition
+    # assembly_plan.functionalComponents.add(reactant_component)
 
     # Create reactant Participation.
-    reactant_participation = sbol2.Participation(uri=f"{reactant_displayId}_reactant")
-    reactant_participation.participant = reactant_component
-    reactant_participation.roles = [sbol2.SBO_REACTANT]
-    participations.append(reactant_participation)
+    # reactant_participation = sbol2.Participation(uri=f"{reactant_displayId}_reactant")
+    # reactant_participation.participant = reactant_component
+    # reactant_participation.roles = [sbol2.SBO_REACTANT]
+    # participations.append(reactant_participation)
 
-    prod_component = sbol2.FunctionalComponent(
-        uri=f"{reactant_displayId}_digestion_product"
-    )
-    prod_component.definition = prod_component_definition
-    assembly_plan.functionalComponents.add(prod_component)
+    # prod_component = sbol2.FunctionalComponent(
+    #     uri=f"{reactant_displayId}_digestion_product"
+    # )
+    # prod_component.definition = prod_component_definition
+    # assembly_plan.functionalComponents.add(prod_component)
 
-    product_participation = sbol2.Participation(uri=f"{reactant_displayId}_product")
-    product_participation.participant = prod_component
-    product_participation.roles = [sbol2.SBO_PRODUCT]
-    participations.append(product_participation)
+    # product_participation = sbol2.Participation(uri=f"{reactant_displayId}_product")
+    # product_participation.participant = prod_component
+    # product_participation.roles = [sbol2.SBO_PRODUCT]
+    # participations.append(product_participation)
 
     # Make Interaction
-    interaction = sbol2.Interaction(
-        uri=f"{reactant_displayId}_digestion",
-        interaction_type="http://identifiers.org/biomodels.sbo/SBO:0000178",
-    )
-    interaction.participations = participations
-    assembly_plan.interactions.add(interaction)
+    # interaction = sbol2.Interaction(
+    #     uri=f"{reactant_displayId}_digestion",
+    #     interaction_type="http://identifiers.org/biomodels.sbo/SBO:0000178",
+    # )
+    # interaction.participations = participations
+    # assembly_plan.interactions.add(interaction)
 
-    return extracts_list, assembly_plan
+    return extracts_list, assembly_activity
 
 
 def backbone_digestion(
