@@ -25,12 +25,14 @@ class Plasmid:
         self,
         definition: sbol2.ComponentDefinition,
         strain_definition: sbol2.ModuleDefinition,
+        plasmid_implementations: sbol2.Implementation,
+        strain_implementations: sbol2.Implementation,
         doc: sbol2.document,
     ):
         self.plasmid_definition = definition
         self.strain_definitions = [strain_definition]
-        self.plasmid_implementations = []
-        self.strain_implementations = []
+        self.plasmid_implementations = plasmid_implementations
+        self.strain_implementations = strain_implementations
         self.fusion_sites = self._match_fusion_sites(doc)
         self.name = definition.displayId + "".join(f"_{s}" for s in self.fusion_sites)
         self.antibiotic_resistance = self._get_antibiotic_resistance(doc)
@@ -70,19 +72,19 @@ class Plasmid:
 
     def __repr__(self) -> str:
         strain_ids = (
-            [getattr(s, "identity", "None") for s in self.strain_definitions]
+            [getattr(s, "identity", None) for s in self.strain_definitions]
             if self.strain_definitions
-            else ["None"]
+            else []
         )
 
         plasmid_impl_ids = (
-            [getattr(p, "identity", "None") for p in self.plasmid_implementations]
+            [getattr(p, "identity", None) for p in self.plasmid_implementations]
             if self.plasmid_implementations
             else []
         )
 
         strain_impl_ids = (
-            [getattr(s, "identity", "None") for s in self.strain_implementations]
+            [getattr(s, "identity", None) for s in self.strain_implementations]
             if self.strain_implementations
             else []
         )
@@ -176,23 +178,41 @@ class BuildCompiler:
                 type(built_object) is sbol2.ModuleDefinition
                 and ORGANISM_STRAIN in built_object.roles
             ):
-                self._extract_plasmids_from_strain(built_object, self.sbol_doc)
+                self._extract_plasmids_from_strain(
+                    built_object, implementation, self.sbol_doc
+                )
             elif (
                 type(built_object) is sbol2.ComponentDefinition
                 and len(built_object.components) > 1
             ):
                 if ENGINEERED_PLASMID in built_object.roles:
-                    self.indexed_plasmids.append(
-                        Plasmid(built_object, None, self.sbol_doc)
+                    existing_plasmid = self._get_indexed_plasmid(
+                        self.indexed_plasmids, built_object
                     )
+                    if existing_plasmid:
+                        existing_plasmid.plasmid_implementations.append(implementation)
+                    else:
+                        self.indexed_plasmids.append(
+                            Plasmid(
+                                built_object, None, [implementation], [], self.sbol_doc
+                            )
+                        )
                 elif PLASMID_CLONING_VECTOR in built_object.roles:
-                    self.indexed_backbones.append(
-                        Plasmid(built_object, None, self.sbol_doc)
+                    existing_backbone = self._get_indexed_plasmid(
+                        self.indexed_backbones, built_object
                     )
+                    if existing_backbone:
+                        existing_backbone.plasmid_implementations.append(implementation)
+                    else:
+                        self.indexed_backbones.append(
+                            Plasmid(
+                                built_object, None, [implementation], [], self.sbol_doc
+                            )
+                        )
 
         for strain in self.sbol_doc.moduleDefinitions:
             if ORGANISM_STRAIN in strain.roles:
-                self._extract_plasmids_from_strain(strain, self.sbol_doc)
+                self._extract_plasmids_from_strain(strain, None, self.sbol_doc)
 
         for definition in self.sbol_doc.componentDefinitions:
             self._sort_plasmid_components(definition, self.sbol_doc)
@@ -274,20 +294,89 @@ class BuildCompiler:
         return protocol
 
     def _extract_plasmids_from_strain(
-        self, strain: sbol2.ModuleDefinition, doc: sbol2.Document
+        self,
+        strain: sbol2.ModuleDefinition,
+        strain_implementation: sbol2.Implementation,
+        doc: sbol2.Document,
     ):
+        # strain_implementation = optional param
         for plasmid in strain.functionalComponents:
             plasmid_definition = get_or_pull(doc, self.sbh, plasmid.definition)
-            if ENGINEERED_PLASMID in plasmid_definition.roles:  # TODO check
-                self.indexed_plasmids.append(Plasmid(plasmid_definition, strain, doc))
+
+            if ENGINEERED_PLASMID in plasmid_definition.roles:
+                existing = self._get_indexed_plasmid(
+                    self.indexed_plasmids, plasmid_definition
+                )
+
+                if existing:
+                    # Add strain if not already recorded, else do nothing
+                    if all(
+                        s.identity != strain.identity
+                        for s in existing.strain_definitions
+                    ):
+                        existing.strain_definitions.append(strain)
+
+                    if strain_implementation:
+                        existing.strain_implementations.append(strain_implementation)
+                else:
+                    # Create new Plasmid entry
+                    self.indexed_plasmids.append(
+                        Plasmid(
+                            plasmid_definition,
+                            strain,
+                            [],
+                            [strain_implementation] if strain_implementation else [],
+                            doc,
+                        )
+                    )
+            elif PLASMID_CLONING_VECTOR in plasmid_definition.roles:
+                existing = self._get_indexed_plasmid(
+                    self.indexed_backbones, plasmid_definition
+                )
+                if existing:
+                    # Add strain if not already recorded, else do nothing
+                    if all(
+                        s.identity != strain.identity
+                        for s in existing.strain_definitions
+                    ):
+                        existing.strain_definitions.append(strain)
+
+                    if strain_implementation:
+                        existing.strain_implementations.append(strain_implementation)
+                else:
+                    # Create new backbone entry
+                    self.indexed_backbones.append(
+                        Plasmid(
+                            plasmid_definition,
+                            strain,
+                            [],
+                            [strain_implementation] if strain_implementation else [],
+                            doc,
+                        )
+                    )
+
+    def _get_indexed_plasmid(self, plasmid_list, plasmid_definition):
+        return next(
+            (
+                p
+                for p in plasmid_list
+                if p.plasmid_definition.identity == plasmid_definition.identity
+            ),
+            None,
+        )
 
     def _sort_plasmid_components(
         self, definition: sbol2.ComponentDefinition, doc: sbol2.Document
     ):
         if len(definition.components) > 1:
-            if ENGINEERED_PLASMID in definition.roles:
+            if ENGINEERED_PLASMID in definition.roles and not self._get_indexed_plasmid(
+                self.indexed_plasmids, definition
+            ):
                 self.indexed_plasmids.append(Plasmid(definition, None, doc))
-            elif PLASMID_CLONING_VECTOR in definition.roles:
+            elif (
+                PLASMID_CLONING_VECTOR in definition.roles
+                and not self._get_indexed_plasmid(self.indexed_backbones, definition)
+            ):
                 self.indexed_backbones.append(Plasmid(definition, None, doc))
 
     def _get_input_plasmids(
