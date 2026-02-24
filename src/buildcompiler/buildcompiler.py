@@ -27,14 +27,16 @@ class Plasmid:
         strain_definition: sbol2.ModuleDefinition,
         doc: sbol2.document,
     ):
-        self.definition = definition
-        self.strain_definition = strain_definition
+        self.plasmid_definition = definition
+        self.strain_definitions = [strain_definition]
+        self.plasmid_implementations = []
+        self.strain_implementations = []
         self.fusion_sites = self._match_fusion_sites(doc)
         self.name = definition.displayId + "".join(f"_{s}" for s in self.fusion_sites)
         self.antibiotic_resistance = self._get_antibiotic_resistance(doc)
 
     def _match_fusion_sites(self, doc: sbol2.document) -> List[str]:
-        fusion_site_definitions = extract_fusion_sites(self.definition, doc)
+        fusion_site_definitions = extract_fusion_sites(self.plasmid_definition, doc)
         fusion_sites = []
         for site in fusion_site_definitions:
             sequence_obj = doc.getSequence(site.sequences[0])
@@ -49,7 +51,7 @@ class Plasmid:
 
     def _get_antibiotic_resistance(self, doc: sbol2.Document) -> str:
         for component in (
-            self.definition.components
+            self.plasmid_definition.components
         ):  # go a level deeper, within the backbone core component
             definition = doc.get(component.definition)
             for subcomponent in definition.components:
@@ -67,22 +69,42 @@ class Plasmid:
         return None
 
     def __repr__(self) -> str:
+        strain_ids = (
+            [getattr(s, "identity", "None") for s in self.strain_definitions]
+            if self.strain_definitions
+            else ["None"]
+        )
+
+        plasmid_impl_ids = (
+            [getattr(p, "identity", "None") for p in self.plasmid_implementations]
+            if self.plasmid_implementations
+            else []
+        )
+
+        strain_impl_ids = (
+            [getattr(s, "identity", "None") for s in self.strain_implementations]
+            if self.strain_implementations
+            else []
+        )
+
         return (
             f"Plasmid:\n"
             f"  Name: {self.name}\n"
-            f"  Definition: {self.definition.identity}\n"
-            f"  Strain: {getattr(self.strain_definition, 'identity', 'None')}\n"
-            f"  Fusion Sites: {self.fusion_sites or 'Not found'}"
-            f"  Antibiotic Resistance: {self.antibiotic_resistance}\n"
+            f"  Plasmid Definition: {getattr(self.plasmid_definition, 'identity', 'None')}\n"
+            f"  Strain Definitions: {strain_ids}\n"
+            f"  Plasmid Implementations: {plasmid_impl_ids or 'None'}\n"
+            f"  Strain Implementations: {strain_impl_ids or 'None'}\n"
+            f"  Fusion Sites: {self.fusion_sites or 'Not found'}\n"
+            f"  Antibiotic Resistance: {self.antibiotic_resistance or 'None'}\n"
         )
 
     def __eq__(self, other):
         if not isinstance(other, Plasmid):
             return False
-        return self.definition == other.definition
+        return self.plasmid_definition == other.plasmid_definition
 
     def __hash__(self):
-        return hash(self.definition)
+        return hash(self.plasmid_definition)
 
 
 class BuildCompiler:
@@ -113,7 +135,9 @@ class BuildCompiler:
         self.sbh = sbol2.PartShop(sbh_registry)
         self.sbh.key = auth_token
 
-        self.sbol_doc = sbol_doc
+        self.sbol_doc = (
+            sbol_doc  # if None, create new document (to fill with collection contents)
+        )
         self.collections = None
         self.indexed_plasmids = []
         self.indexed_backbones = []
@@ -144,35 +168,34 @@ class BuildCompiler:
 
     def index_collections(self, collections: List[str]):
         for uri in collections:
-            temp_doc = sbol2.Document()
-            self.sbh.pull(uri, temp_doc)
+            self.sbh.pull(uri, self.sbol_doc)
 
-            for implementation in temp_doc.implementations:
-                built_object = get_or_pull(temp_doc, self.sbh, implementation.built)
-                if (
-                    type(built_object) is sbol2.ModuleDefinition
-                    and ORGANISM_STRAIN in built_object.roles
-                ):
-                    self._extract_plasmids_from_strain(built_object, temp_doc)
-                elif (
-                    type(built_object) is sbol2.ComponentDefinition
-                    and len(built_object.components) > 1
-                ):
-                    if ENGINEERED_PLASMID in built_object.roles:
-                        self.indexed_plasmids.append(
-                            Plasmid(built_object, None, temp_doc)
-                        )
-                    elif PLASMID_CLONING_VECTOR in built_object.roles:
-                        self.indexed_backbones.append(
-                            Plasmid(built_object, None, temp_doc)
-                        )
+        for implementation in self.sbol_doc.implementations:
+            built_object = get_or_pull(self.sbol_doc, self.sbh, implementation.built)
+            if (
+                type(built_object) is sbol2.ModuleDefinition
+                and ORGANISM_STRAIN in built_object.roles
+            ):
+                self._extract_plasmids_from_strain(built_object, self.sbol_doc)
+            elif (
+                type(built_object) is sbol2.ComponentDefinition
+                and len(built_object.components) > 1
+            ):
+                if ENGINEERED_PLASMID in built_object.roles:
+                    self.indexed_plasmids.append(
+                        Plasmid(built_object, None, self.sbol_doc)
+                    )
+                elif PLASMID_CLONING_VECTOR in built_object.roles:
+                    self.indexed_backbones.append(
+                        Plasmid(built_object, None, self.sbol_doc)
+                    )
 
-            for strain in temp_doc.moduleDefinitions:
-                if ORGANISM_STRAIN in strain.roles:
-                    self._extract_plasmids_from_strain(strain, temp_doc)
+        for strain in self.sbol_doc.moduleDefinitions:
+            if ORGANISM_STRAIN in strain.roles:
+                self._extract_plasmids_from_strain(strain, self.sbol_doc)
 
-            for definition in temp_doc.componentDefinitions:
-                self._sort_plasmid_components(definition, temp_doc)
+        for definition in self.sbol_doc.componentDefinitions:
+            self._sort_plasmid_components(definition, self.sbol_doc)
 
     def domestication(
         self,
@@ -255,7 +278,7 @@ class BuildCompiler:
     ):
         for plasmid in strain.functionalComponents:
             plasmid_definition = get_or_pull(doc, self.sbh, plasmid.definition)
-            if ENGINEERED_PLASMID in plasmid_definition.roles:
+            if ENGINEERED_PLASMID in plasmid_definition.roles:  # TODO check
                 self.indexed_plasmids.append(Plasmid(plasmid_definition, strain, doc))
 
     def _sort_plasmid_components(
@@ -273,11 +296,6 @@ class BuildCompiler:
         """
         with AR=ampicillin.
         """
-        # input_plasmids = []
-
-        # for plas in self.indexed_plasmids:
-        #     if plas.antibiotic_resistance == AMP and is_single_TU(plas):
-        #         input_plasmids.append(plas)
 
         parts = self._extract_design_parts()
         plasmid_dictionary = self._construct_plasmid_dict(parts, antibiotic_resistance)
@@ -343,7 +361,7 @@ class BuildCompiler:
         """
         fusion_sites = []
         for component in plasmid.components:
-            definition = get_or_pull(sbol2.Document(), self.sbh, component.definition)
+            definition = get_or_pull(self.sbol_doc, self.sbh, component.definition)
             if RESTRICTION_ENZYME_ASSEMBLY_SCAR in definition.roles:
                 fusion_sites.append(definition)
 
@@ -368,11 +386,11 @@ class BuildCompiler:
         plasmid_dict = {}
         for part in part_list:
             for plasmid in self.indexed_plasmids:
-                if ENGINEERED_PLASMID in plasmid.definition.roles:
-                    for component in plasmid.definition.components:
+                if ENGINEERED_PLASMID in plasmid.plasmid_definition.roles:
+                    for component in plasmid.plasmid_definition.components:
                         if (
                             component.definition == str(part)
-                            and self._is_single_part(plasmid.definition)
+                            and self._is_single_part(plasmid.plasmid_definition)
                             and plasmid.antibiotic_resistance == antibiotic_resistance
                         ):
                             plasmid_dict.setdefault(part.displayId, [])
@@ -387,7 +405,7 @@ class BuildCompiler:
             return False
         else:
             component_definitions = [
-                get_or_pull(sbol2.Document(), self.sbh, comp.definition)
+                get_or_pull(self.sbol_doc, self.sbh, comp.definition)
                 for comp in plasmid.getInSequentialOrder()
             ]
 
