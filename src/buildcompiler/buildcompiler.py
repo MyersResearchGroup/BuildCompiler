@@ -475,7 +475,9 @@ class BuildCompiler:
         plasmid_dict = {}
         for part in part_list:
             for plasmid in self.indexed_plasmids:
-                if ENGINEERED_PLASMID in plasmid.plasmid_definition.roles:
+                if (
+                    ENGINEERED_PLASMID in plasmid.plasmid_definition.roles
+                ):  # TODO only grab implemented plasmids
                     for component in plasmid.plasmid_definition.components:
                         if (
                             component.definition == str(part)
