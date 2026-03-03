@@ -310,6 +310,14 @@ def part_digestion(
     extracts_list = []
     restriction_enzymes_pydna = []
 
+    assembly_activity.usages.add(
+        sbol2.Usage(
+            uri=f"{reactant.displayId}",
+            entity=reactant.identity,
+            role="http://sbols.org/v2#build",
+        )
+    )
+
     for enzyme_implmentation in restriction_enzymes:
         enzyme_definition = document.get(enzyme_implmentation.built)
 
@@ -512,6 +520,14 @@ def backbone_digestion(
         )
     extracts_list = []
     restriction_enzymes_pydna = []
+
+    assembly_activity.usages.add(
+        sbol2.Usage(
+            uri=f"{reactant.displayId}",
+            entity=reactant.identity,
+            role="http://sbols.org/v2#build",
+        )
+    )
 
     for enzyme_implmentation in restriction_enzymes:
         enzyme_definition = document.get(enzyme_implmentation.built)
