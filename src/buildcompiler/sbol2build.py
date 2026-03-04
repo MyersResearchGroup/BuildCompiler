@@ -14,6 +14,7 @@ from .constants import (
     FIVE_PRIME_OVERHANG,
     LINEAR,
     PLASMID_VECTOR,
+    RESTRICTION_ENZYME_ASSEMBLY_SCAR,
     SINGLE_STRANDED,
     THREE_PRIME_OVERHANG,
 )
@@ -38,14 +39,16 @@ class Assembly:
         part_plasmids: List[Plasmid],
         backbone_plasmid: Plasmid,
         restriction_enzyme: sbol2.Implementation,  # TODO search for implementation in document, or domesticate the RE
-        ligase: sbol2.ComponentDefinition,
+        ligase: sbol2.Implementation,
         document: sbol2.Document,
     ):
         self.part_plasmids = part_plasmids
         self.backbone = backbone_plasmid
         self.restriction_enzyme = restriction_enzyme
+        self.ligase = ligase
         self.extracted_parts = []  # list of tuples [ComponentDefinition, Sequence]
-        self.document = document
+        self.source_document = document
+        self.final_document = sbol2.Document()
         self.assembly_activity = sbol2.Activity("assembly")
         self.composites = []
 
@@ -66,11 +69,12 @@ class Assembly:
                 plasmid_impl,
                 [self.restriction_enzyme],
                 self.assembly_activity,
-                self.document,
+                self.source_document,
             )
             append_extracts_to_doc(
-                extracts_tuple_list, self.document
+                extracts_tuple_list, self.source_document
             )  # TODO remove this? extracted part definition should not be needed in new implementation. check to see if it's used in ligation
+            append_extracts_to_doc(extracts_tuple_list, self.final_document)
             self.extracted_parts.append(extracts_tuple_list[0][0])
 
         backbone_impl = self.backbone.plasmid_implementations[0]
@@ -78,21 +82,28 @@ class Assembly:
             backbone_impl,
             [self.restriction_enzyme],
             self.assembly_activity,
-            self.document,
+            self.source_document,
         )
 
-        append_extracts_to_doc(extracts_tuple_list, self.document)
+        append_extracts_to_doc(extracts_tuple_list, self.source_document)
         self.extracted_parts.append(extracts_tuple_list[0][0])
 
         print(self.extracted_parts)
 
-        # self.composites = ligation(
-        #     self.extracted_parts, self.assembly_activity, self.document
-        # )  # TODO pass ligase into ligation as implementation, implement logic to find in impl collection otherwise 'domesticate'
+        self.composites = ligation(
+            self.extracted_parts,
+            self.assembly_activity,
+            self.source_document,
+            self.final_document,
+            self.ligase,
+        )  # TODO pass ligase into ligation as implementation, implement logic to find in impl collection otherwise 'domesticate'
 
-        # append_extracts_to_doc(self.composites, self.document)
+        append_extracts_to_doc(extracts_tuple_list, self.final_document)
+        add_usages_to_doc(
+            self.assembly_activity, self.source_document, self.final_document
+        )
 
-        # return self.composites
+        return self.composites, self.final_document
 
 
 def rebase_restriction_enzyme(name: str, **kwargs) -> sbol2.ComponentDefinition:
@@ -712,34 +723,28 @@ def number_to_suffix(n):
 
 def ligation(
     reactants: List[sbol2.ComponentDefinition],
-    assembly_plan: sbol2.ModuleDefinition,
-    document: sbol2.Document,
-    ligase: sbol2.ComponentDefinition = None,
+    assembly_activity: sbol2.Activity,
+    source_document: sbol2.Document,
+    final_document: sbol2.Document,
+    ligase: sbol2.Implementation,
 ) -> List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]:
     """Ligates Components using base complementarity and creates product Components and a ligation Interaction.
 
     :param reactants: DNA parts to be ligated as SBOL ModuleDefinition.
-    :param assembly_plan: SBOL ModuleDefinition to contain the functional components, interactions, and participants
+    :param assembly_activity: SBOL activity to track assembly inputs & outputs
     :param document: SBOL2 document containing all reactant ComponentDefinitions.
-    :param ligase: as SBOL ComponentDefinition, optional (defaults to T4 ligase)
+    :param ligase: as SBOL Implementation
     :return: List of all composites generated, in the form of tuples of ComponentDefinition and Sequence.
     """
-    if ligase is None:
-        ligase = sbol2.ComponentDefinition(uri="T4_Ligase")
-        ligase.name = "T4_Ligase"
-        ligase.types = sbol2.BIOPAX_PROTEIN
-        document.add(ligase)
+    enzyme_definition = source_document.get(ligase.built)
 
-    ligase_component = sbol2.FunctionalComponent(uri="T4_Ligase")
-    ligase_component.definition = ligase
-    ligase_component.roles = ["http://identifiers.org/ncit/NCIT:C16796"]
-    assembly_plan.functionalComponents.add(ligase_component)
-
-    modifier_participation = sbol2.Participation(uri="ligation")
-    modifier_participation.participant = ligase_component
-    modifier_participation.roles = [
-        "http://identifiers.org/biomodels.sbo/SBO:0000019"
-    ]  # modifier
+    assembly_activity.usages.add(
+        sbol2.Usage(
+            uri=f"{enzyme_definition.name}",
+            entity=ligase.identity,
+            role="http://sbols.org/v2#build",
+        )
+    )
 
     # Create a dictionary that maps each first and last 4 letters to a list of strings that have those letters.
     reactant_parts = []
@@ -778,10 +783,14 @@ def ligation(
     for reactant in reactant_parts:
         reactant_seq = reactant.sequences[0]
         first_four_letters = (
-            document.getSequence(reactant_seq).elements[:fusion_site_length].lower()
+            source_document.getSequence(reactant_seq)
+            .elements[:fusion_site_length]
+            .lower()
         )
         last_four_letters = (
-            document.getSequence(reactant_seq).elements[-fusion_site_length:].lower()
+            source_document.getSequence(reactant_seq)
+            .elements[-fusion_site_length:]
+            .lower()
         )
         part_syntax = f"{first_four_letters}_{last_four_letters}"
         if part_syntax not in groups:
@@ -797,7 +806,7 @@ def ligation(
     for combination in list_of_parts_per_combination:
         list_of_parts_per_composite = [combination[0]]
         insert_sequence_uri = combination[0].sequences[0]
-        insert_sequence = document.getSequence(insert_sequence_uri).elements
+        insert_sequence = source_document.getSequence(insert_sequence_uri).elements
         remaining_parts = list(combination[1:])
         it = 1
         while remaining_parts:
@@ -806,14 +815,14 @@ def ligation(
                 # match insert sequence 5' to part 3'
                 part_sequence_uri = part.sequences[0]
                 if (
-                    document.getSequence(part_sequence_uri)
+                    source_document.getSequence(part_sequence_uri)
                     .elements[:fusion_site_length]
                     .lower()
                     == insert_sequence[-fusion_site_length:].lower()
                 ):
                     insert_sequence = (
                         insert_sequence[:-fusion_site_length]
-                        + document.getSequence(part_sequence_uri).elements
+                        + source_document.getSequence(part_sequence_uri).elements
                     )
                     list_of_parts_per_composite.append(
                         part
@@ -821,13 +830,13 @@ def ligation(
                     remaining_parts.remove(part)
                 # match insert sequence 3' to part 5'
                 elif (
-                    document.getSequence(part_sequence_uri)
+                    source_document.getSequence(part_sequence_uri)
                     .elements[-fusion_site_length:]
                     .lower()
                     == insert_sequence[:fusion_site_length].lower()
                 ):
                     insert_sequence = (
-                        document.getSequence(part_sequence_uri).elements
+                        source_document.getSequence(part_sequence_uri).elements
                         + insert_sequence[fusion_site_length:]
                     )
                     list_of_parts_per_composite.insert(0, part)
@@ -845,65 +854,53 @@ def ligation(
 
     # transform list_of_parts_per_assembly into list of composites
     products_list = []
-    participations = []
     composite_number = 1
-    participations.append(modifier_participation)
 
     # TODO: use componentinstances to append "subcomponents" to each definition that is a composite component. all composites share the "subcomponents"
     for composite in list_of_composites_per_assembly:  # a composite of the form [A,B,C]
         # calculate sequence
         composite_sequence_str = ""
-        participations = []
         prev_three_prime = (
             composite[len(composite) - 1].components[1].definition
         )  # componentdefinitionuri
-        prev_three_prime_definition = document.getComponentDefinition(prev_three_prime)
+        prev_three_prime_definition = source_document.getComponentDefinition(
+            prev_three_prime
+        )
         scar_index = 1
         anno_list = []
 
         part_extract_definitions = []
         for part_extract in composite:
             part_extract_sequence_uri = part_extract.sequences[0]
-            part_extract_sequence = document.getSequence(
+            part_extract_sequence = source_document.getSequence(
                 part_extract_sequence_uri
             ).elements
             temp_extract_components = []
-            reactant_component = sbol2.FunctionalComponent(
-                uri=f"{part_extract.displayId}_reactant"
-            )
-            reactant_component.definition = part_extract  # TODO do not make new components, instead derive product functionalcomponents from the assembly_plan moduledefinition to add to the ligation interaction/participation
-            for fc in assembly_plan.functionalComponents:
-                if fc.definition == reactant_component.definition:
-                    reactant_component = fc
-
-            reactant_participation = sbol2.Participation(
-                uri=f"{part_extract.displayId}_ligation"
-            )
-            reactant_participation.participant = reactant_component
-            reactant_participation.roles = [sbol2.SBO_REACTANT]
-            participations.append(reactant_participation)
 
             for comp in part_extract.components:
                 if (
-                    "http://identifiers.org/so/SO:0001932"
-                    in document.getComponentDefinition(comp.definition).roles
-                ):  # five prime
+                    FIVE_PRIME_OVERHANG
+                    in source_document.getComponentDefinition(comp.definition).roles
+                ):
                     scar_definition = sbol2.ComponentDefinition(
                         uri=f"Ligation_Scar_{number_to_suffix(scar_index)}"
                     )
                     scar_sequence = sbol2.Sequence(
                         uri=f"Ligation_Scar_{number_to_suffix(scar_index)}_sequence",
-                        elements=document.getSequence(
+                        elements=source_document.getSequence(
                             prev_three_prime_definition.sequences[0]
                         ).elements,
                     )
                     scar_definition.sequences = [scar_sequence]
                     scar_definition.wasDerivedFrom = [comp.definition, prev_three_prime]
-                    scar_definition.roles = ["http://identifiers.org/so/SO:0001953"]
+                    scar_definition.roles = [RESTRICTION_ENZYME_ASSEMBLY_SCAR]
                     temp_extract_components.append(scar_definition.identity)
 
-                    add_object_to_doc(scar_definition, document)
-                    add_object_to_doc(scar_sequence, document)
+                    add_object_to_doc(scar_definition, source_document)
+                    add_object_to_doc(scar_sequence, source_document)
+
+                    add_object_to_doc(scar_definition, final_document)
+                    add_object_to_doc(scar_sequence, final_document)
 
                     scar_location = sbol2.Range(
                         uri=f"Ligation_Scar_{number_to_suffix(scar_index)}_location",
@@ -917,12 +914,12 @@ def ligation(
                     anno_list.append(scar_anno)
                     scar_index += 1
                 elif (
-                    "http://identifiers.org/so/SO:0001933"
-                    in document.getComponentDefinition(comp.definition).roles
+                    THREE_PRIME_OVERHANG
+                    in source_document.getComponentDefinition(comp.definition).roles
                 ):  # three prime
                     prev_three_prime = comp.definition
-                    prev_three_prime_definition = document.getComponentDefinition(
-                        prev_three_prime
+                    prev_three_prime_definition = (
+                        source_document.getComponentDefinition(prev_three_prime)
                     )
                 else:
                     temp_extract_components.append(comp.definition)
@@ -955,7 +952,7 @@ def ligation(
         composite_component_definition.addType(CIRCULAR)
 
         for i, definition in enumerate(part_extract_definitions):
-            def_object = document.getComponentDefinition(definition)
+            def_object = source_document.getComponentDefinition(definition)
             comp = sbol2.Component(uri=def_object.displayId)
             comp.definition = definition
             composite_component_definition.components.add(comp)
@@ -964,28 +961,17 @@ def ligation(
 
         composite_component_definition.sequenceAnnotations = anno_list
 
-        prod_functional_component = sbol2.FunctionalComponent(
-            uri=f"{composite_component_definition.name}"
+        composite_implementation = sbol2.Implementation(
+            f"{composite_component_definition.displayId}_impl"
         )
-        prod_functional_component.definition = composite_component_definition
-        assembly_plan.functionalComponents.add(prod_functional_component)
+        composite_implementation.built = composite_component_definition.identity
+        composite_implementation.wasGeneratedBy = assembly_activity.identity
 
-        product_participation = sbol2.Participation(
-            uri=f"{composite_component_definition.name}_product"
+        final_document.add_list(
+            [composite_component_definition, composite_seq, composite_implementation]
         )
-        product_participation.participant = prod_functional_component
-        product_participation.roles = [sbol2.SBO_PRODUCT]
-        participations.append(product_participation)
 
-        # Make Interaction
-        # interaction = sbol2.Interaction(
-        #     uri=f"{composite_component_definition.name}_ligation_interaction",
-        #     interaction_type="http://identifiers.org/biomodels.sbo/SBO:0000695",
-        # )
-        # interaction.participations = participations
-        # assembly_plan.interactions.add(interaction)
-
-        products_list.append([composite_component_definition, composite_seq])
+        products_list.append(composite_implementation)
         composite_number += 1
 
     return products_list  # TODO instead of returning list of products CDs to append to doc, append all CDs and return list of their implementations
@@ -1023,3 +1009,40 @@ def add_object_to_doc(
             pass
         else:
             raise e
+
+
+def add_usages_to_doc(
+    activity: sbol2.Activity,
+    source_document: sbol2.Document,
+    destination_document: sbol2.Document,
+):
+    """Inserts all usages (in implementation form) and their built objects
+    from source into destination document.
+    """
+
+    for usage in activity.usages:
+        entity_uri = usage.entity
+
+        entity_obj = source_document.get(entity_uri)
+
+        if entity_obj is None:
+            raise ValueError(f"Entity {entity_uri} not found in source document")
+
+        if not isinstance(entity_obj, sbol2.Implementation):
+            continue
+
+        destination_document.add(entity_obj)
+
+        if entity_obj.built:
+            built_uri = entity_obj.built
+            built_obj = source_document.get(built_uri)
+
+            if built_obj is None:
+                raise ValueError(
+                    f"Built object {built_uri} not found in source document"
+                )
+
+            try:
+                destination_document.get(built_obj.identity)
+            except sbol2.SBOLError:
+                destination_document.add(built_obj)
