@@ -88,20 +88,16 @@ class Assembly:
         append_extracts_to_doc(extracts_tuple_list, self.source_document)
         self.extracted_parts.append(extracts_tuple_list[0][0])
 
-        print(self.extracted_parts)
-
         self.composites = ligation(
             self.extracted_parts,
             self.assembly_activity,
             self.source_document,
             self.final_document,
             self.ligase,
-        )  # TODO pass ligase into ligation as implementation, implement logic to find in impl collection otherwise 'domesticate'
+        )
 
         append_extracts_to_doc(extracts_tuple_list, self.final_document)
-        add_usages_to_doc(
-            self.assembly_activity, self.source_document, self.final_document
-        )
+        self.final_document.add(self.assembly_activity)
 
         return self.composites, self.final_document
 
@@ -1011,6 +1007,7 @@ def add_object_to_doc(
             raise e
 
 
+# NOTE redundant, looks like usages are added to document with addition of activity. entities will not be added, but this is not a problem if they exist on SBH
 def add_usages_to_doc(
     activity: sbol2.Activity,
     source_document: sbol2.Document,
@@ -1019,7 +1016,6 @@ def add_usages_to_doc(
     """Inserts all usages (in implementation form) and their built objects
     from source into destination document.
     """
-
     for usage in activity.usages:
         entity_uri = usage.entity
 
