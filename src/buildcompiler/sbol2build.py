@@ -49,10 +49,14 @@ class Assembly:
         self.extracted_parts = []  # list of tuples [ComponentDefinition, Sequence]
         self.source_document = document
         self.final_document = sbol2.Document()
-        self.assembly_activity = sbol2.Activity("assembly")
+        self.assembly_activity = sbol2.Activity(
+            "assembly"
+        )  # agent = buildcompiler, plan = DNA assembly
         self.composites = []
 
-    def run(self) -> List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]:
+    def run(
+        self, include_extracted_parts=False
+    ) -> List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]:
         """Runs full assembly simulation.
 
         `document` parameter of golden_gate_assembly_plan object is updated by reference to include assembly plan ModuleDefinition and all related information.
@@ -71,10 +75,9 @@ class Assembly:
                 self.assembly_activity,
                 self.source_document,
             )
-            append_extracts_to_doc(
-                extracts_tuple_list, self.source_document
-            )  # TODO remove this? extracted part definition should not be needed in new implementation. check to see if it's used in ligation
-            append_extracts_to_doc(extracts_tuple_list, self.final_document)
+            append_extracts_to_doc(extracts_tuple_list, self.source_document)
+            if include_extracted_parts:
+                append_extracts_to_doc(extracts_tuple_list, self.final_document)
             self.extracted_parts.append(extracts_tuple_list[0][0])
 
         backbone_impl = self.backbone.plasmid_implementations[0]
@@ -86,6 +89,8 @@ class Assembly:
         )
 
         append_extracts_to_doc(extracts_tuple_list, self.source_document)
+        if include_extracted_parts:
+            append_extracts_to_doc(extracts_tuple_list, self.final_document)
         self.extracted_parts.append(extracts_tuple_list[0][0])
 
         self.composites = ligation(
@@ -96,7 +101,6 @@ class Assembly:
             self.ligase,
         )
 
-        append_extracts_to_doc(extracts_tuple_list, self.final_document)
         self.final_document.add(self.assembly_activity)
 
         composite_plasmid_objs = [
