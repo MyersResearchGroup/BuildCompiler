@@ -99,7 +99,18 @@ class Assembly:
         append_extracts_to_doc(extracts_tuple_list, self.final_document)
         self.final_document.add(self.assembly_activity)
 
-        return self.composites, self.final_document
+        composite_plasmid_objs = [
+            Plasmid(
+                self.final_document.get(impl.built),
+                None,
+                [impl],
+                [None],
+                self.source_document,
+            )
+            for impl in self.composites
+        ]
+
+        return composite_plasmid_objs, self.final_document
 
 
 def rebase_restriction_enzyme(name: str, **kwargs) -> sbol2.ComponentDefinition:
@@ -723,7 +734,7 @@ def ligation(
     source_document: sbol2.Document,
     final_document: sbol2.Document,
     ligase: sbol2.Implementation,
-) -> List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]:
+) -> List[sbol2.Implementation]:
     """Ligates Components using base complementarity and creates product Components and a ligation Interaction.
 
     :param reactants: DNA parts to be ligated as SBOL ModuleDefinition.
@@ -849,7 +860,7 @@ def ligation(
         list_of_composites_per_assembly.append(list_of_parts_per_composite)
 
     # transform list_of_parts_per_assembly into list of composites
-    products_list = []
+    product_impl_list = []
     composite_number = 1
 
     # TODO: use componentinstances to append "subcomponents" to each definition that is a composite component. all composites share the "subcomponents"
@@ -967,10 +978,10 @@ def ligation(
             [composite_component_definition, composite_seq, composite_implementation]
         )
 
-        products_list.append(composite_implementation)
+        product_impl_list.append(composite_implementation)
         composite_number += 1
 
-    return products_list  # TODO instead of returning list of products CDs to append to doc, append all CDs and return list of their implementations
+    return product_impl_list  # TODO instead of returning list of products CDs to append to doc, append all CDs and return list of their implementations
 
 
 def append_extracts_to_doc(
