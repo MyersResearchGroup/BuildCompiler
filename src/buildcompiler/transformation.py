@@ -6,6 +6,7 @@ from buildcompiler.buildcompiler import Plasmid
 
 def bacterial_transformation(
     plasmids: List[Plasmid],
+    chassis_impl: sbol2.Implementation,
     chassis_md: sbol2.ModuleDefinition,  # TODO change to impl
     transformation_doc: sbol2.Document,
 ):
@@ -20,8 +21,8 @@ def bacterial_transformation(
         transformation_activity.types = "http://sbols.org/v2#build"
 
         chassis_usage = sbol2.Usage(
-            uri=f"{chassis_md.name}_chassis_source",
-            entity=chassis_md.identity,
+            uri=f"{chassis_md.name}_chassis",
+            entity=chassis_impl.identity,
             role="http://sbols.org/v2#build",
         )
 
@@ -61,10 +62,14 @@ def bacterial_transformation(
 
         transformation_activity.associations = [transformation_activity_association]
 
-        new_strain.wasGeneratedBy = transformation_activity
+        new_strain_impl = sbol2.Implementation(f"{new_strain.displayId}_impl")
+
+        new_strain_impl.built = new_strain.identity
+        new_strain_impl.wasGeneratedBy = transformation_activity.identity
 
         transformation_doc.add_list(
             [
+                new_strain_impl,
                 transformation_activity,
                 chassis_md,
                 chassis_usage,
