@@ -49,9 +49,7 @@ class Assembly:
         self.extracted_parts = []  # list of tuples [ComponentDefinition, Sequence]
         self.source_document = document
         self.final_document = sbol2.Document()
-        self.assembly_activity = sbol2.Activity(
-            "assembly"
-        )  # agent = buildcompiler, plan = DNA assembly
+        self.assembly_activity = initialize_assembly_activity()
         self.composites = []
 
     def run(
@@ -1022,38 +1020,23 @@ def add_object_to_doc(
             raise e
 
 
-# NOTE redundant, looks like usages are added to document with addition of activity. entities will not be added, but this is not a problem if they exist on SBH
-def add_usages_to_doc(
-    activity: sbol2.Activity,
-    source_document: sbol2.Document,
-    destination_document: sbol2.Document,
-):
-    """Inserts all usages (in implementation form) and their built objects
-    from source into destination document.
-    """
-    for usage in activity.usages:
-        entity_uri = usage.entity
+def initialize_assembly_activity():
+    activity = sbol2.Activity("assembly")
 
-        entity_obj = source_document.get(entity_uri)
+    activity.name = "DNA Assembly"
+    activity.types = "http://sbols.org/v2#build"
 
-        if entity_obj is None:
-            raise ValueError(f"Entity {entity_uri} not found in source document")
+    activity_association = sbol2.Association("assemble_")
 
-        if not isinstance(entity_obj, sbol2.Implementation):
-            continue
+    assembly_plan = sbol2.Plan("assembly_plan")
 
-        destination_document.add(entity_obj)
+    assembly_plan.description = "MoClo DNA Assembly With Opentrons OT2"
 
-        if entity_obj.built:
-            built_uri = entity_obj.built
-            built_obj = source_document.get(built_uri)
+    activity_association.plan = assembly_plan
 
-            if built_obj is None:
-                raise ValueError(
-                    f"Built object {built_uri} not found in source document"
-                )
+    activity_agent = sbol2.Agent("BuildCompiler")
+    activity_association.agent = activity_agent
 
-            try:
-                destination_document.get(built_obj.identity)
-            except sbol2.SBOLError:
-                destination_document.add(built_obj)
+    activity.associations = [activity_association]
+
+    return activity

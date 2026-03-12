@@ -46,13 +46,13 @@ def bacterial_transformation(
         new_strain.functionalComponents = [plasmid_functional_component]
 
         transformation_activity_association = sbol2.Association(
-            f"transform_{chassis_md.name}_association"
+            f"transform_{chassis_md.name}"
         )
 
         transformation_activity_plan = sbol2.Plan(
             f"{new_strain.displayId}_transformation_plan"
         )
-        transformation_activity_plan.description = (  # TODO implement these for assembly activities as well
+        transformation_activity_plan.description = (
             "TODO: generate accurate description of transformation"
         )
         transformation_activity_association.plan = transformation_activity_plan
