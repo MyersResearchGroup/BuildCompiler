@@ -892,7 +892,7 @@ def ligation(
                     in source_document.getComponentDefinition(comp.definition).roles
                 ):
                     scar_definition = sbol2.ComponentDefinition(
-                        uri=f"Ligation_Scar_{number_to_suffix(scar_index)}"
+                        uri=f"Ligation_Scar_{number_to_suffix(scar_index)}"  # TODO fix off by one error here
                     )
                     scar_sequence = sbol2.Sequence(
                         uri=f"Ligation_Scar_{number_to_suffix(scar_index)}_sequence",
@@ -960,13 +960,24 @@ def ligation(
         composite_component_definition.addRole(ENGINEERED_REGION)
         composite_component_definition.addType(CIRCULAR)
 
+        prev_part_extract = None
+
         for i, definition in enumerate(part_extract_definitions):
             def_object = source_document.getComponentDefinition(definition)
             comp = sbol2.Component(uri=def_object.displayId)
             comp.definition = definition
-            composite_component_definition.components.add(comp)
 
+            composite_component_definition.components.add(comp)
             anno_list[i].component = comp
+
+            if prev_part_extract:
+                _create_precedes_restriction(
+                    composite_component_definition, prev_part_extract, comp
+                )
+
+            prev_part_extract = comp
+
+        # _create_precedes_restriction(composite_component_definition, prev_part_extract, composite_component_definition.components[0]) # final component precedes first component; defining circular order
 
         composite_component_definition.sequenceAnnotations = anno_list
 
@@ -1040,3 +1051,16 @@ def initialize_assembly_activity():
     activity.associations = [activity_association]
 
     return activity
+
+
+def _create_precedes_restriction(
+    parent_definition: sbol2.ComponentDefinition,
+    subject: sbol2.Component,
+    object: sbol2.Component,
+):
+    constraint = parent_definition.sequenceConstraints.create(
+        f"{object.displayId}_{subject.displayId}"
+    )
+    constraint.subject = subject
+    constraint.object = object
+    constraint.restriction = sbol2.SBOL_RESTRICTION_PRECEDES
