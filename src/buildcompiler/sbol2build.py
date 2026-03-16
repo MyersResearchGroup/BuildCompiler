@@ -12,6 +12,7 @@ from .constants import (
     ENGINEERED_PLASMID,
     ENGINEERED_REGION,
     FIVE_PRIME_OVERHANG,
+    FUSION_SITES,
     LINEAR,
     PLASMID_VECTOR,
     RESTRICTION_ENZYME_ASSEMBLY_SCAR,
@@ -875,7 +876,6 @@ def ligation(
         prev_three_prime_definition = source_document.getComponentDefinition(
             prev_three_prime
         )
-        scar_index = 1
         anno_list = []
 
         part_extract_definitions = []
@@ -891,14 +891,27 @@ def ligation(
                     FIVE_PRIME_OVERHANG
                     in source_document.getComponentDefinition(comp.definition).roles
                 ):
+                    sequence = source_document.getSequence(
+                        prev_three_prime_definition.sequences[0]
+                    ).elements
+
+                    fusion_site = None
+
+                    for (
+                        key,
+                        seq,
+                    ) in (
+                        FUSION_SITES.items()
+                    ):  # TODO error handling for fusion site not found?
+                        if seq == sequence.upper():
+                            fusion_site = key
+
                     scar_definition = sbol2.ComponentDefinition(
-                        uri=f"Ligation_Scar_{number_to_suffix(scar_index)}"  # TODO fix off by one error here
+                        uri=f"Ligation_Scar_{fusion_site}"
                     )
                     scar_sequence = sbol2.Sequence(
-                        uri=f"Ligation_Scar_{number_to_suffix(scar_index)}_sequence",
-                        elements=source_document.getSequence(
-                            prev_three_prime_definition.sequences[0]
-                        ).elements,
+                        uri=f"Ligation_Scar_{fusion_site}_sequence",
+                        elements=sequence,
                     )
                     scar_definition.sequences = [scar_sequence]
                     scar_definition.wasDerivedFrom = [comp.definition, prev_three_prime]
@@ -912,16 +925,15 @@ def ligation(
                     add_object_to_doc(scar_sequence, final_document)
 
                     scar_location = sbol2.Range(
-                        uri=f"Ligation_Scar_{number_to_suffix(scar_index)}_location",
+                        uri=f"Ligation_Scar_{fusion_site}_location",
                         start=len(composite_sequence_str) + 1,
                         end=len(composite_sequence_str) + fusion_site_length,
                     )
                     scar_anno = sbol2.SequenceAnnotation(
-                        uri=f"Ligation_Scar_{number_to_suffix(scar_index)}_annotation"
+                        uri=f"Ligation_Scar_{fusion_site}_annotation"
                     )
                     scar_anno.locations.add(scar_location)
                     anno_list.append(scar_anno)
-                    scar_index += 1
                 elif (
                     THREE_PRIME_OVERHANG
                     in source_document.getComponentDefinition(comp.definition).roles
