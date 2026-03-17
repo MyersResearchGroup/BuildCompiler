@@ -23,6 +23,7 @@ ANTIBIOTIC_MAP = {
     "kan": KAN,
     "amp": AMP,
 }
+# TODO http or https for identifiers?
 
 ENGINEERED_PLASMID = "http://identifiers.org/so/SO:0000637"
 ENGINEERED_INSERT = "https://identifiers.org/so/SO:0000915"
@@ -30,6 +31,8 @@ ENGINEERED_REGION = "http://identifiers.org/so/SO:0000804"
 PLASMID_VECTOR = "https://identifiers.org/so/SO:0000755"
 PLASMID_CLONING_VECTOR = "https://identifiers.org/ncit/NCIT:C1919"
 ANTIBIOTIC_RESISTANCE = "https://identifiers.org/ncit/NCIT:C17449"
+LIGASE = "http://identifiers.org/ncit/NCIT:C16796"
+RESTRICTION_ENZYME = "http://identifiers.org/obi/OBI_0000732"
 RESTRICTION_ENZYME_ASSEMBLY_SCAR = "http://identifiers.org/so/SO:0001953"
 ORGANISM_STRAIN = "https://identifiers.org/ncit/NCIT:C14419"
 

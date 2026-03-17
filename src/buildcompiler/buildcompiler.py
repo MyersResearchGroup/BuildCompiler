@@ -1,112 +1,23 @@
 import sbol2
-import re
-from typing import Union, List, Dict
+from typing import List, Dict
+
+from buildcompiler.plasmid import Plasmid
+from buildcompiler.sbol2build import Assembly
 from .abstract_translator import (
-    extract_fusion_sites,
     get_or_pull,
     get_compatible_plasmids,
 )
 from .constants import (
-    ANTIBIOTIC_MAP,
-    FUSION_SITES,
     AMP,
     KAN,
+    LIGASE,
     PART_ROLES,
+    RESTRICTION_ENZYME,
     RESTRICTION_ENZYME_ASSEMBLY_SCAR,
-    ANTIBIOTIC_RESISTANCE,
     ENGINEERED_PLASMID,
     PLASMID_CLONING_VECTOR,
     ORGANISM_STRAIN,
 )
-
-
-class Plasmid:
-    def __init__(
-        self,
-        definition: sbol2.ComponentDefinition,
-        strain_definition: sbol2.ModuleDefinition,
-        plasmid_implementations: sbol2.Implementation,
-        strain_implementations: sbol2.Implementation,
-        doc: sbol2.document,
-    ):
-        self.plasmid_definition = definition
-        self.strain_definitions = [strain_definition]
-        self.plasmid_implementations = plasmid_implementations
-        self.strain_implementations = strain_implementations
-        self.fusion_sites = self._match_fusion_sites(doc)
-        self.name = definition.displayId + "".join(f"_{s}" for s in self.fusion_sites)
-        self.antibiotic_resistance = self._get_antibiotic_resistance(doc)
-
-    def _match_fusion_sites(self, doc: sbol2.document) -> List[str]:
-        fusion_site_definitions = extract_fusion_sites(self.plasmid_definition, doc)
-        fusion_sites = []
-        for site in fusion_site_definitions:
-            sequence_obj = doc.getSequence(site.sequences[0])
-            sequence = sequence_obj.elements
-
-            for key, seq in FUSION_SITES.items():
-                if seq == sequence.upper():
-                    fusion_sites.append(key)
-
-        fusion_sites.sort()
-        return fusion_sites
-
-    def _get_antibiotic_resistance(self, doc: sbol2.Document) -> str:
-        for component in (
-            self.plasmid_definition.components
-        ):  # go a level deeper, within the backbone core component
-            definition = doc.get(component.definition)
-            for subcomponent in definition.components:
-                subcomponent_def = doc.get(subcomponent.definition)
-                if ANTIBIOTIC_RESISTANCE in subcomponent_def.roles:
-                    match = re.search(
-                        r"\b(" + "|".join(ANTIBIOTIC_MAP) + r")_",
-                        subcomponent_def.displayId,
-                        re.IGNORECASE,
-                    )
-                    if match:
-                        return ANTIBIOTIC_MAP[match.group(1).lower()]
-                    return "Unknown"
-
-        return None
-
-    def __repr__(self) -> str:
-        strain_ids = (
-            [getattr(s, "identity", None) for s in self.strain_definitions]
-            if self.strain_definitions
-            else []
-        )
-
-        plasmid_impl_ids = (
-            [getattr(p, "identity", None) for p in self.plasmid_implementations]
-            if self.plasmid_implementations
-            else []
-        )
-
-        strain_impl_ids = (
-            [getattr(s, "identity", None) for s in self.strain_implementations]
-            if self.strain_implementations
-            else []
-        )
-
-        return (
-            f"Plasmid:\n"
-            f"  Name: {self.name}\n"
-            f"  Plasmid Definition: {getattr(self.plasmid_definition, 'identity', 'None')}\n"
-            f"  Strain Definitions: {strain_ids}\n"
-            f"  Plasmid Implementations: {plasmid_impl_ids or 'None'}\n"
-            f"  Strain Implementations: {strain_impl_ids or 'None'}\n"
-            f"  Fusion Sites: {self.fusion_sites or 'Not found'}\n"
-            f"  Antibiotic Resistance: {self.antibiotic_resistance or 'None'}\n"
-        )
-
-    def __eq__(self, other):
-        if not isinstance(other, Plasmid):
-            return False
-        return self.plasmid_definition == other.plasmid_definition
-
-    def __hash__(self):
-        return hash(self.plasmid_definition)
 
 
 class BuildCompiler:
@@ -124,51 +35,33 @@ class BuildCompiler:
 
     def __init__(
         self,
-        abstract_design: Union[
-            sbol2.ComponentDefinition,
-            sbol2.ModuleDefinition,
-            sbol2.CombinatorialDerivation,
-        ],
+        collections: List[str],
         sbh_registry: str,
         auth_token: str,
         sbol_doc: sbol2.Document,
     ):
-        self.abstract_design = abstract_design
         self.sbh = sbol2.PartShop(sbh_registry)
         self.sbh.key = auth_token
-
-        self.sbol_doc = (
-            sbol_doc  # if None, create new document (to fill with collection contents)
-        )
-        self.collections = None
+        self.sbol_doc = sbol_doc or sbol2.Document()
         self.indexed_plasmids = []
         self.indexed_backbones = []
+        self.restriction_enzyme_implementations = []
+        self.ligase_implementations = []
 
-    # def index_collections(
-    #     self, collections: list[sbol2.Collection]
-    # ) -> dict[
-    #     str, sbol2.Collection
-    # ]:  # TODO add support for collection object and sbh URI?
-    #     """Index input collections into plasmids and backbones.
+        self._index_collections(collections)
 
-    #     Parses the provided collections (which may contain plasmids, backbones, or strains)
-    #     and normalizes them into internal Plasmid/Backbone records that remain linked to
-    #     their originating strain definitions.
+    def _index_collections(self, collections: List[str]):
+        """Index input collections into plasmids and backbones.
 
-    #     :param collections: Iterable of user-provided collections/documents.
-    #     :type collections: Iterable
-    #     :returns: None. Updates ``self.indexed_plasmids`` in place.
-    #     :rtype: None
-    #     :raises ValueError: If collection elements cannot be interpreted as plasmids.
-    #     """
-    #     self.collections = collections
+        Parses the provided collections (which may contain plasmids, backbones, strains, and enzymes)
+        and normalizes them into internal Plasmid/enzyme records that remain linked to
+        their originating strain and implementation definitions.
 
-    #     # TODO: Iterate thorugh the Collections and create a set of indexed plasmids, linking them to their originating definitions.
-    #     # Updates indexed_plasmids
-
-    #     return "Success"
-
-    def index_collections(self, collections: List[str]):
+        :param collections: Iterable of user-provided collections/documents.
+        :type collections: Iterable
+        :returns: None. Updates ``self.indexed_plasmids`` in place.
+        :rtype: None
+        """
         for uri in collections:
             self.sbh.pull(uri, self.sbol_doc)
 
@@ -209,6 +102,11 @@ class BuildCompiler:
                                 built_object, None, [implementation], [], self.sbol_doc
                             )
                         )
+            elif sbol2.BIOPAX_PROTEIN in built_object.types:
+                if RESTRICTION_ENZYME in built_object.roles:
+                    self.restriction_enzyme_implementations.append(implementation)
+                elif LIGASE in built_object.roles:
+                    self.ligase_implementations.append(implementation)
 
         for strain in self.sbol_doc.moduleDefinitions:
             if ORGANISM_STRAIN in strain.roles:
@@ -238,7 +136,9 @@ class BuildCompiler:
 
         return protocol
 
-    def assembly_lvl1(self, backbone: Plasmid) -> list[sbol2.ComponentDefinition]:
+    def assembly_lvl1(
+        self, abstract_design: sbol2.ComponentDefinition, backbone: Plasmid = None
+    ) -> list[sbol2.ComponentDefinition]:
         """Assemble level-1 plasmids for each gene/transcriptional unit.
 
         Uses indexed plasmids/backbones and the current design to assemble
@@ -253,7 +153,9 @@ class BuildCompiler:
         # if backbone provided then use it.Then look for parts constraind by the backbone fusion sites.
         # else, run an algorithm to try a backbone from 4 the choices. If it fails on the 4 raise an error.
 
-        plasmid_dict = self._get_input_plasmids(antibiotic_resistance=AMP)
+        plasmid_dict = self._get_input_plasmids(
+            design=abstract_design, antibiotic_resistance=AMP
+        )
 
         if not backbone:
             backbone, compatible_plasmids = self._get_backbone(
@@ -262,7 +164,30 @@ class BuildCompiler:
         else:
             compatible_plasmids = get_compatible_plasmids(plasmid_dict, self.backbone)
 
-        return compatible_plasmids
+        bsaI_impl = next(
+            impl
+            for impl in self.restriction_enzyme_implementations
+            if self.sbol_doc.find(impl.built).displayId == "BsaI"
+        )
+        if bsaI_impl is None:
+            raise ValueError(
+                "BsaI Restriction enzyme not found in provided collections. Terminating assembly."
+            )
+
+        ligase_impl = self.ligase_implementations[0]
+        if bsaI_impl is None:
+            raise ValueError(
+                "No appropriate ligase found in provided collections. Terminating assembly."
+            )
+
+        assembly = Assembly(
+            compatible_plasmids, backbone, bsaI_impl, ligase_impl, self.sbol_doc
+        )
+        composite_plasmids, product_doc = assembly.run()
+
+        self.indexed_plasmids.extend(composite_plasmids)
+
+        return composite_plasmids
 
         # TODO: Create a SBOL representation of the assembly process, updating the SBOL Document.
         # Using he selected parts create the representation, you need Plasmids, BsaI and T4 Ligase.
@@ -372,21 +297,21 @@ class BuildCompiler:
             if ENGINEERED_PLASMID in definition.roles and not self._get_indexed_plasmid(
                 self.indexed_plasmids, definition
             ):
-                self.indexed_plasmids.append(Plasmid(definition, None, doc))
+                self.indexed_plasmids.append(Plasmid(definition, None, [], [], doc))
             elif (
                 PLASMID_CLONING_VECTOR in definition.roles
                 and not self._get_indexed_plasmid(self.indexed_backbones, definition)
             ):
-                self.indexed_backbones.append(Plasmid(definition, None, doc))
+                self.indexed_backbones.append(Plasmid(definition, None, [], [], doc))
 
     def _get_input_plasmids(
-        self, antibiotic_resistance: str
+        self, design: sbol2.ComponentDefinition, antibiotic_resistance: str
     ) -> Dict[str, List[Plasmid]]:
         """
         with AR=ampicillin.
         """
 
-        parts = self._extract_design_parts()
+        parts = self._extract_design_parts(design)
         plasmid_dictionary = self._construct_plasmid_dict(parts, antibiotic_resistance)
         return plasmid_dictionary
 
@@ -418,7 +343,9 @@ class BuildCompiler:
 
         return None, None
 
-    def _extract_design_parts(self) -> List[sbol2.ComponentDefinition]:
+    def _extract_design_parts(
+        self, design: sbol2.ComponentDefinition
+    ) -> List[sbol2.ComponentDefinition]:
         """
         Returns definitions of parts in a design in sequential order.
 
@@ -429,32 +356,11 @@ class BuildCompiler:
         Returns:
             A list of component definitions in sequential order.
         """
-        component_list = [c for c in self.abstract_design.getInSequentialOrder()]
+        component_list = [c for c in design.getInSequentialOrder()]
         return [
             get_or_pull(self.sbol_doc, self.sbh, component.definition)
             for component in component_list
         ]
-
-    def _extract_fusion_sites(
-        self,
-        plasmid: sbol2.ComponentDefinition,
-    ) -> List[sbol2.ComponentDefinition]:
-        """
-        Returns all fusion site component definitions from a plasmid.
-
-        Args:
-            plasmid: :class:`sbol2.ComponentDefinition` representing the plasmid.
-
-        Returns:
-            A list of fusion site component definitions.
-        """
-        fusion_sites = []
-        for component in plasmid.components:
-            definition = get_or_pull(self.sbol_doc, self.sbh, component.definition)
-            if RESTRICTION_ENZYME_ASSEMBLY_SCAR in definition.roles:
-                fusion_sites.append(definition)
-
-        return fusion_sites
 
     def _construct_plasmid_dict(
         self, part_list: List[sbol2.ComponentDefinition], antibiotic_resistance: str
