@@ -3,7 +3,7 @@ from Bio import Restriction
 from Bio.Seq import Seq
 from pydna.dseqrecord import Dseqrecord
 from itertools import product
-from .buildcompiler import Plasmid
+from buildcompiler.plasmid import Plasmid
 from typing import List, Union, Tuple
 from .constants import (
     CIRCULAR,
@@ -15,6 +15,7 @@ from .constants import (
     FUSION_SITES,
     LINEAR,
     PLASMID_VECTOR,
+    RESTRICTION_ENZYME,
     RESTRICTION_ENZYME_ASSEMBLY_SCAR,
     SINGLE_STRANDED,
     THREE_PRIME_OVERHANG,
@@ -125,9 +126,9 @@ def rebase_restriction_enzyme(name: str, **kwargs) -> sbol2.ComponentDefinition:
     """
     definition = f"http://rebase.neb.com/rebase/enz/{name}.html"  # TODO: replace with getting the URI from Enzyme when REBASE identifiers become available in biopython 1.8
     cd = sbol2.ComponentDefinition(name)
-    cd.types = sbol2.BIOPAX_PROTEIN
+    cd.types = [sbol2.BIOPAX_PROTEIN]
     cd.name = name
-    cd.roles = ["http://identifiers.org/obi/OBI:0000732"]
+    cd.roles = [RESTRICTION_ENZYME]
     cd.wasDerivedFrom = definition
     cd.description = f"Restriction enzyme {name} from REBASE."
     return cd
@@ -1020,7 +1021,6 @@ def append_extracts_to_doc(
     """
     for extract, sequence in extract_tuples:
         try:
-            print("adding: " + extract.displayId)
             add_object_to_doc(extract, doc)
             add_object_to_doc(sequence, doc)
         except Exception as e:
