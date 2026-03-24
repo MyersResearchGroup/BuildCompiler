@@ -1,8 +1,9 @@
+import random
 import sbol2
 from typing import List, Dict
 
 from buildcompiler.plasmid import Plasmid
-from buildcompiler.sbol2build import Assembly
+from buildcompiler.sbol2build import Assembly, dna_componentdefinition_with_sequence
 from .abstract_translator import (
     get_or_pull,
     get_compatible_plasmids,
@@ -10,6 +11,7 @@ from .abstract_translator import (
 from .constants import (
     AMP,
     KAN,
+    FUSION_SITES,
     LIGASE,
     PART_ROLES,
     RESTRICTION_ENZYME,
@@ -63,6 +65,7 @@ class BuildCompiler:
         :rtype: None
         """
         for uri in collections:
+            print(f"Indexing collection: {uri}")
             self.sbh.pull(uri, self.sbol_doc)
 
         for implementation in self.sbol_doc.implementations:
@@ -116,25 +119,151 @@ class BuildCompiler:
             self._sort_plasmid_components(definition, self.sbol_doc)
 
     def domestication(
-        self,
-    ) -> list[sbol2.ComponentDefinition]:
-        """Domesticate the indexed plasmids for Golden Gate assembly.
+        self, 
+        parts: list[sbol2.ComponentDefinition],
+        ) -> list[sbol2.ComponentDefinition]:
+        """Domesticate a list of genetic parts for Golden Gate assembly using the MoClo standard.
 
-        For each indexed plasmid, this method identifies the necessary domestication
-        steps (e.g., removing internal BsaI sites) and generates the corresponding
-        domesticated sequences as new ComponentDefinitions in the SBOL document.
+        For each part, this method identifies the necessary domestication
+        steps (e.g., removing internal BsaI sites) and generates the appropiate dsDNA for DNA synthesis and the corresponding
+        domesticated plasmids as new ComponentDefinitions in the SBOL document.
 
         :returns: List of domesticated ComponentDefinitions ready for assembly.
         :rtype: list[sbol2.ComponentDefinition]
         """
 
-        # TODO: Check which parts from the abstract design are not present in the indexed plasmids with the appropiate fusion sites and need to be domesticated.
-        # TODO: Create a SBOL representation of the domestication process, updating the SBOL Document.
-        # TODO: Generate a protocol for the domestication process.
-        protocol = "To be implemented by PUDU"
-        # TODO: Updates indexed plasmids with domesticated versions.
+        role_to_fusion_sites = {
+                "http://identifiers.org/so/SO:0000167": ("GGAG", "TACT"),
+                "http://identifiers.org/so/SO:0000139": ("TACT", "AATG"),
+                "http://identifiers.org/so/SO:0000316": ("AATG", "AGGT"),
+                "http://identifiers.org/so/SO:0000141": ("AGGT", "GCTT"),
+        }
+        fusion_site_name_map = {
+                sequence: name for name, sequence in FUSION_SITES.items()
+            }
 
-        return protocol
+        def _random_dna(length: int) -> str:
+                return "".join(random.choices("ACGT", k=length))
+        
+        def _remove_internal_bsai_sites(sequence: str) -> tuple[str, int]:
+            domesticated_sequence = sequence.upper()
+            removals = 0
+            for site, replacement in (("GGTCTC", "GGTCTA"), ("GAGACC", "GAGACA")):
+                while site in domesticated_sequence:
+                    domesticated_sequence = domesticated_sequence.replace(
+                        site, replacement, 1
+                    )
+                    removals += 1
+            return domesticated_sequence, removals
+
+        bsaI_impl = next(
+            (
+                impl
+                for impl in self.restriction_enzyme_implementations
+                if self.sbol_doc.find(impl.built).displayId == "BsaI"
+            ),
+            None,
+        )
+        if bsaI_impl is None:
+            raise ValueError(
+                "BsaI Restriction enzyme not found in provided collections. Terminating domestication."
+            )
+
+        ligase_impl = self.ligase_implementations[0] if self.ligase_implementations else None
+        if ligase_impl is None:
+            raise ValueError(
+                "No appropriate ligase found in provided collections. Terminating domestication."
+            )
+    
+        dsDNAs = []
+        domesticated_parts = []
+
+        for part in parts:
+            part_role = next(
+                (role for role in part.roles if role in role_to_fusion_sites),
+                None,
+            )
+            if part_role is None:
+                raise ValueError(
+                    f"Part {part.displayId} does not have a supported role for domestication."
+                )
+
+            fusion_site_sequences = role_to_fusion_sites[part_role]
+            fusion_site_names = sorted(
+                fusion_site_name_map[site] for site in fusion_site_sequences
+            )
+            backbone = next(
+                (
+                    indexed_backbone
+                    for indexed_backbone in self.indexed_backbones
+                    if indexed_backbone.antibiotic_resistance == AMP
+                    and indexed_backbone.fusion_sites == fusion_site_names
+                ),
+                None,
+            )
+            if backbone is None:
+                raise ValueError(
+                    f"No backbone found for {part.displayId} with fusion sites "
+                    f"{fusion_site_sequences[0]} and {fusion_site_sequences[1]} and antibiotic resistance {AMP}."
+                )
+            if len(part.sequences) != 1:
+                raise ValueError(
+                    f"Part {part.displayId} must have exactly one sequence for domestication."
+                )
+
+            part_sequence = self.sbol_doc.getSequence(part.sequences[0]).elements
+            domesticated_sequence, removed_sites = _remove_internal_bsai_sites( #TODO make it to return the initial sequence and the modified sequence
+                part_sequence
+            )
+            print(
+                f"BsaI domestication check for {part.displayId}: "
+                f"{removed_sites} internal site(s) removed."
+            )
+
+            insert_sequence = (
+                _random_dna(35)
+                + "GGTCTC"
+                + fusion_site_sequences[0]
+                + domesticated_sequence
+                + fusion_site_sequences[1]
+                + "GAGACC"
+                + _random_dna(35)
+            )
+            insert_definition = self.sbol_doc.find(f"{part.displayId}_domestication_insert")
+            if insert_definition is None:
+                insert_definition, insert_seq = dna_componentdefinition_with_sequence(
+                    f"{part.displayId}_domestication_insert", insert_sequence
+                )
+                insert_definition.name = f"{part.displayId} domestication insert"
+                insert_definition.description = (
+                    f"Domestication insert for {part.displayId}. "
+                    f"BsaI check removed {removed_sites} internal site(s)."
+                )
+                insert_definition.roles = list(part.roles)
+                insert_definition.wasDerivedFrom = part.identity
+                self.sbol_doc.add_list([insert_definition, insert_seq])
+
+            insert_impl = self.sbol_doc.find(f"{part.displayId}_domestication_insert_impl")
+            if insert_impl is None:
+                insert_impl = sbol2.Implementation(
+                    f"{insert_definition.displayId}_impl"
+                )
+                insert_impl.built = insert_definition.identity
+                self.sbol_doc.add(insert_impl)
+                dsDNAs.append(insert_impl)
+
+            assembly = Assembly(
+                [Plasmid(insert_definition, None, [insert_impl], [], self.sbol_doc)],
+                backbone,
+                bsaI_impl,
+                ligase_impl,
+                self.sbol_doc,
+            )
+            assembly_products, assembly_doc = assembly.run()
+            product_definition = assembly_products[0].plasmid_definition
+            domesticated_parts.append(product_definition)
+
+        return domesticated_parts
 
     def assembly_lvl1(
         self, abstract_design: sbol2.ComponentDefinition, backbone: Plasmid = None
@@ -360,6 +489,36 @@ class BuildCompiler:
         return [
             get_or_pull(self.sbol_doc, self.sbh, component.definition)
             for component in component_list
+        ]
+
+    def _get_abstract_design(self) -> sbol2.ComponentDefinition:
+        for definition in self.sbol_doc.componentDefinitions:
+            if (
+                ENGINEERED_PLASMID in definition.roles
+                or PLASMID_CLONING_VECTOR in definition.roles
+                or len(definition.components) <= 1
+            ):
+                continue
+
+            component_definitions = [
+                get_or_pull(self.sbol_doc, self.sbh, component.definition)
+                for component in definition.getInSequentialOrder()
+            ]
+            if any(set(component.roles) & PART_ROLES for component in component_definitions):
+                return definition
+
+        raise ValueError("No abstract design found in the SBOL document.")
+
+    def _get_required_fusion_sites(
+        self, part_list: List[sbol2.ComponentDefinition]
+    ) -> List[tuple[str, str]]:
+        fusion_site_names = sorted(FUSION_SITES)
+        if len(part_list) + 1 > len(fusion_site_names):
+            raise ValueError("Abstract design exceeds supported fusion-site positions.")
+
+        return [
+            (fusion_site_names[index], fusion_site_names[index + 1])
+            for index in range(len(part_list))
         ]
 
     def _construct_plasmid_dict(
