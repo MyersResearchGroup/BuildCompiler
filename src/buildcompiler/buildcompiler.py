@@ -119,9 +119,9 @@ class BuildCompiler:
             self._sort_plasmid_components(definition, self.sbol_doc)
 
     def domestication(
-        self, 
+        self,
         parts: list[sbol2.ComponentDefinition],
-        ) -> list[sbol2.ComponentDefinition]:
+    ) -> list[sbol2.ComponentDefinition]:
         """Domesticate a list of genetic parts for Golden Gate assembly using the MoClo standard.
 
         For each part, this method identifies the necessary domestication
@@ -133,18 +133,18 @@ class BuildCompiler:
         """
 
         role_to_fusion_sites = {
-                "http://identifiers.org/so/SO:0000167": ("GGAG", "TACT"),
-                "http://identifiers.org/so/SO:0000139": ("TACT", "AATG"),
-                "http://identifiers.org/so/SO:0000316": ("AATG", "AGGT"),
-                "http://identifiers.org/so/SO:0000141": ("AGGT", "GCTT"),
+            "http://identifiers.org/so/SO:0000167": ("GGAG", "TACT"),
+            "http://identifiers.org/so/SO:0000139": ("TACT", "AATG"),
+            "http://identifiers.org/so/SO:0000316": ("AATG", "AGGT"),
+            "http://identifiers.org/so/SO:0000141": ("AGGT", "GCTT"),
         }
         fusion_site_name_map = {
-                sequence: name for name, sequence in FUSION_SITES.items()
-            }
+            sequence: name for name, sequence in FUSION_SITES.items()
+        }
 
         def _random_dna(length: int) -> str:
-                return "".join(random.choices("ACGT", k=length))
-        
+            return "".join(random.choices("ACGT", k=length))
+
         def _remove_internal_bsai_sites(sequence: str) -> tuple[str, int]:
             domesticated_sequence = sequence.upper()
             removals = 0
@@ -169,12 +169,14 @@ class BuildCompiler:
                 "BsaI Restriction enzyme not found in provided collections. Terminating domestication."
             )
 
-        ligase_impl = self.ligase_implementations[0] if self.ligase_implementations else None
+        ligase_impl = (
+            self.ligase_implementations[0] if self.ligase_implementations else None
+        )
         if ligase_impl is None:
             raise ValueError(
                 "No appropriate ligase found in provided collections. Terminating domestication."
             )
-    
+
         dsDNAs = []
         domesticated_parts = []
 
@@ -212,8 +214,10 @@ class BuildCompiler:
                 )
 
             part_sequence = self.sbol_doc.getSequence(part.sequences[0]).elements
-            domesticated_sequence, removed_sites = _remove_internal_bsai_sites( #TODO make it to return the initial sequence and the modified sequence
-                part_sequence
+            domesticated_sequence, removed_sites = (
+                _remove_internal_bsai_sites(  # TODO make it to return the initial sequence and the modified sequence
+                    part_sequence
+                )
             )
             print(
                 f"BsaI domestication check for {part.displayId}: "
@@ -229,7 +233,9 @@ class BuildCompiler:
                 + "GAGACC"
                 + _random_dna(35)
             )
-            insert_definition = self.sbol_doc.find(f"{part.displayId}_domestication_insert")
+            insert_definition = self.sbol_doc.find(
+                f"{part.displayId}_domestication_insert"
+            )
             if insert_definition is None:
                 insert_definition, insert_seq = dna_componentdefinition_with_sequence(
                     f"{part.displayId}_domestication_insert", insert_sequence
@@ -243,7 +249,9 @@ class BuildCompiler:
                 insert_definition.wasDerivedFrom = part.identity
                 self.sbol_doc.add_list([insert_definition, insert_seq])
 
-            insert_impl = self.sbol_doc.find(f"{part.displayId}_domestication_insert_impl")
+            insert_impl = self.sbol_doc.find(
+                f"{part.displayId}_domestication_insert_impl"
+            )
             if insert_impl is None:
                 insert_impl = sbol2.Implementation(
                     f"{insert_definition.displayId}_impl"
@@ -291,7 +299,7 @@ class BuildCompiler:
                 plasmid_dict, antibiotic_resistance=KAN
             )
         else:
-            compatible_plasmids = get_compatible_plasmids(plasmid_dict, self.backbone)
+            compatible_plasmids = get_compatible_plasmids(plasmid_dict, backbone)
 
         bsaI_impl = next(
             impl
@@ -367,6 +375,7 @@ class BuildCompiler:
                     if all(
                         s.identity != strain.identity
                         for s in existing.strain_definitions
+                        if s is not None
                     ):
                         existing.strain_definitions.append(strain)
 
@@ -392,6 +401,7 @@ class BuildCompiler:
                     if all(
                         s.identity != strain.identity
                         for s in existing.strain_definitions
+                        if s is not None
                     ):
                         existing.strain_definitions.append(strain)
 
@@ -504,7 +514,9 @@ class BuildCompiler:
                 get_or_pull(self.sbol_doc, self.sbh, component.definition)
                 for component in definition.getInSequentialOrder()
             ]
-            if any(set(component.roles) & PART_ROLES for component in component_definitions):
+            if any(
+                set(component.roles) & PART_ROLES for component in component_definitions
+            ):
                 return definition
 
         raise ValueError("No abstract design found in the SBOL document.")

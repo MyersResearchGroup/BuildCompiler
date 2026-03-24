@@ -16,7 +16,9 @@ def bacterial_transformation(
         ]  # TODO update with more sophisticated selection process?
         plasmid_cd = plasmid.plasmid_definition
 
-        transformation_activity = sbol2.Activity(f"transform_{chassis_md.name}")
+        transformation_activity = sbol2.Activity(
+            f"transform_{chassis_md.name}_with_{plasmid.name}"
+        )
         transformation_activity.name = "Bacterial Tranformation"
         transformation_activity.types = "http://sbols.org/v2#build"
 
