@@ -3,12 +3,118 @@ from Bio import Restriction
 from Bio.Seq import Seq
 from pydna.dseqrecord import Dseqrecord
 from itertools import product
+from buildcompiler.plasmid import Plasmid
 from typing import List, Union, Tuple
-from .constants import DNA_TYPES
+from .constants import (
+    CIRCULAR,
+    DNA_TYPES,
+    ENGINEERED_INSERT,
+    ENGINEERED_PLASMID,
+    ENGINEERED_REGION,
+    FIVE_PRIME_OVERHANG,
+    FUSION_SITES,
+    LINEAR,
+    PLASMID_VECTOR,
+    RESTRICTION_ENZYME,
+    RESTRICTION_ENZYME_ASSEMBLY_SCAR,
+    SINGLE_STRANDED,
+    THREE_PRIME_OVERHANG,
+)
 
 sbol2.Config.setHomespace("https://SBOL2Build.org")
 sbol2.Config.setOption(sbol2.ConfigOptions.SBOL_COMPLIANT_URIS, True)
 sbol2.Config.setOption(sbol2.ConfigOptions.SBOL_TYPED_URIS, False)
+
+
+class Assembly:
+    """Creates an Assembly Plan.
+
+    :param name: Name of the assembly plan ModuleDefinition.
+    :param part_plasmids: Parts in backbone to be assembled.
+    :param plasmid_acceptor_backbone:  Backbone in which parts are inserted on the assembly.
+    :param restriction_enzyme: Restriction enzyme name used by PyDNA. Case sensitive, follow standard restriction enzyme nomenclature, i.e. 'BsaI'
+    :param document: SBOL Document where the assembly plan will be created.
+    """
+
+    def __init__(  # TODO add fields for activity/agent/plan
+        self,
+        part_plasmids: List[Plasmid],
+        backbone_plasmid: Plasmid,
+        restriction_enzyme: sbol2.Implementation,  # TODO search for implementation in document, or domesticate the RE
+        ligase: sbol2.Implementation,
+        document: sbol2.Document,
+    ):
+        self.part_plasmids = part_plasmids
+        self.backbone = backbone_plasmid
+        self.restriction_enzyme = restriction_enzyme
+        self.ligase = ligase
+        self.extracted_parts = []  # list of tuples [ComponentDefinition, Sequence]
+        self.source_document = document
+        self.final_document = sbol2.Document()
+        self.assembly_activity = initialize_assembly_activity()
+        self.composites = []
+
+    def run(
+        self, include_extracted_parts=False
+    ) -> List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]:
+        """Runs full assembly simulation.
+
+        `document` parameter of golden_gate_assembly_plan object is updated by reference to include assembly plan ModuleDefinition and all related information.
+
+        Runs :func:`part_digestion` for all `part_plasmids` and :func:`backbone_digestion` for `plasmid_acceptor_backbone` with `restriction_enzyme`. Then runs :func:`ligation` with these parts to form composites.
+
+        :return: List of all composites generated, in the form of tuples of ComponentDefinition and Sequence.
+        """
+        for plasmid in self.part_plasmids:
+            plasmid_impl = plasmid.plasmid_implementations[
+                0
+            ]  # TODO update with more sophisticated selection process?
+            extracts_tuple_list, _ = part_digestion(
+                plasmid_impl,
+                [self.restriction_enzyme],
+                self.assembly_activity,
+                self.source_document,
+            )
+            append_extracts_to_doc(extracts_tuple_list, self.source_document)
+            if include_extracted_parts:
+                append_extracts_to_doc(extracts_tuple_list, self.final_document)
+            self.extracted_parts.append(extracts_tuple_list[0][0])
+
+        backbone_impl = self.backbone.plasmid_implementations[0]
+        extracts_tuple_list, _ = backbone_digestion(
+            backbone_impl,
+            [self.restriction_enzyme],
+            self.assembly_activity,
+            self.source_document,
+        )
+
+        append_extracts_to_doc(extracts_tuple_list, self.source_document)
+        if include_extracted_parts:
+            append_extracts_to_doc(extracts_tuple_list, self.final_document)
+        self.extracted_parts.append(extracts_tuple_list[0][0])
+
+        self.composites = ligation(
+            self.extracted_parts,
+            self.assembly_activity,
+            self.source_document,
+            self.final_document,
+            self.ligase,
+        )
+
+        self.final_document.add(self.assembly_activity)
+
+        composite_plasmid_objs = [
+            Plasmid(
+                self.final_document.get(impl.built),
+                None,
+                [impl],
+                [None],
+                self.source_document,
+            )
+            for impl in self.composites
+        ]
+
+        return composite_plasmid_objs, self.final_document
 
 
 def rebase_restriction_enzyme(name: str, **kwargs) -> sbol2.ComponentDefinition:
@@ -20,9 +126,9 @@ def rebase_restriction_enzyme(name: str, **kwargs) -> sbol2.ComponentDefinition:
     """
     definition = f"http://rebase.neb.com/rebase/enz/{name}.html"  # TODO: replace with getting the URI from Enzyme when REBASE identifiers become available in biopython 1.8
     cd = sbol2.ComponentDefinition(name)
-    cd.types = sbol2.BIOPAX_PROTEIN
+    cd.types = [sbol2.BIOPAX_PROTEIN]
     cd.name = name
-    cd.roles = ["http://identifiers.org/obi/OBI:0000732"]
+    cd.roles = [RESTRICTION_ENZYME]
     cd.wasDerivedFrom = definition
     cd.description = f"Restriction enzyme {name} from REBASE."
     return cd
@@ -145,12 +251,8 @@ def part_in_backbone_from_sbol(
             locations=[open_backbone_location1, open_backbone_location2]
         )
     else:
-        part_in_backbone_component.addRole(
-            "http://identifiers.org/so/SO:0000988"
-        )  # circular
-        part_in_backbone_component.addRole(
-            "https://identifiers.org/so/SO:0000755"
-        )  # plasmid vector
+        part_in_backbone_component.addRole(CIRCULAR)
+        part_in_backbone_component.addRole(PLASMID_VECTOR)
         # creating backbone feature
         open_backbone_location1 = sbol2.Range(
             uri="backboneloc1", start=1, end=part_location[0] + fusion_site_length - 1
@@ -191,41 +293,31 @@ def is_circular(obj: sbol2.ComponentDefinition) -> bool:
     :return: true if circular
     """
     return any(n == sbol2.SO_CIRCULAR for n in obj.types) or any(
-        n == "http://identifiers.org/so/SO:0000637" for n in obj.roles
+        n == ENGINEERED_PLASMID for n in obj.roles
     )  # temporarily allowing 'engineered plasmid' role to qualify as circular
 
 
 def part_digestion(
-    reactant: Union[sbol2.ComponentDefinition, sbol2.ModuleDefinition],
-    restriction_enzymes: List[sbol2.ComponentDefinition],
-    assembly_plan: sbol2.ModuleDefinition,
+    reactant: sbol2.Implementation,
+    restriction_enzymes: List[sbol2.Implementation],
+    assembly_activity: sbol2.Activity,
     document: sbol2.Document,
-    **kwargs,
-) -> Tuple[
-    List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]], sbol2.ModuleDefinition
-]:
+) -> Tuple[List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]]:
     """Runs a simulated digestion on the top level sequence in the reactant ComponentDefinition or ModuleDefinition with the given restriciton enzymes, creating a extracted part ComponentDefinition, a digestion Interaction, and converts existing scars to 5' and 3' overhangs.
-    The product ComponentDefinition is assumed the open backbone in this case.
+    The product ComponentDefinition is assumed the digested part in this case.
 
     Written for use with the SBOL2.3 output of https://sbolcanvas.org
 
-    :param reactant: DNA to be digested as SBOL ComponentDefinition or ModuleDefinition, usually a part_in_backbone. ComponentDefinition is the best-practice type for plasmids..
+    :param reactant: Plasmid DNA to be digested as SBOL ComponentDefinition
     :param restriction_enzymes: Restriction enzymes as :class:`sbol2.ComponentDefinition`
                                 (generate with :func:`rebase_restriction_enzyme`).
     :param assembly_plan: SBOL ModuleDefinition to contain the functional components, interactions, and participations
     :param document: original SBOL2 document to be used to extract referenced objects.
     :return: A tuple of a list ComponentDefinitions and Sequences, and an assembly plan ModuleDefinition.
     """
-    if type(reactant) is sbol2.ModuleDefinition:
-        # extract component definition from module
-        reactant_displayId = reactant.functionalComponents[0].displayId
-        reactant_def_URI = reactant.functionalComponents[0].definition
-        reactant_component_definition = document.getComponentDefinition(
-            reactant_def_URI
-        )
-    else:
-        reactant_displayId = reactant.displayId
-        reactant_component_definition = reactant
+
+    reactant_component_definition = document.get(reactant.built)
+    reactant_displayId = reactant_component_definition.displayId
 
     types = set(reactant_component_definition.types or [])
 
@@ -237,33 +329,40 @@ def part_digestion(
         raise ValueError(
             f"The reactant needs to have precisely one sequence. The input reactant has {len(reactant.sequences)} sequences"
         )
-    participations = []
     extracts_list = []
     restriction_enzymes_pydna = []
 
-    for re in restriction_enzymes:
-        enzyme = Restriction.__dict__[re.name]
+    assembly_activity.usages.add(
+        sbol2.Usage(
+            uri=f"{reactant.displayId}",
+            entity=reactant.identity,
+            role="http://sbols.org/v2#build",
+        )
+    )
+
+    for enzyme_implmentation in restriction_enzymes:
+        enzyme_definition = document.get(enzyme_implmentation.built)
+
+        enzyme = Restriction.__dict__[enzyme_definition.name]
         restriction_enzymes_pydna.append(enzyme)
 
-        enzyme_component = sbol2.FunctionalComponent(uri=f"{re.name}_enzyme")
-        enzyme_component.definition = re
-        enzyme_component.displayID = f"{re.name}_enzyme"
-        enzyme_in_module = False
+        enzyme_in_activity = False
 
-        for comp in assembly_plan.functionalComponents:
-            if comp.displayId == enzyme_component.displayID:
-                enzyme_component = comp
-                enzyme_in_module = True
+        for usage in assembly_activity.usages:
+            entity_URI = usage.entity
+            # entity = document.get(entity_URI)
 
-        if not enzyme_in_module:
-            assembly_plan.functionalComponents.add(enzyme_component)
+            if entity_URI == enzyme_implmentation.identity:
+                enzyme_in_activity = True
 
-        modifier_participation = sbol2.Participation(uri="restriction")
-        modifier_participation.participant = enzyme_component
-        modifier_participation.roles = [
-            "http://identifiers.org/biomodels.sbo/SBO:0000019"
-        ]
-        participations.append(modifier_participation)
+        if not enzyme_in_activity:
+            assembly_activity.usages.add(
+                sbol2.Usage(
+                    uri=f"{enzyme_definition.name}_enzyme",
+                    entity=enzyme_implmentation.identity,
+                    role="http://sbols.org/v2#build",
+                )
+            )
 
     # Inform topology to PyDNA, if not found assuming linear.
     if is_circular(reactant_component_definition):
@@ -284,9 +383,9 @@ def part_digestion(
             f"Not supported number of products. Found{len(digested_reactant)}"
         )
     elif circular and len(digested_reactant) == 2:
-        part_extract, backbone = sorted(digested_reactant, key=len)
+        part_extract, _ = sorted(digested_reactant, key=len)
     elif linear and len(digested_reactant) == 3:
-        prefix, part_extract, suffix = digested_reactant
+        _, part_extract, _ = digested_reactant
     else:
         raise ValueError(
             f"Reactant {reactant_component_definition.displayId} has no valid topology type, with {len(digested_reactant)} digested products, types: {reactant_component_definition.types}, and roles: {reactant_component_definition.roles}"
@@ -301,18 +400,19 @@ def part_digestion(
     )
     product_sequence = str(part_extract.seq)
     prod_component_definition, prod_seq = dna_componentdefinition_with_sequence(
-        identity=f"{reactant.displayId if isinstance(reactant, sbol2.ComponentDefinition) else reactant.functionalComponents[0].displayId}_extracted_part",
+        identity=f"{reactant_component_definition.displayId}_extracted_part",
         sequence=product_sequence,
-        **kwargs,
     )
     prod_component_definition.wasDerivedFrom = reactant_component_definition.identity
     extracts_list.append((prod_component_definition, prod_seq))
 
+    # TODO explore how much granulatity in overhang representation is needed to preserve final composite annotations/components
+
     # five prime overhang
     five_prime_oh_definition = sbol2.ComponentDefinition(
         uri=f"{reactant_displayId}_five_prime_oh"
-    )  # TODO: ensure circular type is preserved for sbh visualization
-    five_prime_oh_definition.addRole("http://identifiers.org/so/SO:0001932")
+    )
+    five_prime_oh_definition.addRole(FIVE_PRIME_OVERHANG)
     five_prime_oh_location = sbol2.Range(
         uri="five_prime_oh_location", start=1, end=len(product_5_prime_ss_end)
     )
@@ -323,7 +423,7 @@ def part_digestion(
     five_prime_overhang_annotation = sbol2.SequenceAnnotation(uri="five_prime_overhang")
     five_prime_overhang_annotation.locations.add(five_prime_oh_location)
 
-    # extracted part => point straight to part from sbolcanvas
+    # extracted part => point straight to part of interest
     part_location = sbol2.Range(
         uri=f"{reactant_displayId}_part_location",
         start=len(product_5_prime_ss_end) + 1,
@@ -336,7 +436,7 @@ def part_digestion(
     three_prime_oh_definition = sbol2.ComponentDefinition(
         uri=f"{reactant_displayId}_three_prime_oh"
     )
-    three_prime_oh_definition.addRole("http://identifiers.org/so/SO:0001933")
+    three_prime_oh_definition.addRole(THREE_PRIME_OVERHANG)
     three_prime_oh_location = sbol2.Range(
         uri="three_prime_oh_location",
         start=len(product_sequence) - len(product_3_prime_ss_end) + 1,
@@ -360,7 +460,7 @@ def part_digestion(
 
     original_part_def_URI = ""
 
-    # enccode ontologies of overhangs
+    # enccode ontologies of overhangs (may no longer be necessary)
     for definition in document.componentDefinitions:
         for seqURI in definition.sequences:
             seq = document.getSequence(seqURI)
@@ -372,9 +472,7 @@ def part_digestion(
                 )
                 three_prime_sequence.wasDerivedFrom = seq.identity
                 three_prime_oh_definition.sequences = [three_prime_sequence]
-                three_prime_oh_definition.types.append(
-                    "http://identifiers.org/so/SO:0000984"
-                )  # single-stranded for overhangs
+                three_prime_oh_definition.types.append(SINGLE_STRANDED)
 
                 extracts_list.append((three_prime_oh_definition, three_prime_sequence))
                 extracts_list.append((definition, seq))  # add scars to list
@@ -391,9 +489,7 @@ def part_digestion(
                 )
                 five_prime_sequence.wasDerivedFrom = seq.identity
                 five_prime_oh_definition.sequences = [five_prime_sequence]
-                five_prime_oh_definition.types.append(
-                    "http://identifiers.org/so/SO:0000984"
-                )  # single-stranded for overhangs
+                five_prime_oh_definition.types.append(SINGLE_STRANDED)
 
                 extracts_list.append((five_prime_oh_definition, five_prime_sequence))
                 extracts_list.append((definition, seq))
@@ -407,53 +503,18 @@ def part_digestion(
     prod_component_definition.sequenceAnnotations.add(three_prime_overhang_annotation)
     prod_component_definition.sequenceAnnotations.add(five_prime_overhang_annotation)
     prod_component_definition.sequenceAnnotations.add(part_extract_annotation)
-    prod_component_definition.addRole(
-        "https://identifiers.org/so/SO:0000915"
-    )  # engineered insert
-    prod_component_definition.addType("http://identifiers.org/so/SO:0000987")  # linear
+    prod_component_definition.addRole(ENGINEERED_INSERT)
+    prod_component_definition.addType(LINEAR)
 
-    # Add reference to part in backbone
-    reactant_component = sbol2.FunctionalComponent(uri=f"{reactant_displayId}_reactant")
-    reactant_component.definition = reactant_component_definition
-    assembly_plan.functionalComponents.add(reactant_component)
-
-    # Create reactant Participation.
-    reactant_participation = sbol2.Participation(uri=f"{reactant_displayId}_reactant")
-    reactant_participation.participant = reactant_component
-    reactant_participation.roles = [sbol2.SBO_REACTANT]
-    participations.append(reactant_participation)
-
-    prod_component = sbol2.FunctionalComponent(
-        uri=f"{reactant_displayId}_digestion_product"
-    )
-    prod_component.definition = prod_component_definition
-    assembly_plan.functionalComponents.add(prod_component)
-
-    product_participation = sbol2.Participation(uri=f"{reactant_displayId}_product")
-    product_participation.participant = prod_component
-    product_participation.roles = [sbol2.SBO_PRODUCT]
-    participations.append(product_participation)
-
-    # Make Interaction
-    interaction = sbol2.Interaction(
-        uri=f"{reactant_displayId}_digestion_interaction",
-        interaction_type="http://identifiers.org/biomodels.sbo/SBO:0000178",
-    )
-    interaction.participations = participations
-    assembly_plan.interactions.add(interaction)
-
-    return extracts_list, assembly_plan
+    return extracts_list, assembly_activity
 
 
 def backbone_digestion(
-    reactant: Union[sbol2.ComponentDefinition, sbol2.ModuleDefinition],
-    restriction_enzymes: List[sbol2.ComponentDefinition],
-    assembly_plan: sbol2.ModuleDefinition,
+    reactant: sbol2.Implementation,
+    restriction_enzymes: List[sbol2.Implementation],
+    assembly_activity: sbol2.Activity,
     document: sbol2.Document,
-    **kwargs,
-) -> Tuple[
-    List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]], sbol2.ModuleDefinition
-]:
+) -> Tuple[List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]]:
     """Runs a simulated digestion on the top level sequence in the reactant ComponentDefinition or ModuleDefinition with the given restriciton enzymes, creating an open backbone ComponentDefinition, a digestion Interaction, and converts existing scars to 5' and 3' overhangs.
     The product ComponentDefinition is assumed the open backbone in this case.
 
@@ -466,16 +527,8 @@ def backbone_digestion(
     :param document: original SBOL2 document to be used to extract referenced objects.
     :return: A tuple of a list ComponentDefinitions and Sequences, and an assembly plan ModuleDefinition.
     """
-    if type(reactant) is sbol2.ModuleDefinition:
-        # extract component definition from module
-        reactant_displayId = reactant.functionalComponents[0].displayId
-        reactant_def_URI = reactant.functionalComponents[0].definition
-        reactant_component_definition = document.getComponentDefinition(
-            reactant_def_URI
-        )
-    else:
-        reactant_displayId = reactant.displayId
-        reactant_component_definition = reactant
+    reactant_component_definition = document.get(reactant.built)
+    reactant_displayId = reactant_component_definition.displayId
 
     types = set(reactant_component_definition.types or [])
 
@@ -487,33 +540,40 @@ def backbone_digestion(
         raise ValueError(
             f"The reactant needs to have precisely one sequence. The input reactant has {len(reactant.sequences)} sequences"
         )
-    participations = []
     extracts_list = []
     restriction_enzymes_pydna = []
 
-    for re in restriction_enzymes:
-        enzyme = Restriction.__dict__[re.name]
+    assembly_activity.usages.add(
+        sbol2.Usage(
+            uri=f"{reactant.displayId}",
+            entity=reactant.identity,
+            role="http://sbols.org/v2#build",
+        )
+    )
+
+    for enzyme_implmentation in restriction_enzymes:
+        enzyme_definition = document.get(enzyme_implmentation.built)
+
+        enzyme = Restriction.__dict__[enzyme_definition.name]
         restriction_enzymes_pydna.append(enzyme)
 
-        enzyme_component = sbol2.FunctionalComponent(uri=f"{re.name}_enzyme")
-        enzyme_component.definition = re
-        enzyme_component.displayID = f"{re.name}_enzyme"
-        enzyme_in_module = False
+        enzyme_in_activity = False
 
-        for comp in assembly_plan.functionalComponents:
-            if comp.displayId == enzyme_component.displayID:
-                enzyme_component = comp
-                enzyme_in_module = True
+        for usage in assembly_activity.usages:
+            entity_URI = usage.entity
+            # entity = document.get(entity_URI)
 
-        if not enzyme_in_module:
-            assembly_plan.functionalComponents.add(enzyme_component)
+            if entity_URI == enzyme_implmentation.identity:
+                enzyme_in_activity = True
 
-        modifier_participation = sbol2.Participation(uri="restriction")
-        modifier_participation.participant = enzyme_component
-        modifier_participation.roles = [
-            "http://identifiers.org/biomodels.sbo/SBO:0000019"
-        ]  # modifier
-        participations.append(modifier_participation)
+        if not enzyme_in_activity:
+            assembly_activity.usages.add(
+                sbol2.Usage(
+                    uri=f"{enzyme_definition.name}_enzyme",
+                    entity=enzyme_implmentation.identity,
+                    role="http://sbols.org/v2#build",
+                )
+            )
 
     # Inform topology to PyDNA, if not found assuming linear.
     if is_circular(reactant_component_definition):
@@ -527,21 +587,21 @@ def backbone_digestion(
     reactant_seq = document.getSequence(reactant_seq).elements
     # Dseqrecord is from PyDNA package with reactant sequence
     ds_reactant = Dseqrecord(reactant_seq, circular=circular)
-    digested_reactant = ds_reactant.cut(
-        restriction_enzymes_pydna
-    )  # TODO see if ds_reactant.cut is working, causing problems downstream
+    digested_reactant = ds_reactant.cut(restriction_enzymes_pydna)
 
     if len(digested_reactant) < 2 or len(digested_reactant) > 3:
         raise ValueError(
             f"Not supported number of products. Found: {len(digested_reactant)}"
-        )  # TODO make more specific for buildplanner
+        )
     # TODO select them based on content rather than size.
     elif circular and len(digested_reactant) == 2:
-        part_extract, backbone = sorted(digested_reactant, key=len)
+        _, backbone = sorted(digested_reactant, key=len)
     elif linear and len(digested_reactant) == 3:
         prefix, part_extract, suffix = digested_reactant
     else:
-        raise ValueError("The reactant has no valid topology type")
+        raise ValueError(
+            f"Reactant {reactant_component_definition.displayId} has no valid topology type, with {len(digested_reactant)} digested products, types: {reactant_component_definition.types}, and roles: {reactant_component_definition.roles}"
+        )
 
     # Compute the length of single strand sticky ends or fusion sites
     product_5_prime_ss_strand, product_5_prime_ss_end = backbone.seq.five_prime_end()
@@ -550,7 +610,6 @@ def backbone_digestion(
     prod_backbone_definition, prod_seq = dna_componentdefinition_with_sequence(
         identity=f"{reactant_component_definition.displayId}_extracted_backbone",
         sequence=product_sequence,
-        **kwargs,
     )
     prod_backbone_definition.wasDerivedFrom = reactant_component_definition.identity
     extracts_list.append((prod_backbone_definition, prod_seq))
@@ -558,10 +617,8 @@ def backbone_digestion(
     # five prime overhang
     five_prime_oh_definition = sbol2.ComponentDefinition(
         uri=f"{reactant_displayId}_five_prime_oh"
-    )  # TODO: ensure circular type is preserved for sbh visualization
-    five_prime_oh_definition.addRole(
-        "http://identifiers.org/so/SO:0001932"
-    )  # overhang 5 prime
+    )
+    five_prime_oh_definition.addRole(FIVE_PRIME_OVERHANG)
     five_prime_oh_location = sbol2.Range(
         uri="five_prime_oh_location", start=1, end=len(product_5_prime_ss_end)
     )
@@ -587,9 +644,7 @@ def backbone_digestion(
     three_prime_oh_definition = sbol2.ComponentDefinition(
         uri=f"{reactant_displayId}_three_prime_oh"
     )
-    three_prime_oh_definition.addRole(
-        "http://identifiers.org/so/SO:0001933"
-    )  # overhang 3 prime
+    three_prime_oh_definition.addRole(THREE_PRIME_OVERHANG)
     three_prime_oh_location = sbol2.Range(
         uri="three_prime_oh_location",
         start=len(product_sequence) - len(product_3_prime_ss_end) + 1,
@@ -626,9 +681,7 @@ def backbone_digestion(
                 )
                 three_prime_sequence.wasDerivedFrom = seq.identity
                 three_prime_oh_definition.sequences = [three_prime_sequence]
-                three_prime_oh_definition.types.append(
-                    "http://identifiers.org/so/SO:0000984"
-                )  # single-stranded for overhangs
+                three_prime_oh_definition.types.append(SINGLE_STRANDED)
 
                 extracts_list.append((three_prime_oh_definition, three_prime_sequence))
                 extracts_list.append((definition, seq))  # add scars to list
@@ -645,9 +698,7 @@ def backbone_digestion(
                 )
                 five_prime_sequence.wasDerivedFrom = seq.identity
                 five_prime_oh_definition.sequences = [five_prime_sequence]
-                five_prime_oh_definition.types.append(
-                    "http://identifiers.org/so/SO:0000984"
-                )  # single-stranded for overhangs
+                five_prime_oh_definition.types.append(SINGLE_STRANDED)
 
                 extracts_list.append((five_prime_oh_definition, five_prime_sequence))
                 extracts_list.append((definition, seq))
@@ -661,45 +712,9 @@ def backbone_digestion(
     prod_backbone_definition.sequenceAnnotations.add(three_prime_overhang_annotation)
     prod_backbone_definition.sequenceAnnotations.add(five_prime_overhang_annotation)
     prod_backbone_definition.sequenceAnnotations.add(backbone_extract_annotation)
-    prod_backbone_definition.addRole("https://identifiers.org/so/SO:0000755")
+    prod_backbone_definition.addRole(PLASMID_VECTOR)
 
-    # Add reference to part in backbone
-    reactant_component = sbol2.FunctionalComponent(
-        uri=f"{reactant_component_definition.displayId}_backbone_reactant"
-    )
-    reactant_component.definition = reactant_component_definition
-    assembly_plan.functionalComponents.add(reactant_component)
-
-    # Create reactant Participation.
-    reactant_participation = sbol2.Participation(
-        uri=f"{reactant_component_definition.displayId}_backbone_reactant"
-    )
-    reactant_participation.participant = reactant_component
-    reactant_participation.roles = [sbol2.SBO_REACTANT]
-    participations.append(reactant_participation)
-
-    prod_component = sbol2.FunctionalComponent(
-        uri=f"{reactant_component_definition.displayId}_backbone_digestion_product"
-    )
-    prod_component.definition = prod_backbone_definition
-    assembly_plan.functionalComponents.add(prod_component)
-
-    product_participation = sbol2.Participation(
-        uri=f"{reactant_component_definition.displayId}_backbone_product"
-    )
-    product_participation.participant = prod_component
-    product_participation.roles = [sbol2.SBO_PRODUCT]
-    participations.append(product_participation)
-
-    # Make Interaction
-    interaction = sbol2.Interaction(
-        uri=f"{reactant_component_definition.displayId}_digestion_interaction",
-        interaction_type="http://identifiers.org/biomodels.sbo/SBO:0000178",
-    )
-    interaction.participations = participations
-    assembly_plan.interactions.add(interaction)
-
-    return extracts_list, assembly_plan
+    return extracts_list, assembly_activity
 
 
 def number_to_suffix(n):
@@ -719,34 +734,28 @@ def number_to_suffix(n):
 
 def ligation(
     reactants: List[sbol2.ComponentDefinition],
-    assembly_plan: sbol2.ModuleDefinition,
-    document: sbol2.Document,
-    ligase: sbol2.ComponentDefinition = None,
-) -> List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]:
+    assembly_activity: sbol2.Activity,
+    source_document: sbol2.Document,
+    final_document: sbol2.Document,
+    ligase: sbol2.Implementation,
+) -> List[sbol2.Implementation]:
     """Ligates Components using base complementarity and creates product Components and a ligation Interaction.
 
     :param reactants: DNA parts to be ligated as SBOL ModuleDefinition.
-    :param assembly_plan: SBOL ModuleDefinition to contain the functional components, interactions, and participants
+    :param assembly_activity: SBOL activity to track assembly inputs & outputs
     :param document: SBOL2 document containing all reactant ComponentDefinitions.
-    :param ligase: as SBOL ComponentDefinition, optional (defaults to T4 ligase)
+    :param ligase: as SBOL Implementation
     :return: List of all composites generated, in the form of tuples of ComponentDefinition and Sequence.
     """
-    if ligase is None:
-        ligase = sbol2.ComponentDefinition(uri="T4_Ligase")
-        ligase.name = "T4_Ligase"
-        ligase.types = sbol2.BIOPAX_PROTEIN
-        document.add(ligase)
+    enzyme_definition = source_document.get(ligase.built)
 
-    ligase_component = sbol2.FunctionalComponent(uri="T4_Ligase")
-    ligase_component.definition = ligase
-    ligase_component.roles = ["http://identifiers.org/ncit/NCIT:C16796"]
-    assembly_plan.functionalComponents.add(ligase_component)
-
-    modifier_participation = sbol2.Participation(uri="ligation")
-    modifier_participation.participant = ligase_component
-    modifier_participation.roles = [
-        "http://identifiers.org/biomodels.sbo/SBO:0000019"
-    ]  # modifier
+    assembly_activity.usages.add(
+        sbol2.Usage(
+            uri=f"{enzyme_definition.name}",
+            entity=ligase.identity,
+            role="http://sbols.org/v2#build",
+        )
+    )
 
     # Create a dictionary that maps each first and last 4 letters to a list of strings that have those letters.
     reactant_parts = []
@@ -773,9 +782,9 @@ def ligation(
             raise ValueError(
                 f"Fusion sites of different length within the same part. Check {reactant.identity}"
             )
-        if "https://identifiers.org/so/SO:0000755" in reactant.roles:
+        if PLASMID_VECTOR in reactant.roles:
             reactant_parts.append(reactant)
-        elif "https://identifiers.org/so/SO:0000915" in reactant.roles:
+        elif ENGINEERED_INSERT in reactant.roles:
             reactant_parts.append(reactant)
         else:
             raise ValueError(f"Part {reactant.identity} does not have a valid role")
@@ -785,10 +794,14 @@ def ligation(
     for reactant in reactant_parts:
         reactant_seq = reactant.sequences[0]
         first_four_letters = (
-            document.getSequence(reactant_seq).elements[:fusion_site_length].lower()
+            source_document.getSequence(reactant_seq)
+            .elements[:fusion_site_length]
+            .lower()
         )
         last_four_letters = (
-            document.getSequence(reactant_seq).elements[-fusion_site_length:].lower()
+            source_document.getSequence(reactant_seq)
+            .elements[-fusion_site_length:]
+            .lower()
         )
         part_syntax = f"{first_four_letters}_{last_four_letters}"
         if part_syntax not in groups:
@@ -804,7 +817,7 @@ def ligation(
     for combination in list_of_parts_per_combination:
         list_of_parts_per_composite = [combination[0]]
         insert_sequence_uri = combination[0].sequences[0]
-        insert_sequence = document.getSequence(insert_sequence_uri).elements
+        insert_sequence = source_document.getSequence(insert_sequence_uri).elements
         remaining_parts = list(combination[1:])
         it = 1
         while remaining_parts:
@@ -813,14 +826,14 @@ def ligation(
                 # match insert sequence 5' to part 3'
                 part_sequence_uri = part.sequences[0]
                 if (
-                    document.getSequence(part_sequence_uri)
+                    source_document.getSequence(part_sequence_uri)
                     .elements[:fusion_site_length]
                     .lower()
                     == insert_sequence[-fusion_site_length:].lower()
                 ):
                     insert_sequence = (
                         insert_sequence[:-fusion_site_length]
-                        + document.getSequence(part_sequence_uri).elements
+                        + source_document.getSequence(part_sequence_uri).elements
                     )
                     list_of_parts_per_composite.append(
                         part
@@ -828,13 +841,13 @@ def ligation(
                     remaining_parts.remove(part)
                 # match insert sequence 3' to part 5'
                 elif (
-                    document.getSequence(part_sequence_uri)
+                    source_document.getSequence(part_sequence_uri)
                     .elements[-fusion_site_length:]
                     .lower()
                     == insert_sequence[:fusion_site_length].lower()
                 ):
                     insert_sequence = (
-                        document.getSequence(part_sequence_uri).elements
+                        source_document.getSequence(part_sequence_uri).elements
                         + insert_sequence[fusion_site_length:]
                     )
                     list_of_parts_per_composite.insert(0, part)
@@ -851,85 +864,84 @@ def ligation(
         list_of_composites_per_assembly.append(list_of_parts_per_composite)
 
     # transform list_of_parts_per_assembly into list of composites
-    products_list = []
-    participations = []
+    product_impl_list = []
     composite_number = 1
-    participations.append(modifier_participation)
 
     # TODO: use componentinstances to append "subcomponents" to each definition that is a composite component. all composites share the "subcomponents"
     for composite in list_of_composites_per_assembly:  # a composite of the form [A,B,C]
         # calculate sequence
         composite_sequence_str = ""
-        participations = []
         prev_three_prime = (
             composite[len(composite) - 1].components[1].definition
         )  # componentdefinitionuri
-        prev_three_prime_definition = document.getComponentDefinition(prev_three_prime)
-        scar_index = 1
+        prev_three_prime_definition = source_document.getComponentDefinition(
+            prev_three_prime
+        )
         anno_list = []
 
         part_extract_definitions = []
         for part_extract in composite:
             part_extract_sequence_uri = part_extract.sequences[0]
-            part_extract_sequence = document.getSequence(
+            part_extract_sequence = source_document.getSequence(
                 part_extract_sequence_uri
             ).elements
             temp_extract_components = []
-            reactant_component = sbol2.FunctionalComponent(
-                uri=f"{part_extract.displayId}_reactant"
-            )
-            reactant_component.definition = part_extract  # TODO do not make new components, instead derive product functionalcomponents from the assembly_plan moduledefinition to add to the ligation interaction/participation
-            for fc in assembly_plan.functionalComponents:
-                if fc.definition == reactant_component.definition:
-                    reactant_component = fc
-
-            reactant_participation = sbol2.Participation(
-                uri=f"{part_extract.displayId}_ligation"
-            )
-            reactant_participation.participant = reactant_component
-            reactant_participation.roles = [sbol2.SBO_REACTANT]
-            participations.append(reactant_participation)
 
             for comp in part_extract.components:
                 if (
-                    "http://identifiers.org/so/SO:0001932"
-                    in document.getComponentDefinition(comp.definition).roles
-                ):  # five prime
+                    FIVE_PRIME_OVERHANG
+                    in source_document.getComponentDefinition(comp.definition).roles
+                ):
+                    sequence = source_document.getSequence(
+                        prev_three_prime_definition.sequences[0]
+                    ).elements
+
+                    fusion_site = None
+
+                    for (
+                        key,
+                        seq,
+                    ) in (
+                        FUSION_SITES.items()
+                    ):  # TODO error handling for fusion site not found?
+                        if seq == sequence.upper():
+                            fusion_site = key
+
                     scar_definition = sbol2.ComponentDefinition(
-                        uri=f"Ligation_Scar_{number_to_suffix(scar_index)}"
+                        uri=f"Ligation_Scar_{fusion_site}"
                     )
                     scar_sequence = sbol2.Sequence(
-                        uri=f"Ligation_Scar_{number_to_suffix(scar_index)}_sequence",
-                        elements=document.getSequence(
-                            prev_three_prime_definition.sequences[0]
-                        ).elements,
+                        uri=f"Ligation_Scar_{fusion_site}_sequence",
+                        elements=sequence,
                     )
                     scar_definition.sequences = [scar_sequence]
                     scar_definition.wasDerivedFrom = [comp.definition, prev_three_prime]
-                    scar_definition.roles = ["http://identifiers.org/so/SO:0001953"]
+                    scar_definition.roles = [RESTRICTION_ENZYME_ASSEMBLY_SCAR]
                     temp_extract_components.append(scar_definition.identity)
 
-                    add_object_to_doc(scar_definition, document)
-                    add_object_to_doc(scar_sequence, document)
+                    add_object_to_doc(scar_definition, source_document)
+                    add_object_to_doc(scar_sequence, source_document)
+
+                    add_object_to_doc(scar_definition, final_document)
+                    add_object_to_doc(scar_sequence, final_document)
 
                     scar_location = sbol2.Range(
-                        uri=f"Ligation_Scar_{number_to_suffix(scar_index)}_location",
+                        uri=f"Ligation_Scar_{fusion_site}_location",
                         start=len(composite_sequence_str) + 1,
                         end=len(composite_sequence_str) + fusion_site_length,
                     )
                     scar_anno = sbol2.SequenceAnnotation(
-                        uri=f"Ligation_Scar_{number_to_suffix(scar_index)}_annotation"
+                        uri=f"Ligation_Scar_{fusion_site}_annotation"
                     )
                     scar_anno.locations.add(scar_location)
                     anno_list.append(scar_anno)
-                    scar_index += 1
                 elif (
-                    "http://identifiers.org/so/SO:0001933"
-                    in document.getComponentDefinition(comp.definition).roles
+                    THREE_PRIME_OVERHANG
+                    in source_document.getComponentDefinition(comp.definition).roles
                 ):  # three prime
                     prev_three_prime = comp.definition
-                    prev_three_prime_definition = document.getComponentDefinition(
-                        prev_three_prime
+                    prev_three_prime_definition = (
+                        source_document.getComponentDefinition(prev_three_prime)
                     )
                 else:
                     temp_extract_components.append(comp.definition)
@@ -958,45 +970,44 @@ def ligation(
             )
         )
         composite_component_definition.name = f"composite_{composite_number}"
-        composite_component_definition.addRole(
-            "http://identifiers.org/so/SO:0000804"
-        )  # engineered region
-        composite_component_definition.addType("http://identifiers.org/so/SO:0000988")
+        composite_component_definition.addRole(ENGINEERED_REGION)
+        composite_component_definition.addType(CIRCULAR)
+
+        prev_part_extract = None
 
         for i, definition in enumerate(part_extract_definitions):
-            def_object = document.getComponentDefinition(definition)
+            def_object = source_document.getComponentDefinition(definition)
             comp = sbol2.Component(uri=def_object.displayId)
             comp.definition = definition
-            composite_component_definition.components.add(comp)
 
+            composite_component_definition.components.add(comp)
             anno_list[i].component = comp
+
+            if prev_part_extract:
+                _create_precedes_restriction(
+                    composite_component_definition, prev_part_extract, comp
+                )
+
+            prev_part_extract = comp
+
+        # _create_precedes_restriction(composite_component_definition, prev_part_extract, composite_component_definition.components[0]) # final component precedes first component; defining circular order
 
         composite_component_definition.sequenceAnnotations = anno_list
 
-        prod_functional_component = sbol2.FunctionalComponent(
-            uri=f"{composite_component_definition.name}"
+        composite_implementation = sbol2.Implementation(
+            f"{composite_component_definition.displayId}_impl"
         )
-        prod_functional_component.definition = composite_component_definition
-        assembly_plan.functionalComponents.add(prod_functional_component)
+        composite_implementation.built = composite_component_definition.identity
+        composite_implementation.wasGeneratedBy = assembly_activity.identity
 
-        product_participation = sbol2.Participation(
-            uri=f"{composite_component_definition.name}_product"
+        final_document.add_list(
+            [composite_component_definition, composite_seq, composite_implementation]
         )
-        product_participation.participant = prod_functional_component
-        product_participation.roles = [sbol2.SBO_PRODUCT]
-        participations.append(product_participation)
 
-        # Make Interaction
-        interaction = sbol2.Interaction(
-            uri=f"{composite_component_definition.name}_ligation_interaction",
-            interaction_type="http://identifiers.org/biomodels.sbo/SBO:0000695",
-        )
-        interaction.participations = participations
-        assembly_plan.interactions.add(interaction)
-
-        products_list.append([composite_component_definition, composite_seq])
+        product_impl_list.append(composite_implementation)
         composite_number += 1
-    return products_list
+
+    return product_impl_list  # TODO instead of returning list of products CDs to append to doc, append all CDs and return list of their implementations
 
 
 def append_extracts_to_doc(
@@ -1010,7 +1021,6 @@ def append_extracts_to_doc(
     """
     for extract, sequence in extract_tuples:
         try:
-            print("adding: " + extract.displayId)
             add_object_to_doc(extract, doc)
             add_object_to_doc(sequence, doc)
         except Exception as e:
@@ -1033,78 +1043,36 @@ def add_object_to_doc(
             raise e
 
 
-class golden_gate_assembly_plan:
-    """Creates an Assembly Plan.
+def initialize_assembly_activity():
+    activity = sbol2.Activity("assembly")
 
-    :param name: Name of the assembly plan ModuleDefinition.
-    :param parts_in_backbone: Parts in backbone to be assembled.
-    :param plasmid_acceptor_backbone:  Backbone in which parts are inserted on the assembly.
-    :param restriction_enzyme: Restriction enzyme name used by PyDNA. Case sensitive, follow standard restriction enzyme nomenclature, i.e. 'BsaI'
-    :param document: SBOL Document where the assembly plan will be created.
-    """
+    activity.name = "DNA Assembly"
+    activity.types = "http://sbols.org/v2#build"
 
-    def __init__(
-        self,
-        name: str,
-        parts_in_backbone: List[sbol2.Document],
-        plasmid_acceptor_backbone: sbol2.Document,
-        restriction_enzyme: str,
-        document: sbol2.Document,
-    ):
-        self.name = name
-        self.parts_in_backbone = parts_in_backbone
-        self.backbone = plasmid_acceptor_backbone
-        self.restriction_enzyme = rebase_restriction_enzyme(restriction_enzyme)
-        self.extracted_parts = []  # list of tuples [ComponentDefinition, Sequence]
-        self.document = document
+    activity_association = sbol2.Association("assemble_")
 
-        self.assembly_plan = sbol2.ModuleDefinition(name)
-        self.document.add(self.assembly_plan)
-        self.document.add(self.restriction_enzyme)
-        self.composites = []
+    assembly_plan = sbol2.Plan("assembly_plan")
 
-    def run(
-        self, plasmids_in_module_definitions=False
-    ) -> List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]:
-        """Runs full assembly simulation.
+    assembly_plan.description = "MoClo DNA Assembly With Opentrons OT2"
 
-        `document` parameter of golden_gate_assembly_plan object is updated by reference to include assembly plan ModuleDefinition and all related information.
+    activity_association.plan = assembly_plan
 
-        Runs :func:`part_digestion` for all `parts_in_backbone` and :func:`backbone_digestion` for `plasmid_acceptor_backbone` with `restriction_enzyme`. Then runs :func:`ligation` with these parts to form composites.
+    activity_agent = sbol2.Agent("BuildCompiler")
+    activity_association.agent = activity_agent
 
-        :return: List of all composites generated, in the form of tuples of ComponentDefinition and Sequence.
-        """
-        for part_doc in self.parts_in_backbone:
-            if plasmids_in_module_definitions:
-                topLevel = part_doc.getModuleDefinition(
-                    "https://sbolcanvas.org/module1"
-                )  # TODO change to toplevel or some other index?
-            else:
-                topLevel = part_doc.componentDefinitions[0]
-            extracts_tuple_list, _ = part_digestion(
-                topLevel, [self.restriction_enzyme], self.assembly_plan, part_doc
-            )  # make sure assembly plan is pass-by-reference
+    activity.associations = [activity_association]
 
-            append_extracts_to_doc(extracts_tuple_list, self.document)
-            self.extracted_parts.append(extracts_tuple_list[0][0])
+    return activity
 
-        if plasmids_in_module_definitions:
-            topLevel = self.backbone.getModuleDefinition(
-                "https://sbolcanvas.org/module1"
-            )  # TODO change to toplevel or some other index?
-        else:
-            topLevel = self.backbone.componentDefinitions[0]
-        extracts_tuple_list, _ = backbone_digestion(
-            topLevel, [self.restriction_enzyme], self.assembly_plan, self.backbone
-        )
 
-        append_extracts_to_doc(extracts_tuple_list, self.document)
-        self.extracted_parts.append(extracts_tuple_list[0][0])
-
-        self.composites = ligation(
-            self.extracted_parts, self.assembly_plan, self.document
-        )
-
-        append_extracts_to_doc(self.composites, self.document)
-
-        return self.composites
+def _create_precedes_restriction(
+    parent_definition: sbol2.ComponentDefinition,
+    subject: sbol2.Component,
+    object: sbol2.Component,
+):
+    constraint = parent_definition.sequenceConstraints.create(
+        f"{object.displayId}_{subject.displayId}"
+    )
+    constraint.subject = subject
+    constraint.object = object
+    constraint.restriction = sbol2.SBOL_RESTRICTION_PRECEDES

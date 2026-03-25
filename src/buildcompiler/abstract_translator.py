@@ -1,18 +1,30 @@
 import sbol2
 import itertools
+import re
 from typing import Dict, List
-from .constants import FUSION_SITES
+from .constants import (
+    ANTIBIOTIC_MAP,
+    ENGINEERED_PLASMID,
+    FUSION_SITES,
+    ANTIBIOTIC_RESISTANCE,
+    RESTRICTION_ENZYME_ASSEMBLY_SCAR,
+)
 
 
-class MocloPlasmid:
+class Plasmid:
     def __init__(
-        self, name: str, definition: sbol2.ComponentDefinition, doc: sbol2.document
+        self,
+        definition: sbol2.ComponentDefinition,
+        strain_definition: sbol2.ModuleDefinition,
+        doc: sbol2.document,
     ):
         self.definition = definition
-        self.fusion_sites = self.match_fusion_sites(doc)
-        self.name = name + "".join(f"_{s}" for s in self.fusion_sites)
+        self.strain_definition = strain_definition
+        self.fusion_sites = self._match_fusion_sites(doc)
+        self.name = definition.displayId + "".join(f"_{s}" for s in self.fusion_sites)
+        self.antibiotic_resistance = self._get_antibiotic_resistance(doc)
 
-    def match_fusion_sites(self, doc: sbol2.document) -> List[str]:
+    def _match_fusion_sites(self, doc: sbol2.document) -> List[str]:
         fusion_site_definitions = extract_fusion_sites(self.definition, doc)
         fusion_sites = []
         for site in fusion_site_definitions:
@@ -26,16 +38,37 @@ class MocloPlasmid:
         fusion_sites.sort()
         return fusion_sites
 
+    def _get_antibiotic_resistance(self, doc: sbol2.Document) -> str:
+        for component in (
+            self.definition.components
+        ):  # go a level deeper, within the backbone core component
+            definition = doc.get(component.definition)
+            for subcomponent in definition.components:
+                subcomponent_def = doc.get(subcomponent.definition)
+                if ANTIBIOTIC_RESISTANCE in subcomponent_def.roles:
+                    match = re.search(
+                        r"\b(" + "|".join(ANTIBIOTIC_MAP) + r")_",
+                        subcomponent_def.displayId,
+                        re.IGNORECASE,
+                    )
+                    if match:
+                        return ANTIBIOTIC_MAP[match.group(1).lower()]
+                    return "Unknown"
+
+        return None
+
     def __repr__(self) -> str:
         return (
-            f"MocloPlasmid:\n"
+            f"Plasmid:\n"
             f"  Name: {self.name}\n"
             f"  Definition: {self.definition.identity}\n"
+            f"  Strain: {getattr(self.strain_definition, 'identity', 'None')}\n"
             f"  Fusion Sites: {self.fusion_sites or 'Not found'}"
+            f"  Antibiotic Resistance: {self.antibiotic_resistance}\n"
         )
 
     def __eq__(self, other):
-        if not isinstance(other, MocloPlasmid):
+        if not isinstance(other, Plasmid):
             return False
         return self.definition == other.definition
 
@@ -59,7 +92,7 @@ def extract_fusion_sites(
     fusion_sites = []
     for component in plasmid.components:
         definition = doc.getComponentDefinition(component.definition)
-        if "http://identifiers.org/so/SO:0001953" in definition.roles:
+        if RESTRICTION_ENZYME_ASSEMBLY_SCAR in definition.roles:
             fusion_sites.append(definition)
 
     return fusion_sites
@@ -100,6 +133,16 @@ def copy_sequences(component_definition, target_doc, collection_doc):
             seq_obj = component_definition.doc.find(seq_uri)
             if seq_obj is not None:
                 seq_obj.copy(target_doc)
+
+
+def get_or_pull(doc, sbh, uri):
+    """
+    Get an SBOL object from a Document.
+    If missing, pull it from SynBioHub and retry.
+    """
+    if uri not in doc:
+        sbh.pull(uri, doc)
+    return doc.get(uri)
 
 
 def extract_combinatorial_design_parts(
@@ -166,13 +209,13 @@ def enumerate_design_variants(component_dict):
 
 def construct_plasmid_dict(
     part_list: List[sbol2.ComponentDefinition], plasmid_collection: sbol2.Document
-) -> Dict[str, List[MocloPlasmid]]:
+) -> Dict[str, List[Plasmid]]:
     """
-    Builds a mapping from part display IDs to lists of compatible MoCloPlasmid objects.
+    Builds a mapping from part display IDs to lists of compatible Plasmid objects.
 
     For each part in the given list, this function searches the provided plasmid
     collection for plasmids that contain the part as a component.
-    Each matching plasmid is wrapped in a `MocloPlasmid` object and added to the
+    Each matching plasmid is wrapped in a `Plasmid` object and added to the
     dictionary under the part's display ID.
 
     Args:
@@ -183,14 +226,14 @@ def construct_plasmid_dict(
             The :class:`sbol2.Document` containing plasmids to search through.
 
     Returns:
-        Dict[str, List[MocloPlasmid]]:
+        Dict[str, List[Plasmid]]:
             A dictionary mapping each part display ID to a list of corresponding
-            `MocloPlasmid` objects found in the collection.
+            `Plasmid` objects found in the collection.
     """
     plasmid_dict = {}
     for part in part_list:
         for plasmid in plasmid_collection.componentDefinitions:
-            if "http://identifiers.org/so/SO:0000637" in plasmid.roles:
+            if ENGINEERED_PLASMID in plasmid.roles:
                 for component in plasmid.components:
                     if (
                         component.definition == str(part)
@@ -211,34 +254,36 @@ def construct_plasmid_dict(
                         ).name
 
                         plasmid_dict[part.displayId].append(
-                            MocloPlasmid(componentName, plasmid, plasmid_collection)
+                            Plasmid(componentName, plasmid, plasmid_collection)
                         )
 
     return plasmid_dict
 
 
 def get_compatible_plasmids(
-    plasmid_dict: Dict[str, List[MocloPlasmid]], backbone: MocloPlasmid
-) -> List[MocloPlasmid]:
+    plasmid_dict: Dict[str, List[Plasmid]], backbone: Plasmid
+) -> List[Plasmid]:
     """
-    Returns a list of MocloPlasmid objects that can form a compatible assembly
+    Returns a list of Plasmid objects that can form a compatible assembly
     with the given backbone plasmid. The function selects one plasmid from each
     entry in the dictionary, ensuring that adjacent plasmids have matching MoClo fusion sites,
     and that the first and last plasmids are compatible with the backbone.
 
     Args:
         plasmid_dict: A dictionary mapping assembly positions or categories to lists
-            of MocloPlasmid objects.
-        backbone: The backbone MocloPlasmid whose fusion sites define compatibility.
+            of Plasmid objects.
+        backbone: The backbone Plasmid whose fusion sites define compatibility.
 
     Returns:
-        A list of compatible MocloPlasmid objects forming a sequential assembly.
+        A list of compatible Plasmid objects forming a sequential assembly.
     """
     selected_plasmids = []
     match_to = backbone
     match_idx = 0
 
     for i, key in enumerate(plasmid_dict):
+        found = False
+
         for plasmid in plasmid_dict[key]:
             if (
                 i == len(plasmid_dict) - 1
@@ -249,20 +294,24 @@ def get_compatible_plasmids(
                     f"matched final component {plasmid.name} with {match_to.name} and {backbone.name} on fusion sites ({plasmid.fusion_sites[0]}, {plasmid.fusion_sites[1]})!"
                 )
                 selected_plasmids.append(plasmid)
+                found = True
                 break
             elif (
                 i < len(plasmid_dict) - 1
                 and plasmid.fusion_sites[0] == match_to.fusion_sites[match_idx]
-            ):  # TODO add error handling if no compatible plasmid found
+            ):
                 print(
                     f"matched {plasmid.name} with {match_to.name} on fusion site {plasmid.fusion_sites[0]}!"
                 )
                 selected_plasmids.append(plasmid)
+                found = True
                 match_to = plasmid
                 match_idx = 1
                 break
             # TODO edge case where second fusion site does not match terminator fusion site will not be caught by current logic
-            # 10/14: rethink implementation, will likely need to be different for combinatorial designs
+
+        if not found:
+            raise ValueError(f"No compatible plasmid found for part {key}")
 
     return selected_plasmids
 
@@ -271,7 +320,7 @@ def translate_abstract_to_plasmids(
     abstract_design_doc: sbol2.Document,
     plasmid_collection: sbol2.Document,
     backbone_doc: sbol2.Document,
-) -> List[MocloPlasmid]:
+) -> List[Plasmid]:
     """
     Translates an abstract SBOLCanvas design into a set of compatible MoClo plasmid assemblies.
 
@@ -293,14 +342,14 @@ def translate_abstract_to_plasmids(
             parts are assembled.
 
     Returns:
-        List[MocloPlasmid]:
+        List[Plasmid]:
             - For combinatorial designs: a list of unique compatible plasmids
-              (`MocloPlasmid` objects) representing all enumerated design variants.
+              (`Plasmid` objects) representing all enumerated design variants.
             - For generic designs: a list of compatible plasmids for the single
               design instance.
     """
     backbone_def = extract_toplevel_definition(backbone_doc)
-    backbone_plasmid = MocloPlasmid(backbone_def.displayId, backbone_def, backbone_doc)
+    backbone_plasmid = Plasmid(backbone_def.displayId, backbone_def, backbone_doc)
 
     # combinatorial design
     if len(abstract_design_doc.combinatorialderivations) > 0:
