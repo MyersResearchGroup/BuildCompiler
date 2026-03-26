@@ -1,5 +1,6 @@
-import random
 import sbol2
+import random
+import warnings
 from typing import List, Dict
 
 from buildcompiler.plasmid import Plasmid
@@ -165,16 +166,19 @@ class BuildCompiler:
             None,
         )
         if bsaI_impl is None:
-            raise ValueError(
-                "BsaI Restriction enzyme not found in provided collections. Terminating domestication."
+            self._create_RE_implementation("BsaI")
+            warnings.warn(
+                "BsaI Restriction enzyme not found in provided collection(s). Domestication via purchase will be added to protocol.",
+                RuntimeWarning,
             )
 
         ligase_impl = (
             self.ligase_implementations[0] if self.ligase_implementations else None
         )
         if ligase_impl is None:
-            raise ValueError(
-                "No appropriate ligase found in provided collections. Terminating domestication."
+            self._create_ligase_implementation()
+            warnings.warn(
+                "No appropriate ligase found in provided collection(s). Domestication of T4 Ligase via purchase will be added to protocol."
             )
 
         dsDNAs = []
@@ -591,3 +595,9 @@ class BuildCompiler:
                         return True
 
         return False
+
+    def _create_RE_implementation(name: str):
+        pass
+
+    def _create_ligase_implementation():
+        pass
