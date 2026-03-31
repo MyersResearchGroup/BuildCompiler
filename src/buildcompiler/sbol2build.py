@@ -50,7 +50,9 @@ class Assembly:
         self.ligase = ligase
         self.extracted_parts = []  # list of tuples [ComponentDefinition, Sequence]
         self.source_document = document
-        self.final_document = sbol2.Document()
+        self.final_document = (
+            sbol2.Document()
+        )  # TODO change to allow this to be passed in as a parameter
         self.assembly_activity = initialize_assembly_activity()
         self.composites = []
 
@@ -497,8 +499,20 @@ def part_digestion(
     # find + add original component to product def & annotation
     for comp in reactant_component_definition.components:
         if comp.definition == original_part_def_URI:
-            prod_component_definition.components.add(comp)
-            part_extract_annotation.component = comp
+            new_comp = prod_component_definition.components.create(comp.displayId)
+            new_comp.definition = comp.definition
+            part_extract_annotation.component = new_comp
+
+            original_cd = document.getComponentDefinition(comp.definition)
+            seq = document.get(original_cd.sequences[0])
+
+            new_seq = sbol2.Sequence(
+                uri=f"{reactant_component_definition.displayId}_extracted_part_seq",
+                elements=seq.elements,
+                encoding=seq.encoding,
+            )
+            prod_component_definition.sequences.append(new_seq)
+            extracts_list.append((new_comp, new_seq))
 
     prod_component_definition.sequenceAnnotations.add(three_prime_overhang_annotation)
     prod_component_definition.sequenceAnnotations.add(five_prime_overhang_annotation)
@@ -1000,6 +1014,9 @@ def ligation(
         composite_implementation.built = composite_component_definition.identity
         composite_implementation.wasGeneratedBy = assembly_activity.identity
 
+        source_document.add_list(
+            [composite_component_definition, composite_seq, composite_implementation]
+        )
         final_document.add_list(
             [composite_component_definition, composite_seq, composite_implementation]
         )
