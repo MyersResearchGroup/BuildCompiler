@@ -278,7 +278,11 @@ class BuildCompiler:
         return domesticated_parts
 
     def assembly_lvl1(
-        self, abstract_design: sbol2.ComponentDefinition, backbone: Plasmid = None
+        self,
+        abstract_design: sbol2.ComponentDefinition,
+        final_doc: sbol2.Document = sbol2.Document(),
+        product_name: str = None,
+        backbone: Plasmid = None,
     ) -> list[sbol2.ComponentDefinition]:
         """Assemble level-1 plasmids for each gene/transcriptional unit.
 
@@ -322,9 +326,15 @@ class BuildCompiler:
             )
 
         assembly = Assembly(
-            compatible_plasmids, backbone, bsaI_impl, ligase_impl, self.sbol_doc
+            compatible_plasmids,
+            backbone,
+            bsaI_impl,
+            ligase_impl,
+            self.sbol_doc,
+            final_doc,
+            product_name,
         )
-        composite_plasmids, product_doc = assembly.run()
+        composite_plasmids, product_doc = assembly.run()  # TODO upload product_doc?
 
         self.indexed_plasmids.extend(composite_plasmids)
 

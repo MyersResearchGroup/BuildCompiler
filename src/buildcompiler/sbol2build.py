@@ -42,22 +42,23 @@ class Assembly:
         backbone_plasmid: Plasmid,
         restriction_enzyme: sbol2.Implementation,  # TODO search for implementation in document, or domesticate the RE
         ligase: sbol2.Implementation,
-        document: sbol2.Document,
+        source_document: sbol2.Document,
+        final_document: sbol2.Document,
+        composite_prefix: str = "composite",
     ):
         self.part_plasmids = part_plasmids
         self.backbone = backbone_plasmid
         self.restriction_enzyme = restriction_enzyme
         self.ligase = ligase
         self.extracted_parts = []  # list of tuples [ComponentDefinition, Sequence]
-        self.source_document = document
-        self.final_document = (
-            sbol2.Document()
-        )  # TODO change to allow this to be passed in as a parameter
-        self.assembly_activity = initialize_assembly_activity()
+        self.source_document = source_document
+        self.final_document = final_document
+        self.composite_prefix = composite_prefix
+        self.assembly_activity = self.initialize_assembly_activity()
         self.composites = []
 
     def run(
-        self, include_extracted_parts=False
+        self, include_extracted_parts: bool = False
     ) -> List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]:
         """Runs full assembly simulation.
 
@@ -98,6 +99,7 @@ class Assembly:
         self.composites = ligation(
             self.extracted_parts,
             self.assembly_activity,
+            self.composite_prefix,
             self.source_document,
             self.final_document,
             self.ligase,
@@ -117,6 +119,27 @@ class Assembly:
         ]
 
         return composite_plasmid_objs, self.final_document
+
+    def initialize_assembly_activity(self):
+        activity = sbol2.Activity(f"{self.composite_prefix}_assembly")
+
+        activity.name = "DNA Assembly"
+        activity.types = "http://sbols.org/v2#build"
+
+        activity_association = sbol2.Association("assemble_")
+
+        assembly_plan = sbol2.Plan("assembly_plan")
+
+        assembly_plan.description = "MoClo DNA Assembly With Opentrons OT2"
+
+        activity_association.plan = assembly_plan
+
+        activity_agent = sbol2.Agent("BuildCompiler")
+        activity_association.agent = activity_agent
+
+        activity.associations = [activity_association]
+
+        return activity
 
 
 def rebase_restriction_enzyme(name: str, **kwargs) -> sbol2.ComponentDefinition:
@@ -749,6 +772,7 @@ def number_to_suffix(n):
 def ligation(
     reactants: List[sbol2.ComponentDefinition],
     assembly_activity: sbol2.Activity,
+    composite_prefix: str,
     source_document: sbol2.Document,
     final_document: sbol2.Document,
     ligase: sbol2.Implementation,
@@ -980,10 +1004,12 @@ def ligation(
         # create dna component and sequence
         composite_component_definition, composite_seq = (
             dna_componentdefinition_with_sequence(
-                f"composite_{composite_number}", composite_sequence_str, molecule=True
+                f"{composite_prefix}_{composite_number}",
+                composite_sequence_str,
+                molecule=True,
             )
         )
-        composite_component_definition.name = f"composite_{composite_number}"
+        composite_component_definition.name = f"{composite_prefix}_{composite_number}"
         composite_component_definition.addRole(ENGINEERED_REGION)
         composite_component_definition.addType(CIRCULAR)
 
@@ -1003,8 +1029,6 @@ def ligation(
                 )
 
             prev_part_extract = comp
-
-        # _create_precedes_restriction(composite_component_definition, prev_part_extract, composite_component_definition.components[0]) # final component precedes first component; defining circular order
 
         composite_component_definition.sequenceAnnotations = anno_list
 
@@ -1058,28 +1082,6 @@ def add_object_to_doc(
             pass
         else:
             raise e
-
-
-def initialize_assembly_activity():
-    activity = sbol2.Activity("assembly")
-
-    activity.name = "DNA Assembly"
-    activity.types = "http://sbols.org/v2#build"
-
-    activity_association = sbol2.Association("assemble_")
-
-    assembly_plan = sbol2.Plan("assembly_plan")
-
-    assembly_plan.description = "MoClo DNA Assembly With Opentrons OT2"
-
-    activity_association.plan = assembly_plan
-
-    activity_agent = sbol2.Agent("BuildCompiler")
-    activity_association.agent = activity_agent
-
-    activity.associations = [activity_association]
-
-    return activity
 
 
 def _create_precedes_restriction(
