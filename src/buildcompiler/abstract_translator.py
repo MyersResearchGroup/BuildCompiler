@@ -90,7 +90,7 @@ def extract_fusion_sites(
         A list of fusion site component definitions.
     """
     fusion_sites = []
-    for component in plasmid.components:
+    for component in plasmid.getInSequentialOrder():
         definition = doc.getComponentDefinition(component.definition)
         if RESTRICTION_ENZYME_ASSEMBLY_SCAR in definition.roles:
             fusion_sites.append(definition)

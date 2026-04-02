@@ -35,8 +35,8 @@ class Plasmid:
                 if seq == sequence.upper():
                     fusion_sites.append(key)
 
-        fusion_sites.sort()
-        return [fusion_sites[0], fusion_sites[-1]]
+        # fusion_sites.sort()
+        return fusion_sites
 
     def _get_antibiotic_resistance(self, doc: sbol2.Document) -> str:
         for component in (
