@@ -9,6 +9,7 @@ from .abstract_translator import (
     get_or_pull,
     get_compatible_plasmids,
 )
+from .robotutils import assembly_plan_RDF_to_JSON
 from .constants import (
     AMP,
     KAN,
@@ -337,16 +338,9 @@ class BuildCompiler:
         composite_plasmids, product_doc = assembly.run()  # TODO upload product_doc?
 
         self.indexed_plasmids.extend(composite_plasmids)
-
+        assembly_plan_RDF_to_JSON(product_doc)
+        
         return composite_plasmids
-
-        # TODO: Create a SBOL representation of the assembly process, updating the SBOL Document.
-        # Using he selected parts create the representation, you need Plasmids, BsaI and T4 Ligase.
-        # TODO: Updates indexed plasmids with assembled versions.
-        # TODO: Generate a protocol for the assembly process.
-        protocol = "To be implemented by PUDU"
-
-        return protocol
 
     def assembly_lvl2(
         self,
