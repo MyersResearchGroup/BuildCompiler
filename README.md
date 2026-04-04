@@ -1,7 +1,7 @@
 # BuildCompiler
- BuildCompiler is an open-source tool that bridges the Design and Build stages of the DBTL cycle by compiling SBOL-encoded genetic designs into executable DNA assembly and transformation workflows.
+ BuildCompiler is an open-source tool that bridges the Design and Build stages of the Synthetic Biology DBTL cycle by compiling standardized genetic designs into executable DNA assembly, transformation, and plating workflows.
 
-It was developed to support build functionality in comand line and cloud workflows in [SynBioSuite](https://synbiosuite.org), based off the [SBOL Best Practices](https://github.com/SynBioDex/SBOL-examples/tree/main/SBOL/best-practices/BP011/).
+It supports build functionality in comand line and cloud workflows in [SynBioSuite](https://synbiosuite.org), based off the [SBOL Best Practices](https://github.com/SynBioDex/SBOL-examples/tree/main/SBOL/best-practices/BP011/).
 
 <img src="https://github.com/MyersResearchGroup/BuildCompiler/blob/main/images/buildcompiler_logo.png#gh-light-mode-only" alt="BuildCompiler light logo" width="300"/>
 <img src="https://github.com/MyersResearchGroup/BuildCompiler/blob/main/images/buildcompiler_logo.png#gh-dark-mode-only" alt="BuildCompiler night logo" width="300"/> 
@@ -11,6 +11,15 @@ It was developed to support build functionality in comand line and cloud workflo
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/sbol2build)
 ![PyPI - License](https://img.shields.io/pypi/l/sbol2build)
 ![gh-action badge](https://github.com/MyersResearchGroup/sbol2build/workflows/Python%20package/badge.svg)
+
+## Why this project exists
+
+Synthetic biology design tools often stop at *design representation*. BuildCompiler closes the gap between:
+
+1. **Design intent** in SBOL. SBOLCanvas, Cello, and LOICA support SBOL outputs.
+2. **Part/backbone selection**. Load your lab inventory to be used by BuildCompiler 
+3. **Assembly simulation**. Plasmids are digested to generate products by ligation. 
+4. **Output artifacts**. Protocols, instructions and lab automation scripts to accelerate your workflows.
 
 ## Installing BuildCompiler: 
 ```pip install buildcompiler```
