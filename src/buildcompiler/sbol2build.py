@@ -857,6 +857,7 @@ def ligation(
         insert_sequence_uri = combination[0].sequences[0]
         insert_sequence = source_document.getSequence(insert_sequence_uri).elements
         remaining_parts = list(combination[1:])
+        insert_3prime_match_id = None
         it = 1
         while remaining_parts:
             remaining_parts_before = len(remaining_parts)
@@ -869,27 +870,31 @@ def ligation(
                     .lower()
                     == insert_sequence[-fusion_site_length:].lower()
                 ):
-                    insert_sequence = (
-                        insert_sequence[:-fusion_site_length]
-                        + source_document.getSequence(part_sequence_uri).elements
-                    )
-                    list_of_parts_per_composite.append(
-                        part
-                    )  # add sequence annotation here, index based on insert_sequence
-                    remaining_parts.remove(part)
-                # match insert sequence 3' to part 5'
+                    if (
+                        len(remaining_parts) == 1
+                        and part.identity == insert_3prime_match_id
+                    ):  # check flag and match backbone 5' on final part 3'
+                        insert_sequence = (
+                            insert_sequence[:-fusion_site_length]
+                            + source_document.getSequence(part_sequence_uri).elements
+                        )
+                        list_of_parts_per_composite.append(part)
+                        remaining_parts.remove(part)
+                    elif len(remaining_parts) > 1:
+                        insert_sequence = (
+                            insert_sequence[:-fusion_site_length]
+                            + source_document.getSequence(part_sequence_uri).elements
+                        )
+                        list_of_parts_per_composite.append(part)
+                        remaining_parts.remove(part)
+                # match backbone 5' to insert sequence 3', set flag
                 elif (
                     source_document.getSequence(part_sequence_uri)
                     .elements[-fusion_site_length:]
                     .lower()
                     == insert_sequence[:fusion_site_length].lower()
                 ):
-                    insert_sequence = (
-                        source_document.getSequence(part_sequence_uri).elements
-                        + insert_sequence[fusion_site_length:]
-                    )
-                    list_of_parts_per_composite.insert(0, part)
-                    remaining_parts.remove(part)
+                    insert_3prime_match_id = part.identity
                 remaining_parts_after = len(remaining_parts)
 
             if remaining_parts_before == remaining_parts_after:
@@ -1041,6 +1046,7 @@ def ligation(
         source_document.add_list(
             [composite_component_definition, composite_seq, composite_implementation]
         )
+
         final_document.add_list(
             [composite_component_definition, composite_seq, composite_implementation]
         )
