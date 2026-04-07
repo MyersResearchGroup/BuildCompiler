@@ -12,14 +12,105 @@ It supports build functionality in comand line and cloud workflows in [SynBioSui
 ![PyPI - License](https://img.shields.io/pypi/l/sbol2build)
 ![gh-action badge](https://github.com/MyersResearchGroup/sbol2build/workflows/Python%20package/badge.svg)
 
-## Why this project exists
+# BuildCompiler
 
-Synthetic biology design tools often stop at *design representation*. BuildCompiler closes the gap between:
+BuildCompiler is an open-source framework that converts **abstract genetic designs** into **fully executable cloning workflows** using MoClo (Golden Gate) assembly.
 
-1. **Design intent** in SBOL. SBOLCanvas, Cello, and LOICA support SBOL outputs.
-2. **Part/backbone selection**. Load your lab inventory to be used by BuildCompiler 
-3. **Assembly simulation**. Plasmids are digested to generate products by ligation. 
-4. **Output artifacts**. Protocols, instructions and lab automation scripts to accelerate your workflows.
+It bridges the gap between *design* and *build* in the Design–Build–Test–Learn (DBTL) cycle by automatically generating:
+
+- DNA assembly plans
+- Lab automation protocols (Opentrons OT-2)
+- Transformation workflows
+- Plating protocols
+- Step-by-step execution instructions
+
+👉 Instead of manually planning cloning experiments, BuildCompiler **compiles them**.
+
+---
+
+## 🧬 What Problem Does It Solve?
+
+Designing genetic constructs is easy.  
+Building them in the lab is not.
+
+BuildCompiler automates the transition from:
+
+**SBOL design → DNA → cells on plates**
+
+This reduces:
+- Manual planning errors
+- Protocol design time
+- Lab-to-lab variability
+
+---
+
+## ⚙️ Core Capabilities
+
+BuildCompiler provides a complete cloning workflow composed of:
+
+### 1. Index Collections
+Scans SBOL documents to build an internal index of available plasmids.
+
+### 2. Domestication
+Creates missing parts as linear DNA and generates protocols to insert them into plasmids.
+
+### 3. Assembly Level 1 (Single Gene)
+- Maps abstract parts → plasmids
+- Builds a gene using MoClo
+- Generates automation-ready protocols
+
+### 4. Assembly Level 2 (Multi-Gene)
+- Combines up to 4 genes into a construct
+- Uses Level 1 products as inputs
+
+### 5. Transformation
+- Converts DNA into engineered strains
+- Generates automated chemical transformation protocols
+
+### 6. Plating
+- Creates dilution series
+- Generates plating protocols
+
+### 7. Full Build (Orchestrator)
+Runs the entire workflow automatically:
+- Detects missing parts
+- Generates them if needed
+- Executes all assembly steps
+- Chains transformation and plating
+
+---
+
+## 🔄 Full Build Workflow
+
+```text
+SBOL Design
+     ↓
+Index Collections
+     ↓
+Domestication
+     ↓
+Transformation
+     ↓
+Plating
+     ↓
+DNA Extraction
+     ↓
+Assembly Level 1 (Missing parts added to Domestication)
+     ↓
+Transformation
+     ↓
+Plating
+     ↓
+DNA Extraction
+     ↓
+Assembly Level 2 (Missing parts added to Assembly Level 1)
+     ↓
+Transformation
+     ↓
+Plating
+     ↓
+Final Build Outputs
+```
 
 ## Installing BuildCompiler: 
 ```pip install buildcompiler```
