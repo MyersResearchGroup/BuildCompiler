@@ -10,7 +10,6 @@ from .constants import (
     DNA_TYPES,
     ENGINEERED_INSERT,
     ENGINEERED_PLASMID,
-    ENGINEERED_REGION,
     FIVE_PRIME_OVERHANG,
     FUSION_SITES,
     LINEAR,
@@ -1015,7 +1014,7 @@ def ligation(
             )
         )
         composite_component_definition.name = f"{composite_prefix}_{composite_number}"
-        composite_component_definition.addRole(ENGINEERED_REGION)
+        composite_component_definition.addRole(ENGINEERED_PLASMID)
         composite_component_definition.addType(CIRCULAR)
 
         prev_part_extract = None
