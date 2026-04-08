@@ -610,19 +610,22 @@ class BuildCompiler:
 
     def _encapsulate_TU(
         self, plasmid: Plasmid
-    ) -> Tuple[Plasmid, List[sbol2.ComponentDefinition]]:
+    ) -> Tuple[Plasmid, List[sbol2.Identified]]:
         """
         Collapse a detailed plasmid with a transcriptional unit (pro, rbs, cds, terminator)
         into a simplified representation:
 
-            fusion_site_L -> TU_gene -> fusion_site_R -> backbone
+            fusion_site_L -> TU -> fusion_site_R -> backbone
+
+        Builds new sequences for both the TU and simplified plasmid.
 
         Returns
         -------
-        Tuple[Plasmid, List[ComponentDefinition]]
-            simplified plasmid and any new component definitions created
+        Tuple[Plasmid, List[Identified]]
+            simplified plasmid and all new SBOL objects created
         """
-        new_defs = []
+
+        new_objs = []
         plasmid_def = plasmid.plasmid_definition
 
         fusion_left, fusion_right = plasmid.fusion_sites
@@ -639,7 +642,6 @@ class BuildCompiler:
         for comp in plasmid_def.components:
             comp_def = self.sbol_doc.get(comp.definition)
 
-            # find fusion sites of interest
             if RESTRICTION_ENZYME_ASSEMBLY_SCAR in comp_def.roles:
                 seq_obj = self.sbol_doc.get(comp_def.sequences[0])
                 if seq_obj.elements == left_seq:
@@ -648,10 +650,13 @@ class BuildCompiler:
                 if seq_obj.elements == right_seq:
                     right_def = comp_def
                     continue
+
             elif PLASMID_VECTOR in comp_def.roles:
                 backbone_def = comp_def
+
             elif sbol2.SO_PROMOTER in comp_def.roles:
                 promoter = comp
+
             elif sbol2.SO_TERMINATOR in comp_def.roles:
                 terminator = comp
 
@@ -661,9 +666,7 @@ class BuildCompiler:
         comp_dict = {c.identity: c for c in plasmid_def.components}
 
         follows = {}
-        for (
-            sc
-        ) in plasmid_def.sequenceConstraints:  # TODO replace with getInSequentialOrder?
+        for sc in plasmid_def.sequenceConstraints:
             if sc.restriction == sbol2.SBOL_RESTRICTION_PRECEDES:
                 subject_comp = comp_dict[sc.subject]
                 object_comp = comp_dict[sc.object]
@@ -683,13 +686,38 @@ class BuildCompiler:
 
             curr_comp = follows[curr_comp]
 
+        def build_sequence_from_components(components):
+            seq = ""
+            ranges = {}
+            cursor = 1
+
+            for comp in components:
+                comp_def = self.sbol_doc.get(comp.definition)
+
+                if not comp_def.sequences:
+                    raise ValueError(f"{comp_def.displayId} has no sequence")
+
+                seq_obj = self.sbol_doc.get(comp_def.sequences[0])
+                part_seq = seq_obj.elements
+
+                start = cursor
+                end = cursor + len(part_seq) - 1
+
+                ranges[comp.identity] = (start, end)
+
+                seq += part_seq
+                cursor = end + 1
+
+            return seq, ranges
+
+        # Create TU definition
         tu_def = sbol2.ComponentDefinition(plasmid_def.displayId + "_TU")
         tu_def.roles = [ENGINEERED_REGION]
 
         self.sbol_doc.add(tu_def)
-        new_defs.append(tu_def)
+        new_objs.append(tu_def)
 
-        # map old components to new ones
+        # map old components to new
         comp_map = {}
 
         for comp in old_tu_components:
@@ -697,23 +725,43 @@ class BuildCompiler:
             new_comp.definition = comp.definition
             comp_map[comp.identity] = new_comp.identity
 
-        # Copy sequence annotations inside TU
+        # Build TU sequence
+        tu_seq_string, tu_ranges = build_sequence_from_components(old_tu_components)
+
+        tu_seq = sbol2.Sequence(
+            tu_def.displayId + "_seq",
+            elements=tu_seq_string,
+            encoding=sbol2.SBOL_ENCODING_IUPAC,
+        )
+
+        self.sbol_doc.addSequence(tu_seq)
+        tu_def.sequences = [tu_seq.identity]
+
+        new_objs.append(tu_seq)
+
+        # Copy TU annotations
         for sa in plasmid_def.sequenceAnnotations:
-            if sa.component in comp_map:
-                new_sa = tu_def.sequenceAnnotations.create(sa.displayId)
-                new_sa.component = comp_map[sa.component]
+            if sa.component not in comp_map:
+                continue
 
-                for loc in sa.locations:
-                    new_range = sbol2.Range(
-                        uri=loc.displayId, start=loc.start, end=loc.end
-                    )
+            new_sa = tu_def.sequenceAnnotations.create(sa.displayId)
+            new_sa.component = comp_map[sa.component]
 
-                    if hasattr(loc, "orientation"):
-                        new_range.orientation = loc.orientation
+            offset_start, _ = tu_ranges[sa.component]
 
-                    new_sa.locations.add(new_range)
+            for loc in sa.locations:
+                if isinstance(loc, sbol2.Range):
+                    new_start = offset_start + loc.start - 1
+                    new_end = offset_start + loc.end - 1
 
-        # Copy sequence constraints
+                    new_loc = new_sa.locations.createRange(loc.displayId)
+                    new_loc.start = new_start
+                    new_loc.end = new_end
+                    new_loc.orientation = loc.orientation
+
+        # --------------------------------------------------
+        # Copy TU sequence constraints
+        # --------------------------------------------------
         for sc in plasmid_def.sequenceConstraints:
             if sc.subject in comp_map and sc.object in comp_map:
                 new_sc = tu_def.sequenceConstraints.create(sc.displayId)
@@ -721,12 +769,15 @@ class BuildCompiler:
                 new_sc.object = comp_map[sc.object]
                 new_sc.restriction = sc.restriction
 
+        # --------------------------------------------------
         # Build simplified plasmid definition
+        # --------------------------------------------------
         simple_plasmid_def = sbol2.ComponentDefinition(
             plasmid_def.displayId + "_simple"
         )
+
         self.sbol_doc.addComponentDefinition(simple_plasmid_def)
-        new_defs.append(simple_plasmid_def)
+        new_objs.append(simple_plasmid_def)
 
         simple_plasmid_def.types = list(plasmid_def.types)
         simple_plasmid_def.roles = list(plasmid_def.roles)
@@ -745,7 +796,9 @@ class BuildCompiler:
             backbone_comp = simple_plasmid_def.components.create("backbone")
             backbone_comp.definition = backbone_def.identity
 
-        # Sequence Constraints (ordering)
+        # --------------------------------------------------
+        # Sequence ordering constraints
+        # --------------------------------------------------
         constraint_counter = 0
 
         def add_precedes(subj, obj):
@@ -764,6 +817,32 @@ class BuildCompiler:
         if backbone_comp:
             add_precedes(fusion_right_comp, backbone_comp)
 
+        # --------------------------------------------------
+        # Build simplified plasmid sequence
+        # --------------------------------------------------
+        ordered_components = [fusion_left_comp, tu_comp, fusion_right_comp]
+
+        if backbone_comp:
+            ordered_components.append(backbone_comp)
+
+        plas_seq_string, plas_ranges = build_sequence_from_components(
+            ordered_components
+        )
+
+        plas_seq = sbol2.Sequence(
+            simple_plasmid_def.displayId + "_seq",
+            elements=plas_seq_string,
+            encoding=sbol2.SBOL_ENCODING_IUPAC,
+        )
+
+        self.sbol_doc.addSequence(plas_seq)
+        simple_plasmid_def.sequences = [plas_seq.identity]
+
+        new_objs.append(plas_seq)
+
+        # --------------------------------------------------
+        # Copy simplified plasmid annotations
+        # --------------------------------------------------
         component_map = {
             left_def.identity: fusion_left_comp.identity,
             tu_def.identity: tu_comp.identity,
@@ -777,31 +856,27 @@ class BuildCompiler:
             comp_uri = sa.component
 
             if comp_uri not in component_map:
-                continue
-
-            if len(sa.locations) == 0:
+                print(f"{comp_uri} not found in map: {component_map}")
                 continue
 
             new_sa = simple_plasmid_def.sequenceAnnotations.create(sa.displayId)
             new_sa.component = component_map[comp_uri]
 
+            offset_start, _ = plas_ranges[component_map[comp_uri]]
+
             for loc in sa.locations:
                 if isinstance(loc, sbol2.Range):
+                    new_start = offset_start + loc.start - 1
+                    new_end = offset_start + loc.end - 1
+
                     new_loc = new_sa.locations.createRange(loc.displayId)
-                    new_loc.start = loc.start
-                    new_loc.end = loc.end
+                    new_loc.start = new_start
+                    new_loc.end = new_end
                     new_loc.orientation = loc.orientation
 
-                elif isinstance(loc, sbol2.Cut):
-                    new_loc = new_sa.locations.createCut(loc.displayId)
-                    new_loc.at = loc.at
-                    new_loc.orientation = loc.orientation
-
-                else:
-                    new_loc = new_sa.locations.createGenericLocation(loc.displayId)
-                    new_loc.orientation = loc.orientation
-
+        # --------------------------------------------------
         # Construct new plasmid object
+        # --------------------------------------------------
         new_plasmid = Plasmid(
             simple_plasmid_def,
             plasmid.strain_definitions[0],
@@ -810,7 +885,7 @@ class BuildCompiler:
             self.sbol_doc,
         )
 
-        return new_plasmid, new_defs
+        return new_plasmid, new_objs
 
     def _create_RE_implementation(name: str):
         pass
