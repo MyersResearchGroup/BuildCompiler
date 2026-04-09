@@ -9,7 +9,7 @@ from .abstract_translator import (
     get_or_pull,
     get_compatible_plasmids,
 )
-from .robotutils import assembly_plan_RDF_to_JSON
+from .robotutils import assembly_plan_RDF_to_JSON, run_manual_script_with_json_to_zip
 from .constants import (
     AMP,
     KAN,
@@ -284,6 +284,8 @@ class BuildCompiler:
         final_doc: sbol2.Document = sbol2.Document(),
         product_name: str = None,
         backbone: Plasmid = None,
+        protocol: str = "Manual"
+
     ) -> list[sbol2.ComponentDefinition]:
         """Assemble level-1 plasmids for each gene/transcriptional unit.
 
@@ -338,9 +340,25 @@ class BuildCompiler:
         composite_plasmids, product_doc = assembly.run()  # TODO upload product_doc?
 
         self.indexed_plasmids.extend(composite_plasmids)
-        assembly_plan_RDF_to_JSON(product_doc)
-        
-        return composite_plasmids
+        input_doc = self.sbol_doc
+        combined_doc = self._combine_documents(input_doc, product_doc)
+
+        if protocol == "Manual":
+            assembly_plan_RDF_to_JSON(combined_doc, output_path="assembly_product_assembly_plan.json")
+            run_manual_script_with_json_to_zip(
+                manual_script_path="./generate_manual_assembly_protocol.py", 
+                json_file_path="./assembly_product_assembly_plan.json",
+                zip_name="assembly_protocol_simulation.zip",
+                )
+        """
+        assembly_plan_RDF_to_JSON(combined_doc, output_path=f"{product_name}_assembly_plan.json")
+        run_opentrons_script_with_json_to_zip(
+            opentrons_script_path="opentrons_scripts/assembly_lvl1.py",
+            json_file_path=f"{product_name}_assembly_plan.json",
+            zip_name=f"{product_name}_assembly_lvl1.zip",
+            overwrite=False,)
+        """    
+        return composite_plasmids, product_doc, combined_doc
 
     def assembly_lvl2(
         self,
@@ -504,6 +522,7 @@ class BuildCompiler:
             A list of component definitions in sequential order.
         """
         component_list = [c for c in design.getInSequentialOrder()]
+        print(component_list) #TODO remove
         return [
             get_or_pull(self.sbol_doc, self.sbh, component.definition)
             for component in component_list
@@ -599,6 +618,18 @@ class BuildCompiler:
                         return True
 
         return False
+
+    def _combine_documents(self, doc1, doc2):
+        combined = sbol2.Document()
+        # Add all objects from doc1
+        for obj in doc1:
+            combined.add(obj)
+        # Add objects from doc2 only if not already present
+        for obj in doc2:
+            if not combined.find(obj.identity):
+                combined.add(obj)
+        return combined
+
 
     def _create_RE_implementation(name: str):
         pass
