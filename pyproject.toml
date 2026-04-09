@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sbol2build"
-version = "0.0.b3"
-description = "SBOL2Build: python package for construction of SBOL objects during build planning"
+name = "synbio-buildcompiler"
+version = "0.0.a1"
+description = "BuildCompiler is an open-source tool that bridges the Design and Build stages of the Synthetic Biology DBTL cycle"
 readme = "README.md"
 requires-python = ">=3.7"
 license = {file = "LICENSE.md"}
@@ -36,8 +36,8 @@ test = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/MyersResearchGroup/SBOL2Build"
-"Bug Tracker" = "https://github.com/MyersResearchGroup/SBOL2Build/issues"
+"Homepage" = "https://github.com/MyersResearchGroup/BuildCompiler"
+"Bug Tracker" = "https://github.com/MyersResearchGroup/BuildCompiler/issues"
 
 [dependency-groups]
 dev = [

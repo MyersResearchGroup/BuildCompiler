@@ -1,7 +1,7 @@
 # BuildCompiler
- BuildCompiler is an open-source tool that bridges the Design and Build stages of the DBTL cycle by compiling SBOL-encoded genetic designs into executable DNA assembly and transformation workflows.
+ BuildCompiler is an open-source tool that bridges the Design and Build stages of the Synthetic Biology DBTL cycle by compiling standardized genetic designs into executable DNA assembly, transformation, and plating workflows.
 
-It was developed to support build functionality in comand line and cloud workflows in [SynBioSuite](https://synbiosuite.org), based off the [SBOL Best Practices](https://github.com/SynBioDex/SBOL-examples/tree/main/SBOL/best-practices/BP011/).
+It supports build functionality in comand line and cloud workflows in [SynBioSuite](https://synbiosuite.org), based off the [SBOL Best Practices](https://github.com/SynBioDex/SBOL-examples/tree/main/SBOL/best-practices/BP011/).
 
 <img src="https://github.com/MyersResearchGroup/BuildCompiler/blob/main/images/buildcompiler_logo.png#gh-light-mode-only" alt="BuildCompiler light logo" width="300"/>
 <img src="https://github.com/MyersResearchGroup/BuildCompiler/blob/main/images/buildcompiler_logo.png#gh-dark-mode-only" alt="BuildCompiler night logo" width="300"/> 
@@ -11,6 +11,106 @@ It was developed to support build functionality in comand line and cloud workflo
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/sbol2build)
 ![PyPI - License](https://img.shields.io/pypi/l/sbol2build)
 ![gh-action badge](https://github.com/MyersResearchGroup/sbol2build/workflows/Python%20package/badge.svg)
+
+# BuildCompiler
+
+BuildCompiler is an open-source framework that converts **abstract genetic designs** into **fully executable cloning workflows** using MoClo (Golden Gate) assembly.
+
+It bridges the gap between *design* and *build* in the Design–Build–Test–Learn (DBTL) cycle by automatically generating:
+
+- DNA assembly plans
+- Lab automation protocols (Opentrons OT-2)
+- Transformation workflows
+- Plating protocols
+- Step-by-step execution instructions
+
+👉 Instead of manually planning cloning experiments, BuildCompiler **compiles them**.
+
+---
+
+## 🧬 What Problem Does It Solve?
+
+Designing genetic constructs is easy.  
+Building them in the lab is not.
+
+BuildCompiler automates the transition from:
+
+**SBOL design → DNA → cells on plates**
+
+This reduces:
+- Manual planning errors
+- Protocol design time
+- Lab-to-lab variability
+
+---
+
+## ⚙️ Core Capabilities
+
+BuildCompiler provides a complete cloning workflow composed of:
+
+### 1. Index Collections
+Scans SBOL documents to build an internal index of available plasmids.
+
+### 2. Domestication
+Creates missing parts as linear DNA and generates protocols to insert them into plasmids.
+
+### 3. Assembly Level 1 (Single Gene)
+- Maps abstract parts → plasmids
+- Builds a gene using MoClo
+- Generates automation-ready protocols
+
+### 4. Assembly Level 2 (Multi-Gene)
+- Combines up to 4 genes into a construct
+- Uses Level 1 products as inputs
+
+### 5. Transformation
+- Converts DNA into engineered strains
+- Generates automated chemical transformation protocols
+
+### 6. Plating
+- Creates dilution series
+- Generates plating protocols
+
+### 7. Full Build (Orchestrator)
+Runs the entire workflow automatically:
+- Detects missing parts
+- Generates them if needed
+- Executes all assembly steps
+- Chains transformation and plating
+
+---
+
+## 🔄 Full Build Workflow
+
+```text
+SBOL Design
+     ↓
+Index Collections
+     ↓
+Domestication
+     ↓
+Transformation
+     ↓
+Plating
+     ↓
+DNA Extraction
+     ↓
+Assembly Level 1 (Missing parts added to Domestication)
+     ↓
+Transformation
+     ↓
+Plating
+     ↓
+DNA Extraction
+     ↓
+Assembly Level 2 (Missing parts added to Assembly Level 1)
+     ↓
+Transformation
+     ↓
+Plating
+     ↓
+Final Build Outputs
+```
 
 ## Installing BuildCompiler: 
 ```pip install buildcompiler```
