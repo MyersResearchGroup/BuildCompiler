@@ -1,7 +1,7 @@
 import sbol2
 import random
 import warnings
-from typing import List, Dict
+from typing import Any, Dict, List
 
 from buildcompiler.plasmid import Plasmid
 from buildcompiler.sbol2build import Assembly, dna_componentdefinition_with_sequence
@@ -362,6 +362,166 @@ class BuildCompiler:
         # TODO: Updates indexed plasmids with assembled versions.
 
         return protocol
+
+    def transformation(
+        self,
+        assembly_products: List[Plasmid] | None = None,
+        plasmid_inputs: List[sbol2.ComponentDefinition] | None = None,
+        chassis_name: str = "E_coli_DH5alpha",
+    ) -> Dict[str, Any]:
+        """Generate a deterministic transformation plan for one or more plasmids.
+
+        The method accepts either assembled :class:`Plasmid` objects (preferred) or
+        standalone plasmid ``ComponentDefinition`` inputs and returns structured
+        transformation artifacts for downstream orchestration.
+
+        :param assembly_products: Assembled plasmid objects from an upstream assembly stage.
+        :param plasmid_inputs: Plasmid definitions when assembly outputs are unavailable.
+        :param chassis_name: Label used to name chassis/transformed-strain artifacts.
+        :raises ValueError: If neither, or both, plasmid input channels are supplied.
+        :returns: Structured transformation output including SBOL references, JSON plan,
+                  and protocol placeholders.
+        :rtype: Dict[str, Any]
+        """
+        plasmids = self._resolve_transformation_inputs(assembly_products, plasmid_inputs)
+
+        transformation_md = sbol2.ModuleDefinition(f"{chassis_name}_transformation")
+        transformation_md.name = f"{chassis_name} chemical transformation"
+        self.sbol_doc.add(transformation_md)
+
+        transformed_strains: List[Dict[str, str]] = []
+        transformation_records: List[Dict[str, Any]] = []
+
+        for index, plasmid in enumerate(plasmids, start=1):
+            plasmid_identity = plasmid.plasmid_definition.identity
+            plasmid_display_id = plasmid.plasmid_definition.displayId
+
+            activity = sbol2.Activity(
+                f"{chassis_name}_transform_{plasmid_display_id}_{index}"
+            )
+            activity.name = f"Chemical transformation of {plasmid_display_id}"
+            activity.types = ["http://sbols.org/v2#build"]
+            self.sbol_doc.add(activity)
+
+            transformed_strain = sbol2.ModuleDefinition(
+                f"{chassis_name}_with_{plasmid_display_id}_{index}"
+            )
+            transformed_strain.name = (
+                f"{chassis_name} transformed with {plasmid_display_id}"
+            )
+            transformed_strain.roles = [ORGANISM_STRAIN]
+
+            plasmid_fc = transformed_strain.functionalComponents.create(
+                f"{plasmid_display_id}_engineered_plasmid"
+            )
+            plasmid_fc.definition = plasmid_identity
+
+            transformed_impl = sbol2.Implementation(
+                f"{transformed_strain.displayId}_impl"
+            )
+            transformed_impl.built = transformed_strain.identity
+            transformed_impl.wasGeneratedBy = activity.identity
+
+            self.sbol_doc.add_list([transformed_strain, transformed_impl])
+
+            transformation_records.append(
+                {
+                    "reaction_id": f"transform_{index}",
+                    "plasmid": plasmid_display_id,
+                    "plasmid_identity": plasmid_identity,
+                    "destination_strain": transformed_strain.displayId,
+                    "total_volume_ul": 50,
+                    "plasmid_volume_ul": 2,
+                    "competent_cells_volume_ul": 48,
+                    "outgrowth_minutes": 60,
+                }
+            )
+
+            transformed_strains.append(
+                {
+                    "module_definition": transformed_strain.identity,
+                    "implementation": transformed_impl.identity,
+                    "activity": activity.identity,
+                }
+            )
+
+        robot_json = {
+            "stage": "transformation",
+            "protocol": "chemical_transformation",
+            "chassis": chassis_name,
+            "reactions": transformation_records,
+        }
+        protocol_bundle = self._build_transformation_protocol_bundle(
+            chassis_name=chassis_name, reactions=transformation_records
+        )
+
+        return {
+            "stage": "transformation",
+            "inputs": [plasmid.plasmid_definition.identity for plasmid in plasmids],
+            "sbol": {
+                "transformation_module": transformation_md.identity,
+                "transformed_strains": transformed_strains,
+            },
+            "json": robot_json,
+            "artifacts": protocol_bundle,
+        }
+
+    def _resolve_transformation_inputs(
+        self,
+        assembly_products: List[Plasmid] | None,
+        plasmid_inputs: List[sbol2.ComponentDefinition] | None,
+    ) -> List[Plasmid]:
+        if bool(assembly_products) == bool(plasmid_inputs):
+            raise ValueError(
+                "Provide either assembly_products or plasmid_inputs (exactly one)."
+            )
+
+        if assembly_products:
+            return assembly_products
+
+        resolved_plasmids: List[Plasmid] = []
+        for plasmid_definition in plasmid_inputs or []:
+            existing_plasmid = self._get_indexed_plasmid(
+                self.indexed_plasmids, plasmid_definition
+            )
+            if existing_plasmid:
+                resolved_plasmids.append(existing_plasmid)
+                continue
+
+            generated_impl = sbol2.Implementation(f"{plasmid_definition.displayId}_impl")
+            generated_impl.built = plasmid_definition.identity
+            self.sbol_doc.add(generated_impl)
+
+            resolved_plasmids.append(
+                Plasmid(
+                    plasmid_definition,
+                    None,
+                    [generated_impl],
+                    [],
+                    self.sbol_doc,
+                )
+            )
+
+        return resolved_plasmids
+
+    def _build_transformation_protocol_bundle(
+        self, chassis_name: str, reactions: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        instruction_lines = [
+            f"1. Thaw competent {chassis_name} cells on ice.",
+            "2. Add 48 µL competent cells + 2 µL assembly product for each reaction.",
+            "3. Incubate on ice for 30 minutes.",
+            "4. Heat shock at 42°C for 45 seconds, then return to ice for 2 minutes.",
+            "5. Add 450 µL SOC media and recover at 37°C for 60 minutes.",
+        ]
+        return {
+            "protocol_name": "chemical_transformation",
+            "opentrons_template": "ot2_chemical_transformation_v1",
+            "instructions": instruction_lines,
+            "log": [
+                f"Prepared {len(reactions)} transformation reaction(s) for {chassis_name}."
+            ],
+        }
 
     def _extract_plasmids_from_strain(
         self,

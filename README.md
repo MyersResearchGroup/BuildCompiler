@@ -66,6 +66,7 @@ Creates missing parts as linear DNA and generates protocols to insert them into 
 ### 5. Transformation
 - Converts DNA into engineered strains
 - Generates automated chemical transformation protocols
+- API entry point: `BuildCompiler.transformation(...)`
 
 ### 6. Plating
 - Creates dilution series
