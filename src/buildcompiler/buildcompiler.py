@@ -1,7 +1,7 @@
 import sbol2
 import random
 import warnings
-from typing import List, Dict
+from typing import Any, Dict, List
 
 from buildcompiler.plasmid import Plasmid
 from buildcompiler.sbol2build import Assembly, dna_componentdefinition_with_sequence
@@ -363,6 +363,145 @@ class BuildCompiler:
 
         return protocol
 
+    def transformation(
+        self,
+        assembly_products: List[Any],
+        chassis_name: str = "E_coli_DH5alpha",
+        transformation_doc: sbol2.Document = None,
+    ) -> Dict[str, Any]:
+        """Generate deterministic transformation artifacts from assembly outputs.
+
+        The method accepts either:
+        - ``Plasmid`` objects,
+        - ``sbol2.ComponentDefinition`` plasmids, or
+        - dictionaries containing at least a ``plasmid`` key with one of the above.
+
+        :param assembly_products: Structured inputs produced by an assembly stage.
+        :type assembly_products: list
+        :param chassis_name: Display id used for the chassis module and implementation.
+        :type chassis_name: str
+        :param transformation_doc: Optional SBOL document to write outputs into.
+        :type transformation_doc: sbol2.Document | None
+        :returns: Structured transformation outputs including SBOL references,
+            robot JSON intermediate, protocol placeholders, and logs.
+        :rtype: dict
+        :raises ValueError: If no valid plasmid inputs can be extracted.
+        """
+        if transformation_doc is None:
+            transformation_doc = self.sbol_doc
+
+        normalized_products = self._normalize_transformation_inputs(assembly_products)
+        if not normalized_products:
+            raise ValueError("transformation requires at least one plasmid input.")
+
+        chassis_module, chassis_impl = self._get_or_create_chassis(
+            transformation_doc, chassis_name
+        )
+
+        sbol_outputs = []
+        robot_steps = []
+        logs = []
+
+        for index, product in enumerate(normalized_products, start=1):
+            plasmid = product["plasmid"]
+            plasmid_impl = self._get_or_create_plasmid_implementation(
+                transformation_doc, plasmid
+            )
+            transform_id = f"transform_{plasmid.displayId}_{index}"
+
+            transformation_activity = sbol2.Activity(transform_id)
+            transformation_activity.name = f"Transform {chassis_name} with {plasmid.displayId}"
+            transformation_activity.types = "http://sbols.org/v2#build"
+
+            chassis_usage = sbol2.Usage(
+                uri=f"{transform_id}_chassis_usage",
+                entity=chassis_impl.identity,
+                role="http://sbols.org/v2#build",
+            )
+            plasmid_usage = sbol2.Usage(
+                uri=f"{transform_id}_plasmid_usage",
+                entity=plasmid_impl.identity,
+                role="http://sbols.org/v2#build",
+            )
+            transformation_activity.usages = [chassis_usage, plasmid_usage]
+
+            transformed_strain = sbol2.ModuleDefinition(
+                f"{chassis_name}_with_{plasmid.displayId}"
+            )
+            transformed_strain.roles = [ORGANISM_STRAIN]
+            transformed_strain.name = f"{chassis_name} transformed with {plasmid.displayId}"
+
+            chassis_module_ref = sbol2.Module(
+                uri=f"{transformed_strain.displayId}_chassis_module"
+            )
+            chassis_module_ref.definition = chassis_module.identity
+            plasmid_fc = sbol2.FunctionalComponent(
+                uri=f"{transformed_strain.displayId}_plasmid_fc"
+            )
+            plasmid_fc.definition = plasmid.identity
+
+            transformed_strain.modules = [chassis_module_ref]
+            transformed_strain.functionalComponents = [plasmid_fc]
+
+            transformed_impl = sbol2.Implementation(
+                f"{transformed_strain.displayId}_impl"
+            )
+            transformed_impl.built = transformed_strain.identity
+            transformed_impl.wasGeneratedBy = transformation_activity.identity
+
+            for obj in (
+                transformation_activity,
+                chassis_usage,
+                plasmid_usage,
+                transformed_strain,
+                chassis_module_ref,
+                plasmid_fc,
+                transformed_impl,
+            ):
+                self._add_if_absent(transformation_doc, obj)
+
+            sbol_outputs.append(
+                {
+                    "transformation_activity": transformation_activity.identity,
+                    "transformed_strain_module": transformed_strain.identity,
+                    "transformed_strain_implementation": transformed_impl.identity,
+                }
+            )
+            robot_steps.append(
+                {
+                    "step": index,
+                    "plasmid": plasmid.displayId,
+                    "chassis": chassis_name,
+                    "mix_ul": {"competent_cells": 50, "assembly_product": 5},
+                    "heat_shock": {"temperature_c": 42, "duration_seconds": 45},
+                    "recovery": {"medium": "SOC", "volume_ul": 950, "duration_min": 60},
+                }
+            )
+            logs.append(
+                f"Prepared transformation input for plasmid {plasmid.displayId} into chassis {chassis_name}."
+            )
+
+        return {
+            "stage": "transformation",
+            "inputs": [item["source"] for item in normalized_products],
+            "chassis": chassis_name,
+            "sbol_artifacts": sbol_outputs,
+            "json_intermediate": {
+                "protocol": "chemical_transformation",
+                "version": "0.1",
+                "steps": robot_steps,
+            },
+            "protocol_artifacts": {
+                "ot2_script": "TODO: adapter to protocol generator",
+                "human_instructions": [
+                    "Thaw competent cells on ice.",
+                    "Combine assembly product with competent cells as specified.",
+                    "Run heat shock and recovery according to generated parameters.",
+                ],
+                "logs": logs,
+            },
+        }
+
     def _extract_plasmids_from_strain(
         self,
         strain: sbol2.ModuleDefinition,
@@ -605,3 +744,63 @@ class BuildCompiler:
 
     def _create_ligase_implementation():
         pass
+
+    def _normalize_transformation_inputs(
+        self, assembly_products: List[Any]
+    ) -> List[Dict[str, Any]]:
+        normalized = []
+        for item in assembly_products or []:
+            if isinstance(item, Plasmid):
+                normalized.append(
+                    {"plasmid": item.plasmid_definition, "source": item.name}
+                )
+                continue
+
+            if isinstance(item, sbol2.ComponentDefinition):
+                normalized.append({"plasmid": item, "source": item.displayId})
+                continue
+
+            if isinstance(item, dict) and "plasmid" in item:
+                plasmid_candidate = item["plasmid"]
+                if isinstance(plasmid_candidate, Plasmid):
+                    normalized.append(
+                        {
+                            "plasmid": plasmid_candidate.plasmid_definition,
+                            "source": item.get("name", plasmid_candidate.name),
+                        }
+                    )
+                elif isinstance(plasmid_candidate, sbol2.ComponentDefinition):
+                    normalized.append(
+                        {
+                            "plasmid": plasmid_candidate,
+                            "source": item.get("name", plasmid_candidate.displayId),
+                        }
+                    )
+        return normalized
+
+    def _get_or_create_chassis(
+        self, doc: sbol2.Document, chassis_name: str
+    ) -> tuple[sbol2.ModuleDefinition, sbol2.Implementation]:
+        chassis_module = doc.find(chassis_name) or sbol2.ModuleDefinition(chassis_name)
+        chassis_module.roles = [ORGANISM_STRAIN]
+        chassis_module.name = chassis_name
+        self._add_if_absent(doc, chassis_module)
+
+        chassis_impl_id = f"{chassis_name}_impl"
+        chassis_impl = doc.find(chassis_impl_id) or sbol2.Implementation(chassis_impl_id)
+        chassis_impl.built = chassis_module.identity
+        self._add_if_absent(doc, chassis_impl)
+        return chassis_module, chassis_impl
+
+    def _get_or_create_plasmid_implementation(
+        self, doc: sbol2.Document, plasmid: sbol2.ComponentDefinition
+    ) -> sbol2.Implementation:
+        plasmid_impl_id = f"{plasmid.displayId}_impl"
+        plasmid_impl = doc.find(plasmid_impl_id) or sbol2.Implementation(plasmid_impl_id)
+        plasmid_impl.built = plasmid.identity
+        self._add_if_absent(doc, plasmid_impl)
+        return plasmid_impl
+
+    def _add_if_absent(self, doc: sbol2.Document, obj: Any):
+        if doc.find(obj.identity) is None:
+            doc.add(obj)
