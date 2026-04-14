@@ -68,11 +68,8 @@ class Assembly:
         :return: List of all composites generated, in the form of tuples of ComponentDefinition and Sequence.
         """
         for plasmid in self.part_plasmids:
-            plasmid_impl = plasmid.plasmid_implementations[
-                0
-            ]  # TODO update with more sophisticated selection process?
             extracts_tuple_list, _ = part_digestion(
-                plasmid_impl,
+                plasmid,
                 [self.restriction_enzyme],
                 self.assembly_activity,
                 self.source_document,
@@ -322,7 +319,7 @@ def is_circular(obj: sbol2.ComponentDefinition) -> bool:
 
 
 def part_digestion(
-    reactant: sbol2.Implementation,
+    reactant: Plasmid,
     restriction_enzymes: List[sbol2.Implementation],
     assembly_activity: sbol2.Activity,
     document: sbol2.Document,
@@ -339,27 +336,27 @@ def part_digestion(
     :param document: original SBOL2 document to be used to extract referenced objects.
     :return: A tuple of a list ComponentDefinitions and Sequences, and an assembly plan ModuleDefinition.
     """
-
-    reactant_component_definition = document.get(reactant.built)
+    reactant_impl = reactant.plasmid_implementations[0]
+    reactant_component_definition = reactant.plasmid_definition
     reactant_displayId = reactant_component_definition.displayId
 
     types = set(reactant_component_definition.types or [])
 
     if not types.intersection(DNA_TYPES):
         raise TypeError(
-            f"The reactant should have a DNA type. Types found: {reactant.types}."
+            f"The reactant should have a DNA type. Types found: {reactant_component_definition.types}."
         )
     if len(reactant_component_definition.sequences) != 1:
         raise ValueError(
-            f"The reactant needs to have precisely one sequence. The input reactant has {len(reactant.sequences)} sequences"
+            f"The reactant needs to have precisely one sequence. The input reactant has {len(reactant_component_definition.sequences)} sequences"
         )
     extracts_list = []
     restriction_enzymes_pydna = []
 
     assembly_activity.usages.add(
         sbol2.Usage(
-            uri=f"{reactant.displayId}",
-            entity=reactant.identity,
+            uri=f"{reactant_impl.displayId}",
+            entity=reactant_impl.identity,
             role="http://sbols.org/v2#build",
         )
     )
