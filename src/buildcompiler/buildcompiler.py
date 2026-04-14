@@ -615,7 +615,7 @@ class BuildCompiler:
         Collapse a detailed plasmid with a transcriptional unit (pro, rbs, cds, terminator)
         into a simplified representation:
 
-            fusion_site_L -> TU -> fusion_site_R -> backbone
+            fusion_site_left -> TU -> fusion_site_right -> backbone
 
         Builds new sequences for both the TU and simplified plasmid.
 
@@ -840,39 +840,17 @@ class BuildCompiler:
 
         new_objs.append(plas_seq)
 
-        # --------------------------------------------------
-        # Copy simplified plasmid annotations
-        # --------------------------------------------------
-        component_map = {
-            left_def.identity: fusion_left_comp.identity,
-            tu_def.identity: tu_comp.identity,
-            right_def.identity: fusion_right_comp.identity,
-        }
+        for comp_uri, (start, end) in plas_ranges.items():
+            anno = simple_plasmid_def.sequenceAnnotations.create(
+                f"simple_plasmid_def_{start}_{end}_annotation"
+            )
+            anno.component = comp_uri
 
-        if backbone_def:
-            component_map[backbone_def.identity] = backbone_comp.identity
-
-        for sa in plasmid_def.sequenceAnnotations:
-            comp_uri = sa.component
-
-            if comp_uri not in component_map:
-                print(f"{comp_uri} not found in map: {component_map}")
-                continue
-
-            new_sa = simple_plasmid_def.sequenceAnnotations.create(sa.displayId)
-            new_sa.component = component_map[comp_uri]
-
-            offset_start, _ = plas_ranges[component_map[comp_uri]]
-
-            for loc in sa.locations:
-                if isinstance(loc, sbol2.Range):
-                    new_start = offset_start + loc.start - 1
-                    new_end = offset_start + loc.end - 1
-
-                    new_loc = new_sa.locations.createRange(loc.displayId)
-                    new_loc.start = new_start
-                    new_loc.end = new_end
-                    new_loc.orientation = loc.orientation
+            location = anno.locations.createRange(
+                f"{simple_plasmid_def.displayId}_{start}_{end}_location"
+            )
+            location.start = start
+            location.end = end
 
         # --------------------------------------------------
         # Construct new plasmid object
