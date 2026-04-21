@@ -39,7 +39,7 @@ class Assembly:
         self,
         part_plasmids: List[Plasmid],
         backbone_plasmid: Plasmid,
-        restriction_enzyme: sbol2.Implementation,  # TODO search for implementation in document, or domesticate the RE
+        restriction_enzyme: sbol2.Implementation,
         ligase: sbol2.Implementation,
         source_document: sbol2.Document,
         final_document: sbol2.Document,
