@@ -4,7 +4,11 @@ import warnings
 from typing import List, Dict, Tuple
 
 from buildcompiler.plasmid import Plasmid
-from buildcompiler.sbol2build import Assembly, dna_componentdefinition_with_sequence
+from buildcompiler.sbol2build import (
+    Assembly,
+    dna_componentdefinition_with_sequence,
+    rebase_restriction_enzyme,
+)
 from .abstract_translator import (
     get_or_pull,
     get_compatible_plasmids,
@@ -50,8 +54,9 @@ class BuildCompiler:
         self.sbol_doc = sbol_doc or sbol2.Document()
         self.indexed_plasmids = []
         self.indexed_backbones = []
-        self.restriction_enzyme_implementations = []
-        self.ligase_implementations = []
+        self.BsaI_impl = None
+        self.BbsI_impl = None
+        self.T4_ligase_impl = None
 
         self._index_collections(collections)
 
@@ -110,9 +115,18 @@ class BuildCompiler:
                         )
             elif sbol2.BIOPAX_PROTEIN in built_object.types:
                 if RESTRICTION_ENZYME in built_object.roles:
-                    self.restriction_enzyme_implementations.append(implementation)
+                    if (
+                        built_object.definition
+                        == "http://rebase.neb.com/rebase/enz/BsaI.html"
+                    ):
+                        self.BsaI_impl = implementation
+                    elif (
+                        built_object.definition
+                        == "http://rebase.neb.com/rebase/enz/BbsI.html"
+                    ):
+                        self.BbsI_impl = implementation
                 elif LIGASE in built_object.roles:
-                    self.ligase_implementations.append(implementation)
+                    self.T4_ligase_impl = implementation
 
         for strain in self.sbol_doc.moduleDefinitions:
             if ORGANISM_STRAIN in strain.roles:
@@ -159,28 +173,18 @@ class BuildCompiler:
                     removals += 1
             return domesticated_sequence, removals
 
-        bsaI_impl = next(
-            (
-                impl
-                for impl in self.restriction_enzyme_implementations
-                if self.sbol_doc.find(impl.built).displayId == "BsaI"
-            ),
-            None,
-        )
-        if bsaI_impl is None:
+        if self.BsaI_impl is None:
             self._create_RE_implementation("BsaI")
             warnings.warn(
                 "BsaI Restriction enzyme not found in provided collection(s). Domestication via purchase will be added to protocol.",
                 RuntimeWarning,
             )
 
-        ligase_impl = (
-            self.ligase_implementations[0] if self.ligase_implementations else None
-        )
-        if ligase_impl is None:
+        if self.T4_ligase_impl is None:
             self._create_ligase_implementation()
             warnings.warn(
-                "No appropriate ligase found in provided collection(s). Domestication of T4 Ligase via purchase will be added to protocol."
+                "No appropriate ligase found in provided collection(s). Domestication of T4 Ligase via purchase will be added to protocol.",
+                RuntimeWarning,
             )
 
         dsDNAs = []
@@ -269,8 +273,8 @@ class BuildCompiler:
             assembly = Assembly(
                 [Plasmid(insert_definition, None, [insert_impl], [], self.sbol_doc)],
                 backbone,
-                bsaI_impl,
-                ligase_impl,
+                self.bsaI_impl,
+                self.T4_ligase_impl,
                 self.sbol_doc,
             )
             assembly_products, assembly_doc = assembly.run()
@@ -311,27 +315,25 @@ class BuildCompiler:
         else:
             compatible_plasmids = get_compatible_plasmids(plasmid_dict, backbone)
 
-        bsaI_impl = next(
-            impl
-            for impl in self.restriction_enzyme_implementations
-            if self.sbol_doc.find(impl.built).displayId == "BsaI"
-        )
-        if bsaI_impl is None:
-            raise ValueError(
-                "BsaI Restriction enzyme not found in provided collections. Terminating assembly."
+        if self.BsaI_impl is None:
+            self._create_RE_implementation("BsaI")
+            warnings.warn(
+                "BsaI Restriction enzyme not found in provided collection(s). Domestication via purchase will be added to protocol.",
+                RuntimeWarning,
             )
 
-        ligase_impl = self.ligase_implementations[0]
-        if ligase_impl is None:
-            raise ValueError(
-                "No appropriate ligase found in provided collections. Terminating assembly."
+        if self.T4_ligase_impl is None:
+            self._create_ligase_implementation()
+            warnings.warn(
+                "No appropriate ligase found in provided collection(s). Domestication of T4 Ligase via purchase will be added to protocol.",
+                RuntimeWarning,
             )
 
         assembly = Assembly(
             compatible_plasmids,
             backbone,
-            bsaI_impl,
-            ligase_impl,
+            self.BsaI_impl,
+            self.T4_ligase_impl,
             self.sbol_doc,
             final_doc,
             product_name,
@@ -483,7 +485,6 @@ class BuildCompiler:
         for backbone in sorted_backbones:
             if backbone.antibiotic_resistance == antibiotic_resistance:
                 # check for compatibility
-                # also, if we find a hit here we may not need to run get_compatible plasmids later, work is already done
                 try:
                     compatible_plasmids = get_compatible_plasmids(
                         plasmid_dict, backbone
@@ -865,8 +866,37 @@ class BuildCompiler:
 
         return new_plasmid, new_objs
 
-    def _create_RE_implementation(name: str):
-        pass
+    def _create_RE_implementation(self, name: str):
+        RE_def = rebase_restriction_enzyme(name)
 
-    def _create_ligase_implementation():
-        pass
+        RE_sourcing = sbol2.Activity(f"{name}_restriction_enzyme_purchase")
+        RE_sourcing.name = "Restriction Enzyme Purchase"
+
+        RE_impl = sbol2.Implementation(f"{RE_def.displayId}_impl")
+
+        RE_impl.built = RE_def.identity
+        RE_impl.wasGeneratedBy = RE_sourcing.identity
+
+        self.sbol_doc.add_list([RE_impl, RE_def])
+
+        if name == "BsaI":
+            self.BsaI_impl = RE_impl
+        elif name == "BbsI":
+            self.BbsI_impl = RE_impl
+
+    def _create_ligase_implementation(self):
+        ligase_def = sbol2.ComponentDefinition("T4_Ligase")
+        ligase_def.name = "T4_Ligase"
+        ligase_def.types = [sbol2.BIOPAX_PROTEIN]
+        ligase_def.roles = ["http://identifiers.org/ncit/NCIT:C16796"]
+
+        ligase_sourcing = sbol2.Activity("ligase_purchase")
+        ligase_sourcing.name = "Ligase Purchase"
+
+        T4_impl = sbol2.Implementation(f"{ligase_def.displayId}_impl")
+
+        T4_impl.built = ligase_def.identity
+        T4_impl.wasGeneratedBy = ligase_sourcing.identity
+
+        self.sbol_doc.add_list([T4_impl, ligase_def])
+        self.T4_ligase_impl = T4_impl

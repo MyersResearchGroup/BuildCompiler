@@ -26,7 +26,7 @@ ANTIBIOTIC_MAP = {
 
 LVL2_FUSION_SITE_ORDER = [["A", "E"], ["E", "F"], ["F", "G"], ["G", "H"]]
 
-# TODO http or https for identifiers?
+# TODO CHANGE ALL TO HTTP
 
 ENGINEERED_PLASMID = "http://identifiers.org/so/SO:0000637"
 ENGINEERED_INSERT = "https://identifiers.org/so/SO:0000915"
