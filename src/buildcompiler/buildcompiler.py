@@ -116,12 +116,12 @@ class BuildCompiler:
             elif sbol2.BIOPAX_PROTEIN in built_object.types:
                 if RESTRICTION_ENZYME in built_object.roles:
                     if (
-                        built_object.definition
+                        built_object.identity
                         == "http://rebase.neb.com/rebase/enz/BsaI.html"
                     ):
                         self.BsaI_impl = implementation
                     elif (
-                        built_object.definition
+                        built_object.identity
                         == "http://rebase.neb.com/rebase/enz/BbsI.html"
                     ):
                         self.BbsI_impl = implementation
