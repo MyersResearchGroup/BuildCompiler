@@ -28,11 +28,18 @@ sbol2.Config.setOption(sbol2.ConfigOptions.SBOL_TYPED_URIS, False)
 class Assembly:
     """Creates an Assembly Plan.
 
-    :param name: Name of the assembly plan ModuleDefinition.
-    :param part_plasmids: Parts in backbone to be assembled.
-    :param plasmid_acceptor_backbone:  Backbone in which parts are inserted on the assembly.
-    :param restriction_enzyme: Restriction enzyme name used by PyDNA. Case sensitive, follow standard restriction enzyme nomenclature, i.e. 'BsaI'
-    :param document: SBOL Document where the assembly plan will be created.
+    :param part_plasmids: List of part-in-backbone plasmids to be assembled.
+    :param backbone_plasmid: Acceptor backbone into which parts are inserted.
+    :param restriction_enzyme: SBOL Implementation representing the restriction enzyme
+        (e.g. BsaI) used to digest parts during assembly.
+    :param ligase: SBOL Implementation representing the ligase (e.g. T4) used to
+        ligate digested parts.
+    :param source_document: SBOL Document containing the source part/plasmid definitions.
+    :param final_document: SBOL Document where assembled composite plasmid definitions
+        will be written.
+    :param composite_prefix: Prefix used when naming composite plasmid definitions.
+        Defaults to 'composite'.
+
     """
 
     def __init__(  # TODO add fields for activity/agent/plan
@@ -58,14 +65,27 @@ class Assembly:
 
     def run(
         self, include_extracted_parts: bool = False
-    ) -> List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]:
-        """Runs full assembly simulation.
+    ) -> Tuple[List[Plasmid], sbol2.Document]:
+        """Run the full Golden Gate assembly simulation.
 
-        `document` parameter of golden_gate_assembly_plan object is updated by reference to include assembly plan ModuleDefinition and all related information.
+        Executes the following steps in order:
 
-        Runs :func:`part_digestion` for all `part_plasmids` and :func:`backbone_digestion` for `plasmid_acceptor_backbone` with `restriction_enzyme`. Then runs :func:`ligation` with these parts to form composites.
+        1. Calls :func:`part_digestion` on each plasmid in ``part_plasmids`` using
+           ``restriction_enzyme``, appending extracted parts to ``source_document``.
+        2. Calls :func:`backbone_digestion` on the first implementation of ``backbone``,
+           appending the linearised backbone to ``source_document``.
+        3. Calls :func:`ligation` on all extracted parts and the backbone to produce
+           composite plasmid implementations, written to ``final_document``.
+        4. Wraps each composite implementation in a :class:`Plasmid` object and returns
+           the full list alongside the populated ``final_document``.
 
-        :return: List of all composites generated, in the form of tuples of ComponentDefinition and Sequence.
+        :param include_extracted_parts: If ``True``, extracted part and backbone
+            definitions are also written to ``final_document`` in addition to
+            ``source_document``. Defaults to ``False``.
+        :return: A tuple of (composite plasmids, final document), where composite
+            plasmids is a list of :class:`Plasmid` objects built from the ligated
+            implementations, and final document is the populated ``sbol2.Document``
+            containing all assembly outputs.
         """
         for plasmid in self.part_plasmids:
             extracts_tuple_list, _ = part_digestion(
@@ -324,17 +344,28 @@ def part_digestion(
     assembly_activity: sbol2.Activity,
     document: sbol2.Document,
 ) -> Tuple[List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]]:
-    """Runs a simulated digestion on the top level sequence in the reactant ComponentDefinition or ModuleDefinition with the given restriciton enzymes, creating a extracted part ComponentDefinition, a digestion Interaction, and converts existing scars to 5' and 3' overhangs.
-    The product ComponentDefinition is assumed the digested part in this case.
+    """Simulate restriction digestion of a part plasmid and extract the insert.
 
-    Written for use with the SBOL2.3 output of https://sbolcanvas.org
+    Uses PyDNA to cut the reactant sequence, then constructs SBOL representations
+    of the extracted part, its 5' and 3' overhangs, and any derived scar sequences.
+    Each enzyme and the reactant implementation are recorded as usages on
+    ``assembly_activity``.
 
-    :param reactant: Plasmid DNA to be digested as SBOL ComponentDefinition
-    :param restriction_enzymes: Restriction enzymes as :class:`sbol2.ComponentDefinition`
-                                (generate with :func:`rebase_restriction_enzyme`).
-    :param assembly_plan: SBOL ModuleDefinition to contain the functional components, interactions, and participations
-    :param document: original SBOL2 document to be used to extract referenced objects.
-    :return: A tuple of a list ComponentDefinitions and Sequences, and an assembly plan ModuleDefinition.
+    Expects the reactant to be circular with 2 digest products, or linear with 3
+    (backbone | part | backbone). The shorter circular product or middle linear
+    product is taken as the extracted insert.
+
+    :param reactant: Part-in-backbone plasmid to digest.
+    :param restriction_enzymes: Restriction enzyme implementations; the corresponding
+        ``ComponentDefinition.name`` must match a PyDNA/ReBase enzyme name (e.g. ``'BsaI'``).
+    :param assembly_activity: SBOL Activity to record reactant and enzyme usages on.
+    :param document: Source SBOL document used to resolve referenced definitions and sequences.
+    :return: A tuple of (extracts, activity), where extracts is a list of
+        ``(ComponentDefinition, Sequence)`` pairs covering the extracted part,
+        overhangs, and scar definitions, and activity is the updated ``assembly_activity``.
+    :raises TypeError: If the reactant has no recognised DNA type.
+    :raises ValueError: If the reactant does not have exactly one sequence, or if
+        the number of digest products is unsupported for the reactant topology.
     """
     reactant_impl = reactant.plasmid_implementations[0]
     reactant_component_definition = reactant.plasmid_definition
@@ -548,17 +579,27 @@ def backbone_digestion(
     assembly_activity: sbol2.Activity,
     document: sbol2.Document,
 ) -> Tuple[List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]]:
-    """Runs a simulated digestion on the top level sequence in the reactant ComponentDefinition or ModuleDefinition with the given restriciton enzymes, creating an open backbone ComponentDefinition, a digestion Interaction, and converts existing scars to 5' and 3' overhangs.
-    The product ComponentDefinition is assumed the open backbone in this case.
+    """Simulate restriction digestion of a backbone plasmid and extract the linearised vector.
 
-    Written for use with the SBOL2.3 output of https://sbolcanvas.org
+    Mirrors :func:`part_digestion` but targets the backbone: for a circular reactant
+    with 2 digest products the longer fragment is taken as the open backbone; for a
+    linear reactant with 3 products the outer prefix/suffix fragments are used.
+    The resulting open-backbone ``ComponentDefinition``, its 5' and 3' overhangs, and
+    any matched scar sequences are returned as SBOL objects. The reactant implementation
+    and each enzyme are recorded as usages on ``assembly_activity``.
 
-    :param reactant: DNA to be digested as SBOL ComponentDefinition or ModuleDefinition, usually a part_in_backbone. ComponentDefinition is the best-practice type for plasmids.
-    :param restriction_enzymes: Restriction enzymes as :class:`sbol2.ComponentDefinition`
-                                (generate with :func:`rebase_restriction_enzyme`).
-    :param assembly_plan: SBOL ModuleDefinition to contain the functional components, interactions, and participations
-    :param document: original SBOL2 document to be used to extract referenced objects.
-    :return: A tuple of a list ComponentDefinitions and Sequences, and an assembly plan ModuleDefinition.
+    :param reactant: SBOL Implementation whose ``built`` URI resolves to the
+        backbone ``ComponentDefinition`` in ``document``.
+    :param restriction_enzymes: Restriction enzyme implementations; the corresponding
+        ``ComponentDefinition.name`` must match a PyDNA/ReBase enzyme name (e.g. ``'BsaI'``).
+    :param assembly_activity: SBOL Activity to record reactant and enzyme usages on.
+    :param document: Source SBOL document used to resolve referenced definitions and sequences.
+    :return: A tuple of (extracts, activity), where extracts is a list of
+        ``(ComponentDefinition, Sequence)`` pairs covering the open backbone,
+        overhangs, and scar definitions, and activity is the updated ``assembly_activity``.
+    :raises TypeError: If the reactant has no recognised DNA type.
+    :raises ValueError: If the reactant does not have exactly one sequence, or if
+        the number of digest products is unsupported for the reactant topology.
     """
     reactant_component_definition = document.get(reactant.built)
     reactant_displayId = reactant_component_definition.displayId
@@ -775,11 +816,14 @@ def ligation(
 ) -> List[sbol2.Implementation]:
     """Ligates Components using base complementarity and creates product Components and a ligation Interaction.
 
-    :param reactants: DNA parts to be ligated as SBOL ModuleDefinition.
+    :param reactants: Extracted part and backbone ``ComponentDefinition`` objects to ligate.
     :param assembly_activity: SBOL activity to track assembly inputs & outputs
-    :param document: SBOL2 document containing all reactant ComponentDefinitions.
-    :param ligase: as SBOL Implementation
-    :return: List of all composites generated, in the form of tuples of ComponentDefinition and Sequence.
+    :param composite_prefix: Prefix used when naming composite ``ComponentDefinition``
+        and ``Implementation`` identities.
+    :param source_document: SBOL Document containing all reactant definitions.
+    :param final_document: SBOL Document that receives composite definitions and implementations.
+    :param ligase: SBOL Implementation of the ligase (e.g. T4).
+    :return: List of ``sbol2.Implementation`` objects, one per composite plasmid generated.
     """
     enzyme_definition = source_document.get(ligase.built)
 
