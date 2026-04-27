@@ -12,6 +12,7 @@ from buildcompiler.sbol2build import (
 from .abstract_translator import (
     get_or_pull,
     get_compatible_plasmids,
+    extract_toplevel_definition,
 )
 from .constants import (
     AMP,
@@ -19,6 +20,7 @@ from .constants import (
     KAN,
     FUSION_SITES,
     LIGASE,
+    LVL2_FUSION_SITE_ORDER,
     PART_ROLES,
     PLASMID_VECTOR,
     RESTRICTION_ENZYME,
@@ -285,11 +287,11 @@ class BuildCompiler:
 
     def assembly_lvl1(
         self,
-        abstract_design: sbol2.ComponentDefinition,
+        abstract_designs: List[sbol2.ComponentDefinition],
         final_doc: sbol2.Document = sbol2.Document(),
         product_name: str = None,
         backbone: Plasmid = None,
-    ) -> list[sbol2.ComponentDefinition]:
+    ) -> Tuple[Dict, sbol2.Document]:
         """Assemble level-1 plasmids for each gene/transcriptional unit.
 
         Uses indexed plasmids/backbones and the current design to assemble
@@ -300,49 +302,51 @@ class BuildCompiler:
         :raises LookupError: If compatible plasmids or backbones cannot be found.
         """
 
-        # TODO: Identify parts from the abstract design needed for lvl1 assembly and find compatible indexed plasmids/backbones.
-        # if backbone provided then use it.Then look for parts constraind by the backbone fusion sites.
-        # else, run an algorithm to try a backbone from 4 the choices. If it fails on the 4 raise an error.
+        assembly_dict = {}
 
-        plasmid_dict = self._get_input_plasmids(
-            design=abstract_design, antibiotic_resistance=AMP
-        )
-
-        if not backbone:
-            backbone, compatible_plasmids = self._get_backbone(
-                plasmid_dict, antibiotic_resistance=KAN
-            )
-        else:
-            compatible_plasmids = get_compatible_plasmids(plasmid_dict, backbone)
-
-        if self.BsaI_impl is None:
-            self._create_RE_implementation("BsaI")
-            warnings.warn(
-                "BsaI Restriction enzyme not found in provided collection(s). Domestication via purchase will be added to protocol.",
-                RuntimeWarning,
+        for abstract_design in abstract_designs:
+            plasmid_dict = self._get_input_plasmids(
+                design=abstract_design, antibiotic_resistance=AMP
             )
 
-        if self.T4_ligase_impl is None:
-            self._create_ligase_implementation()
-            warnings.warn(
-                "No appropriate ligase found in provided collection(s). Domestication of T4 Ligase via purchase will be added to protocol.",
-                RuntimeWarning,
+            if not backbone:
+                backbone, compatible_plasmids = self._get_backbone(
+                    plasmid_dict, antibiotic_resistance=KAN
+                )
+            else:
+                compatible_plasmids = get_compatible_plasmids(plasmid_dict, backbone)
+
+            if self.BsaI_impl is None:
+                self._create_RE_implementation("BsaI")
+                warnings.warn(
+                    "BsaI Restriction enzyme not found in provided collection(s). Domestication via purchase will be added to protocol.",
+                    RuntimeWarning,
+                )
+
+            if self.T4_ligase_impl is None:
+                self._create_ligase_implementation()
+                warnings.warn(
+                    "No appropriate ligase found in provided collection(s). Domestication of T4 Ligase via purchase will be added to protocol.",
+                    RuntimeWarning,
+                )
+
+            assembly = Assembly(
+                compatible_plasmids,
+                backbone,
+                self.BsaI_impl,
+                self.T4_ligase_impl,
+                self.sbol_doc,
+                final_doc,
+                product_name,
             )
+            composite_plasmids, product_doc = assembly.run()  # TODO upload product_doc?
 
-        assembly = Assembly(
-            compatible_plasmids,
-            backbone,
-            self.BsaI_impl,
-            self.T4_ligase_impl,
-            self.sbol_doc,
-            final_doc,
-            product_name,
-        )
-        composite_plasmids, product_doc = assembly.run()  # TODO upload product_doc?
+            self.indexed_plasmids.extend(
+                composite_plasmids
+            )  # see about using a wrapper function to do this, where it checks if the design already exists (like in index_collections). this way we avoid duplicate issues that might come with loading the abstract design definitions into the self.sbol_doc ahead of time
+            assembly_dict[abstract_design.identity] = composite_plasmids
 
-        self.indexed_plasmids.extend(composite_plasmids)
-
-        return composite_plasmids, product_doc
+        return assembly_dict, product_doc
 
         # TODO: Create a SBOL representation of the assembly process, updating the SBOL Document.
         # Using he selected parts create the representation, you need Plasmids, BsaI and T4 Ligase.
@@ -354,6 +358,9 @@ class BuildCompiler:
 
     def assembly_lvl2(
         self,
+        abstract_design_doc: sbol2.Document,
+        backbone: Plasmid = None,
+        product_name: str = None,
     ) -> list[sbol2.ComponentDefinition]:
         """Assemble level-2 plasmids for the full design.
 
@@ -364,14 +371,78 @@ class BuildCompiler:
         :rtype: list[Plasmid]
         :raises LookupError: If compatible plasmids or backbones cannot be found.
         """
+        # get high level genes, send to assembly_lvl1
+        # send original abstract_design to get a new dictionary
+        # send new dictionary to _get_backbone or get_compatible plasmids with AMP
+        TUs = _extract_lvl2_TUs(abstract_design_doc)
+        lvl1_plasmids = []
 
-        # TODO: Identify parts from the abstract design needed for lvl2 assembly and find compatible indexed plasmids/backbones.
-        # TODO: Create a SBOL representation of the assembly process, updating the SBOL Document.
-        # TODO: Generate a protocol for the assembly process.
-        protocol = "To be implemented by PUDU"
-        # TODO: Updates indexed plasmids with assembled versions.
+        for i, TU in enumerate(TUs):
+            print(TU.displayId)
 
-        return protocol
+            # l1 backbone zselection
+            backbone_fusion_sites = LVL2_FUSION_SITE_ORDER[i]
+            backbone = next(
+                plasmid
+                for plasmid in self.indexed_backbones
+                if plasmid.fusion_sites == backbone_fusion_sites
+                and plasmid.antibiotic_resistance == KAN
+            )
+
+            print(backbone)
+
+            # TODO insert check here to see if the TU exists already (#43). should not be too expensive, as long as we search only indexed_plasmids where AR=KAN
+            composite_plasmids, final_doc = self.assembly_lvl1(
+                TU, backbone=backbone, product_name=f"{TU.displayId}_plas"
+            )
+
+            simplified_representation, new_defs = self._encapsulate_TU(
+                composite_plasmids[0]
+            )
+            final_doc.add_list(new_defs)
+            lvl1_plasmids.append(simplified_representation)
+            print(simplified_representation)
+
+        # get l2 backbone
+        plasmid_dict = {}
+        for p in lvl1_plasmids:
+            key = p.plasmid_definition.displayId
+            plasmid_dict.setdefault(key, []).append(p)
+
+        backbone, _ = self._get_backbone(plasmid_dict, antibiotic_resistance=AMP)
+
+        print(backbone)
+
+        # BbsI for l2
+        if self.BbsI_impl is None:
+            self._create_RE_implementation("BbsI")
+            warnings.warn(
+                "BbsI Restriction enzyme not found in provided collection(s). Domestication via purchase will be added to protocol.",
+                RuntimeWarning,
+            )
+
+        # TODO see about making these common enzymes (BsaI, BbSI, T4) global or class variables, so they only need to be searched for once
+        if self.T4_ligase_impl is None:
+            self._create_ligase_implementation()
+            warnings.warn(
+                "No appropriate ligase found in provided collection(s). Domestication of T4 Ligase via purchase will be added to protocol.",
+                RuntimeWarning,
+            )
+
+        assembly = Assembly(
+            lvl1_plasmids,
+            backbone,
+            self.BbsI_impl,
+            self.T4_ligase_impl,
+            self.sbol_doc,
+            final_doc,
+            product_name,
+        )
+
+        lvl2_plasmids, final_doc = assembly.run()  # TODO upload product_doc?
+        self.indexed_plasmids.extend(lvl2_plasmids)
+
+        return lvl2_plasmids, final_doc
 
     def _extract_plasmids_from_strain(
         self,
@@ -900,3 +971,23 @@ class BuildCompiler:
 
         self.sbol_doc.add_list([T4_impl, ligase_def])
         self.T4_ligase_impl = T4_impl
+
+
+def _extract_lvl2_TUs(  # TODO send to misc helper file instead of buildcompiler.py?
+    design_doc: sbol2.Document,
+) -> List[sbol2.ComponentDefinition]:
+    """
+    Returns the component definitions of each level-1 component (TU)
+    in the design.
+
+    Args:
+        design: :class:`sbol2.Document` containing the design.
+
+    Returns:
+        A list of TU component definitions in sequential order.
+    """
+    top_design = extract_toplevel_definition(design_doc)
+
+    return [
+        design_doc.get(comp.definition) for comp in top_design.getInSequentialOrder()
+    ]
