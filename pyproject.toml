@@ -34,6 +34,9 @@ test = [
   "pytest < 5.0.0",
   "pytest-cov[all]"
 ]
+automation = [
+  "pudupy"
+]
 
 [project.urls]
 "Homepage" = "https://github.com/MyersResearchGroup/BuildCompiler"

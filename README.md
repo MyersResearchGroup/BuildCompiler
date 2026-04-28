@@ -71,6 +71,35 @@ Creates missing parts as linear DNA and generates protocols to insert them into 
 - Creates dilution series
 - Generates plating protocols
 
+#### Example: Generate plating protocol artifacts from transformation results
+
+```python
+from buildcompiler.buildcompiler import BuildCompiler
+
+compiler = BuildCompiler(collections=[], sbh_registry="", auth_token="", sbol_doc=None)
+
+transformation_results = {
+    "thermocycler_wells": {
+        "A1": "strain_001",
+        "A2": "strain_002"
+    }
+}
+
+advanced_params = {
+    "target_colonies": 12,
+    "spots_per_strain": 2
+}
+
+artifacts = compiler.plating(
+    transformation_results=transformation_results,
+    results_dir="plating_outputs",
+    advanced_params=advanced_params,
+    zip_name="plating_simulation.zip",
+)
+
+print(artifacts["simulation_zip"])  # plating_outputs/plating_simulation.zip
+```
+
 ### 7. Full Build (Orchestrator)
 Runs the entire workflow automatically:
 - Detects missing parts

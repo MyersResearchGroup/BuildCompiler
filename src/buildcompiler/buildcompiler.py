@@ -2,6 +2,8 @@ import sbol2
 import random
 import warnings
 from typing import List, Dict
+from pathlib import Path
+import json
 
 from buildcompiler.plasmid import Plasmid
 from buildcompiler.sbol2build import Assembly, dna_componentdefinition_with_sequence
@@ -9,7 +11,13 @@ from .abstract_translator import (
     get_or_pull,
     get_compatible_plasmids,
 )
-from .robotutils import assembly_plan_RDF_to_JSON, run_manual_script_with_json_to_zip
+from .robotutils import (
+    assembly_plan_RDF_to_JSON,
+    normalize_plating_data,
+    run_manual_script_with_json_to_zip,
+    run_opentrons_script_to_zip,
+    write_plating_protocol_script,
+)
 from .constants import (
     AMP,
     KAN,
@@ -380,6 +388,53 @@ class BuildCompiler:
         # TODO: Updates indexed plasmids with assembled versions.
 
         return protocol
+
+    def plating(
+        self,
+        transformation_results,
+        results_dir,
+        advanced_params=None,
+        protocol_script_path=None,
+        zip_name=None,
+        overwrite=False,
+    ):
+        """Generate and simulate a PUDU plating protocol from transformation results."""
+        advanced_params = advanced_params or {}
+        normalized_plating_data = normalize_plating_data(transformation_results)
+
+        output_dir = Path(results_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        plating_json_path = output_dir / "plating_input.json"
+        payload = {
+            "plating_data": normalized_plating_data,
+            "advanced_params": advanced_params,
+        }
+        plating_json_path.write_text(json.dumps(payload, indent=4), encoding="utf-8")
+
+        protocol_path = (
+            Path(protocol_script_path)
+            if protocol_script_path is not None
+            else output_dir / "run_plating.py"
+        )
+        write_plating_protocol_script(
+            output_path=protocol_path,
+            plating_data=normalized_plating_data,
+            advanced_params=advanced_params,
+        )
+
+        simulation_zip = run_opentrons_script_to_zip(
+            opentrons_script_path=protocol_path,
+            plating_json_path=plating_json_path,
+            zip_name=zip_name,
+            overwrite=overwrite,
+        )
+
+        return {
+            "plating_json": str(plating_json_path),
+            "protocol_script": str(protocol_path),
+            "simulation_zip": str(simulation_zip),
+        }
 
     def _extract_plasmids_from_strain(
         self,

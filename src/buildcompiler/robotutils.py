@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import tempfile
 import zipfile
+import re
 from pathlib import Path
 
 def assembly_plan_RDF_to_JSON(file, output_path: str | Path | None = None):
@@ -249,5 +250,134 @@ def run_manual_script_with_json_to_zip(
             for p in tmpdir.rglob("*"):
                 if p.is_file():
                     z.write(p, arcname=p.relative_to(tmpdir))
+
+    return out_zip
+
+
+def load_json_or_dict(value):
+    """Load JSON input from a dictionary, JSON string, or JSON file path."""
+    if isinstance(value, dict):
+        return value
+
+    if isinstance(value, Path):
+        candidate = value
+    elif isinstance(value, str):
+        candidate = Path(value)
+    else:
+        raise ValueError("Expected a dict, JSON string, or path to a JSON file.")
+
+    if candidate.exists():
+        with candidate.open("r", encoding="utf-8") as infile:
+            return json.load(infile)
+
+    try:
+        return json.loads(str(value))
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            "Could not parse input as JSON string or JSON file path."
+        ) from exc
+
+
+def normalize_plating_data(transformation_results):
+    """Normalize transformation results to {'bacterium_locations': {...}}."""
+    data = load_json_or_dict(transformation_results)
+    if not isinstance(data, dict):
+        raise ValueError("Transformation results must be a JSON object.")
+
+    key_aliases = (
+        "bacterium_locations",
+        "strain_locations",
+        "thermocycler_wells",
+    )
+    for key in key_aliases:
+        if key in data:
+            well_mapping = data[key]
+            if not isinstance(well_mapping, dict) or not well_mapping:
+                raise ValueError(f"'{key}' must be a non-empty object.")
+            return {"bacterium_locations": well_mapping}
+
+    well_pattern = re.compile(r"^[A-H](?:[1-9]|1[0-2])$")
+    if data and all(well_pattern.match(str(k)) for k in data.keys()):
+        return {"bacterium_locations": data}
+
+    raise ValueError(
+        "Unsupported transformation results format. Expected one of: "
+        "{'bacterium_locations': {...}}, {'strain_locations': {...}}, "
+        "{'thermocycler_wells': {...}}, or a raw well mapping like {'A1': 'strain_1'}."
+    )
+
+
+def write_plating_protocol_script(output_path, plating_data, advanced_params):
+    """Write a self-contained PUDU plating runner script."""
+    script_path = Path(output_path)
+    script_text = (
+        "from pudu.plating import Plating\n\n"
+        f"PLATING_DATA = {json.dumps(plating_data, indent=4)}\n\n"
+        f"ADVANCED_PARAMS = {json.dumps(advanced_params, indent=4)}\n\n"
+        "if __name__ == '__main__':\n"
+        "    protocol = Plating(plating_data=PLATING_DATA, json_params=ADVANCED_PARAMS)\n"
+        "    protocol.run()\n"
+    )
+    script_path.write_text(script_text, encoding="utf-8")
+    return script_path
+
+
+def run_opentrons_script_to_zip(
+    opentrons_script_path: str | Path,
+    plating_json_path: str | Path,
+    zip_name: str | None = None,
+    overwrite: bool = False,
+) -> Path:
+    """Run opentrons_simulate and zip protocol artifacts and logs."""
+    script_path = Path(opentrons_script_path).resolve()
+    json_path = Path(plating_json_path).resolve()
+
+    if not script_path.exists():
+        raise FileNotFoundError(f"Opentrons script not found: {script_path}")
+    if not json_path.exists():
+        raise FileNotFoundError(f"JSON file not found: {json_path}")
+
+    out_dir = script_path.parent
+    base_name = zip_name or f"{script_path.stem}_opentrons_simulation.zip"
+    out_zip = out_dir / base_name
+
+    if out_zip.exists() and not overwrite:
+        stem = out_zip.stem
+        suffix = out_zip.suffix
+        i = 1
+        while True:
+            candidate = out_dir / f"{stem}_{i}{suffix}"
+            if not candidate.exists():
+                out_zip = candidate
+                break
+            i += 1
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdir = Path(tmpdirname)
+        tmp_script = tmpdir / script_path.name
+        tmp_json = tmpdir / json_path.name
+        shutil.copy2(script_path, tmp_script)
+        shutil.copy2(json_path, tmp_json)
+
+        proc = subprocess.run(
+            ["opentrons_simulate", str(tmp_script)],
+            capture_output=True,
+            cwd=tmpdir,
+        )
+
+        (tmpdir / "simulate_stdout.txt").write_text(
+            (proc.stdout or b"").decode("utf-8", errors="replace"), encoding="utf-8"
+        )
+        (tmpdir / "simulate_stderr.txt").write_text(
+            (proc.stderr or b"").decode("utf-8", errors="replace"), encoding="utf-8"
+        )
+        (tmpdir / "simulate_returncode.txt").write_text(
+            str(proc.returncode), encoding="utf-8"
+        )
+
+        with zipfile.ZipFile(out_zip, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            for p in tmpdir.rglob("*"):
+                if p.is_file():
+                    zf.write(p, arcname=p.relative_to(tmpdir))
 
     return out_zip
