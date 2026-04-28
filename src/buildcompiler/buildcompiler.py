@@ -1,6 +1,7 @@
 import sbol2
 import random
 import warnings
+from pathlib import Path
 from typing import List, Dict
 
 from buildcompiler.plasmid import Plasmid
@@ -344,11 +345,21 @@ class BuildCompiler:
         combined_doc = self._combine_documents(input_doc, product_doc)
 
         if protocol == "Manual":
-            assembly_plan_RDF_to_JSON(combined_doc, output_path="assembly_product_assembly_plan.json")
+            protocol_basename = product_name or "assembly_product"
+            assembly_plan_path = f"{protocol_basename}_assembly_plan.json"
+            manual_script_path = Path("generate_manual_assembly_protocol.py")
+            if not manual_script_path.exists():
+                manual_script_path = (
+                    Path(__file__).resolve().parents[2]
+                    / "notebooks"
+                    / "generate_manual_assembly_protocol.py"
+                )
+
+            assembly_plan_RDF_to_JSON(combined_doc, output_path=assembly_plan_path)
             run_manual_script_with_json_to_zip(
-                manual_script_path="./generate_manual_assembly_protocol.py", 
-                json_file_path="./assembly_product_assembly_plan.json",
-                zip_name="assembly_protocol_simulation.zip",
+                manual_script_path=str(manual_script_path),
+                json_file_path=assembly_plan_path,
+                zip_name=f"{protocol_basename}_assembly_protocol.zip",
                 )
         """
         assembly_plan_RDF_to_JSON(combined_doc, output_path=f"{product_name}_assembly_plan.json")
