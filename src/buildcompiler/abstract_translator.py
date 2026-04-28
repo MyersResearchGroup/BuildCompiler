@@ -187,7 +187,30 @@ def extract_combinatorial_design_parts(
 
 
 def extract_toplevel_definition(doc: sbol2.Document) -> sbol2.ComponentDefinition:
-    return doc.componentDefinitions[0]
+    cds = list(doc.componentDefinitions)
+
+    # identities of definitions used as subcomponents
+    used_defs = set()
+
+    for cd in cds:
+        for comp in cd.components:
+            used_defs.add(comp.definition)
+
+    # candidates = composite designs not used inside another design
+    candidates = [
+        cd for cd in cds if len(cd.components) > 0 and cd.identity not in used_defs
+    ]
+
+    if len(candidates) == 1:
+        return candidates[0]
+
+    if len(candidates) == 0:
+        raise ValueError("No top-level composite ComponentDefinition found")
+
+    raise ValueError(
+        f"Multiple top-level ComponentDefinitions found: "
+        f"{[c.displayId for c in candidates]}"
+    )
 
 
 def enumerate_design_variants(component_dict):
