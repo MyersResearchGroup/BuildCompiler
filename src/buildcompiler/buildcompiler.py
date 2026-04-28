@@ -118,13 +118,13 @@ class BuildCompiler:
             elif sbol2.BIOPAX_PROTEIN in built_object.types:
                 if RESTRICTION_ENZYME in built_object.roles:
                     if (
-                        built_object.identity
-                        == "http://rebase.neb.com/rebase/enz/BsaI.html"
+                        "http://rebase.neb.com/rebase/enz/BsaI.html"
+                        in built_object.wasDerivedFrom
                     ):
                         self.BsaI_impl = implementation
                     elif (
-                        built_object.identity
-                        == "http://rebase.neb.com/rebase/enz/BbsI.html"
+                        "http://rebase.neb.com/rebase/enz/BbsI.html"
+                        in built_object.wasDerivedFrom
                     ):
                         self.BbsI_impl = implementation
                 elif LIGASE in built_object.roles:
@@ -289,7 +289,7 @@ class BuildCompiler:
         self,
         abstract_designs: List[sbol2.ComponentDefinition],
         final_doc: sbol2.Document = sbol2.Document(),
-        product_name: str = None,
+        product_name: str = "composite",
         backbone: Plasmid = None,
     ) -> Tuple[Dict, sbol2.Document]:
         """Assemble level-1 plasmids for each gene/transcriptional unit.
@@ -337,16 +337,16 @@ class BuildCompiler:
                 self.T4_ligase_impl,
                 self.sbol_doc,
                 final_doc,
-                product_name,
+                f"{abstract_design.displayId}_{product_name}",
             )
-            composite_plasmids, product_doc = assembly.run()  # TODO upload product_doc?
+            composite_plasmids, final_doc = assembly.run()  # TODO upload product_doc?
 
             self.indexed_plasmids.extend(
                 composite_plasmids
             )  # see about using a wrapper function to do this, where it checks if the design already exists (like in index_collections). this way we avoid duplicate issues that might come with loading the abstract design definitions into the self.sbol_doc ahead of time
             assembly_dict[abstract_design.identity] = composite_plasmids
 
-        return assembly_dict, product_doc
+        return assembly_dict, final_doc
 
         # TODO: Create a SBOL representation of the assembly process, updating the SBOL Document.
         # Using he selected parts create the representation, you need Plasmids, BsaI and T4 Ligase.
