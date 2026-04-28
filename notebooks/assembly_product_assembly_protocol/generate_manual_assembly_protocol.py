@@ -13,45 +13,12 @@ DEFAULT_REACTION = {
 
 
 def _name_from_uri(value):
-    if isinstance(value, dict):
-        for key in ("displayId", "display_id", "name", "label"):
-            if value.get(key):
-                return value[key]
-    value = _uri_from_entry(value) or value
     if not value:
         return "Unknown"
     parts = str(value).rstrip("/").split("/")
     if len(parts) >= 2 and parts[-1].isdigit():
         return parts[-2]
     return parts[-1]
-
-
-def _uri_from_entry(value):
-    if isinstance(value, dict):
-        for key in (
-            "Implementation",
-            "implementation",
-            "implementation_uri",
-            "implementationUri",
-            "Implementation URI",
-            "uri",
-            "URI",
-            "identity",
-        ):
-            if value.get(key):
-                return value[key]
-        return None
-    if isinstance(value, str) and value.startswith(("http://", "https://")):
-        return value
-    return None
-
-
-def _markdown_link(label, uri):
-    if not uri:
-        return label
-    escaped_label = str(label).replace("[", "\\[").replace("]", "\\]")
-    escaped_uri = str(uri).replace(")", "%29").replace(" ", "%20")
-    return f"[{escaped_label}]({escaped_uri})"
 
 
 def _validate_assembly(assembly, index):
@@ -64,9 +31,9 @@ def _validate_assembly(assembly, index):
 
 
 def _reaction_rows(assembly):
-    backbone = assembly["Backbone"]
-    enzyme = assembly["Restriction Enzyme"]
-    parts = assembly["PartsList"]
+    backbone = _name_from_uri(assembly["Backbone"])
+    enzyme = _name_from_uri(assembly["Restriction Enzyme"])
+    parts = [_name_from_uri(part) for part in assembly["PartsList"]]
     dna_inputs = [backbone] + parts
 
     reagents_volume = (
@@ -84,19 +51,12 @@ def _reaction_rows(assembly):
         )
 
     rows = [
-        ("Nuclease-free water", water_volume, None),
-        ("T4 DNA ligase buffer", DEFAULT_REACTION["t4_ligase_buffer"], None),
-        ("T4 DNA ligase", DEFAULT_REACTION["t4_ligase"], None),
-        (
-            f"{_name_from_uri(enzyme)} restriction enzyme",
-            DEFAULT_REACTION["restriction_enzyme"],
-            _uri_from_entry(enzyme),
-        ),
+        ("Nuclease-free water", water_volume),
+        ("T4 DNA ligase buffer", DEFAULT_REACTION["t4_ligase_buffer"]),
+        ("T4 DNA ligase", DEFAULT_REACTION["t4_ligase"]),
+        (f"{enzyme} restriction enzyme", DEFAULT_REACTION["restriction_enzyme"]),
     ]
-    rows.extend(
-        (_name_from_uri(input_reagent), DEFAULT_REACTION["part"], _uri_from_entry(input_reagent))
-        for input_reagent in dna_inputs
-    )
+    rows.extend((input_name, DEFAULT_REACTION["part"]) for input_name in dna_inputs)
     return rows
 
 
@@ -107,7 +67,7 @@ def build_markdown(assemblies):
     lines = [
         "# Manual Golden Gate Assembly Protocol",
         "",
-        "## Overview",
+        "##Overview",
         " Golden Gate assembly is a one-pot DNA cloning method that uses a Type IIS restriction enzyme, such as BsaI, together with DNA ligase to assemble multiple DNA fragments in a predefined order. Because Type IIS enzymes cut outside their recognition sites, they generate custom overhangs that direct fragment assembly and allow the recognition sites to be removed from the final construct. In this protocol, plasmids containing DNA parts and a destination backbone are combined with the restriction enzyme and ligase in a single tube, then cycled in a thermocycler between digestion and ligation temperatures. Repetition of these cycles enriches for the correctly assembled composite plasmid, after which the enzymes are heat-inactivated and the reaction is held at 4 °C until collection.",
         "## Reaction Setup",
         "",
@@ -130,8 +90,8 @@ def build_markdown(assemblies):
                 "| --- | ---: |",
             ]
         )
-        for reagent, volume, uri in rows:
-            lines.append(f"| {_markdown_link(reagent, uri)} | {volume:g} |")
+        for reagent, volume in rows:
+            lines.append(f"| {reagent} | {volume:g} |")
 
         lines.extend(
             [
