@@ -35,6 +35,7 @@ LIGASE = "http://identifiers.org/ncit/NCIT:C16796"
 RESTRICTION_ENZYME = "http://identifiers.org/obi/OBI_0000732"
 RESTRICTION_ENZYME_ASSEMBLY_SCAR = "http://identifiers.org/so/SO:0001953"
 ORGANISM_STRAIN = "https://identifiers.org/ncit/NCIT:C14419"
+PLATING_ACTIVITY_ROLE = "https://w3id.org/buildcompiler/roles/plating_input"
 
 FIVE_PRIME_OVERHANG = "http://identifiers.org/so/SO:0001932"
 THREE_PRIME_OVERHANG = "http://identifiers.org/so/SO:0001933"
