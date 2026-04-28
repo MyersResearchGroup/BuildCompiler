@@ -1,5 +1,8 @@
 import sbol2
+import json
 import random
+import re
+import shutil
 import warnings
 import urllib.parse
 from pathlib import Path
@@ -8,6 +11,8 @@ from typing import Any, Dict, List
 from buildcompiler.plasmid import Plasmid
 from buildcompiler.sbol2build import Assembly, dna_componentdefinition_with_sequence
 from .abstract_translator import (
+    enumerate_design_variants,
+    extract_combinatorial_design_parts,
     get_or_pull,
     get_compatible_plasmids,
 )
@@ -1011,6 +1016,388 @@ class BuildCompiler:
                         }
                     )
         return normalized
+
+    def _safe_display_id(self, value: str) -> str:
+        safe_value = re.sub(r"[^A-Za-z0-9_]+", "_", value or "")
+        return safe_value.strip("_") or "unnamed_design"
+
+    def _serialize_sbol_identity(self, obj_or_uri) -> str:
+        return getattr(obj_or_uri, "identity", str(obj_or_uri))
+
+    def _write_json(self, path: Path, payload: dict) -> Path:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2, sort_keys=True)
+        return path
+
+    def _status_from_manifest(self, manifest: dict) -> str:
+        if manifest.get("errors"):
+            return "completed_with_errors"
+        if manifest["assembly_lvl1"].get("successful"):
+            return "completed"
+        if (
+            manifest["assembly_lvl1"].get("failed")
+            or manifest["domestication"].get("errors")
+        ):
+            return "completed_with_errors"
+        return "failed"
+
+    def _find_missing_parts_for_lvl1(
+        self,
+        design: sbol2.ComponentDefinition,
+        backbone: Plasmid = None,
+    ) -> list[dict]:
+        parts = self._extract_design_parts(design)
+        plasmid_dict = self._construct_plasmid_dict(parts, antibiotic_resistance=AMP)
+
+        missing_parts = []
+        for part in parts:
+            candidates = plasmid_dict.get(part.displayId, [])
+            if not candidates:
+                missing_parts.append(
+                    {
+                        "part": part,
+                        "reason": "no implemented plasmid",
+                    }
+                )
+                continue
+
+            try:
+                if backbone is None:
+                    selected_backbone, _ = self._get_backbone(
+                        plasmid_dict, antibiotic_resistance=KAN
+                    )
+                    if selected_backbone is None:
+                        missing_parts.append(
+                            {
+                                "part": part,
+                                "reason": "no compatible backbone",
+                            }
+                        )
+                else:
+                    compatible = get_compatible_plasmids(plasmid_dict, backbone)
+                    if not compatible:
+                        missing_parts.append(
+                            {
+                                "part": part,
+                                "reason": "no compatible plasmid",
+                            }
+                        )
+            except Exception:
+                missing_parts.append(
+                    {
+                        "part": part,
+                        "reason": "no compatible plasmid",
+                    }
+                )
+
+        return missing_parts
+
+    def _index_domestication_products(
+        self,
+        products: list[sbol2.ComponentDefinition],
+    ) -> None:
+        for product_definition in products:
+            if self._get_indexed_plasmid(self.indexed_plasmids, product_definition):
+                continue
+            try:
+                indexed = Plasmid(product_definition, None, [], [], self.sbol_doc)
+            except Exception:
+                indexed = type(
+                    "IndexedDomesticationPlasmid",
+                    (),
+                    {
+                        "plasmid_definition": product_definition,
+                        "name": product_definition.displayId,
+                        "fusion_sites": [],
+                        "antibiotic_resistance": None,
+                    },
+                )()
+            self.indexed_plasmids.append(indexed)
+
+    def _zip_full_build_results(
+        self,
+        source_dir: Path,
+        zip_path: Path,
+        overwrite: bool = False,
+    ) -> Path:
+        if zip_path.exists():
+            if not overwrite:
+                raise FileExistsError(
+                    f"Zip path already exists and overwrite=False: {zip_path}"
+                )
+            zip_path.unlink()
+        zip_path.parent.mkdir(parents=True, exist_ok=True)
+        zip_base = zip_path.with_suffix("")
+        archive = shutil.make_archive(
+            str(zip_base), "zip", root_dir=str(source_dir), base_dir="."
+        )
+        return Path(archive)
+
+    def _expand_combinatorial_derivation(
+        self,
+        derivation: sbol2.CombinatorialDerivation,
+        product_name_prefix: str = None,
+    ) -> list[sbol2.ComponentDefinition]:
+        master_template = get_or_pull(self.sbol_doc, self.sbh, derivation.masterTemplate)
+        component_variants = extract_combinatorial_design_parts(
+            master_template, self.sbol_doc, self.sbol_doc
+        )
+        variant_definitions = enumerate_design_variants(component_variants)
+
+        prefix = product_name_prefix or master_template.displayId
+        created_variants = []
+
+        ordered_components = list(master_template.getInSequentialOrder())
+        for index, variant_parts in enumerate(variant_definitions, start=1):
+            variant_display_id = f"{self._safe_display_id(prefix)}_variant_{index:03d}"
+            variant_design = self.sbol_doc.find(variant_display_id) or sbol2.ComponentDefinition(
+                variant_display_id
+            )
+            variant_design.types = list(master_template.types)
+            variant_design.roles = list(master_template.roles)
+            variant_design.wasDerivedFrom = derivation.identity
+            self._add_if_absent(self.sbol_doc, variant_design)
+
+            if len(variant_design.components) == 0:
+                for comp_index, component in enumerate(ordered_components):
+                    part_def = variant_parts[comp_index]
+                    variant_component = variant_design.components.create(
+                        f"{variant_display_id}_component_{comp_index+1:03d}"
+                    )
+                    variant_component.definition = part_def.identity
+                    try:
+                        variant_component.access = component.access
+                    except Exception:
+                        pass
+                    try:
+                        variant_component.direction = component.direction
+                    except Exception:
+                        pass
+            created_variants.append(variant_design)
+
+        return created_variants
+
+    def _normalize_full_build_designs(self, designs) -> list[sbol2.ComponentDefinition]:
+        if isinstance(designs, sbol2.ComponentDefinition):
+            return [designs]
+        if isinstance(designs, sbol2.CombinatorialDerivation):
+            return self._expand_combinatorial_derivation(designs)
+        if isinstance(designs, list):
+            if all(isinstance(design, sbol2.ComponentDefinition) for design in designs):
+                return designs
+            raise TypeError("designs list must contain only ComponentDefinition objects.")
+        raise TypeError(
+            "designs must be a ComponentDefinition, list[ComponentDefinition], or CombinatorialDerivation."
+        )
+
+    def full_build(
+        self,
+        designs,
+        results_dir,
+        chassis_name: str = "E_coli_DH5alpha",
+        protocol_type: str = "manual",
+        transformation_params: dict | None = None,
+        plating_params: dict | None = None,
+        product_name_prefix: str | None = None,
+        overwrite: bool = False,
+    ) -> dict:
+        transformation_params = transformation_params or {}
+        plating_params = plating_params or {}
+        results_path = Path(results_dir)
+        results_path.mkdir(parents=True, exist_ok=True)
+
+        input_type = type(designs).__name__
+        normalized_designs = self._normalize_full_build_designs(designs)
+        manifest = {
+            "stage": "full_build",
+            "inputs": {
+                "input_type": input_type,
+                "design_count": len(normalized_designs),
+                "chassis_name": chassis_name,
+                "protocol_type": protocol_type,
+                "product_name_prefix": product_name_prefix,
+            },
+            "domestication": {
+                "missing_parts": [],
+                "products": [],
+                "transformation": {},
+                "plating": {},
+                "errors": [],
+            },
+            "assembly_lvl1": {"successful": [], "failed": []},
+            "transformation": {"assembly_products": {}},
+            "plating": {"assembly_products": {}},
+            "skipped": [
+                {
+                    "stage": "assembly_lvl2",
+                    "status": "skipped",
+                    "reason": "assembly_lvl2 is not implemented yet",
+                }
+            ],
+            "errors": [],
+        }
+
+        per_design_missing = {}
+        unique_missing = {}
+        for design in normalized_designs:
+            missing_items = self._find_missing_parts_for_lvl1(design)
+            serialized_missing = []
+            for item in missing_items:
+                part = item["part"]
+                entry = {
+                    "part_identity": self._serialize_sbol_identity(part),
+                    "part_display_id": part.displayId,
+                    "reason": item["reason"],
+                }
+                serialized_missing.append(entry)
+                unique_missing.setdefault(part.identity, {"part": part, "reason": item["reason"]})
+            per_design_missing[design.identity] = serialized_missing
+
+        manifest["domestication"]["missing_parts"] = list(unique_missing.values())
+        if unique_missing:
+            manifest["domestication"]["missing_parts"] = [
+                {
+                    "part_identity": self._serialize_sbol_identity(item["part"]),
+                    "part_display_id": item["part"].displayId,
+                    "reason": item["reason"],
+                }
+                for item in unique_missing.values()
+            ]
+            unique_missing_parts = [item["part"] for item in unique_missing.values()]
+            try:
+                domesticated_products = self.domestication(unique_missing_parts)
+                self._index_domestication_products(domesticated_products)
+                manifest["domestication"]["products"] = [
+                    self._serialize_sbol_identity(product)
+                    for product in domesticated_products
+                ]
+                try:
+                    domestication_transformation = self.transformation(
+                        domesticated_products,
+                        chassis_name=chassis_name,
+                        transformation_doc=self.sbol_doc,
+                        **transformation_params,
+                    )
+                    manifest["domestication"]["transformation"] = domestication_transformation
+                except Exception as exc:
+                    manifest["domestication"]["errors"].append(
+                        f"Domestication transformation failed: {exc}"
+                    )
+                    domestication_transformation = None
+
+                if domestication_transformation:
+                    try:
+                        domestication_plating = self.plating(
+                            transformation_results=domestication_transformation,
+                            results_dir=results_path / "domestication" / "plating",
+                            protocol_type=protocol_type,
+                            advanced_params=plating_params,
+                            plating_doc=self.sbol_doc,
+                            overwrite=overwrite,
+                        )
+                        manifest["domestication"]["plating"] = domestication_plating
+                    except Exception as exc:
+                        manifest["domestication"]["errors"].append(
+                            f"Domestication plating failed: {exc}"
+                        )
+            except Exception as exc:
+                manifest["domestication"]["errors"].append(f"Domestication failed: {exc}")
+                manifest["errors"].append(f"Domestication failed: {exc}")
+
+        for index, design in enumerate(normalized_designs, start=1):
+            design_slug = self._safe_display_id(design.displayId or f"design_{index:03d}")
+            stable_product_name = (
+                f"{self._safe_display_id(product_name_prefix)}_{design_slug}_{index:03d}"
+                if product_name_prefix
+                else f"{design_slug}_{index:03d}"
+            )
+            try:
+                assembly_products = self.assembly_lvl1(
+                    abstract_design=design,
+                    product_name=stable_product_name,
+                )
+                product_ids = [
+                    self._serialize_sbol_identity(
+                        product.plasmid_definition if isinstance(product, Plasmid) else product
+                    )
+                    for product in assembly_products
+                ]
+
+                assembly_transformation = self.transformation(
+                    assembly_products,
+                    chassis_name=chassis_name,
+                    transformation_doc=self.sbol_doc,
+                    **transformation_params,
+                )
+                assembly_plating = self.plating(
+                    transformation_results=assembly_transformation,
+                    results_dir=results_path / "assembly_lvl1" / design_slug / "plating",
+                    protocol_type=protocol_type,
+                    advanced_params=plating_params,
+                    plating_doc=self.sbol_doc,
+                    overwrite=overwrite,
+                )
+
+                manifest["assembly_lvl1"]["successful"].append(
+                    {
+                        "design_identity": design.identity,
+                        "design_display_id": design.displayId,
+                        "assembly_product_identities": product_ids,
+                    }
+                )
+                manifest["transformation"]["assembly_products"][design_slug] = assembly_transformation
+                manifest["plating"]["assembly_products"][design_slug] = assembly_plating
+            except Exception as exc:
+                failure_entry = {
+                    "design_identity": design.identity,
+                    "design_display_id": design.displayId,
+                    "error": str(exc),
+                    "missing_parts": per_design_missing.get(design.identity, []),
+                }
+                manifest["assembly_lvl1"]["failed"].append(failure_entry)
+                manifest["errors"].append(
+                    f"Assembly failed for {design.displayId}: {exc}"
+                )
+
+        sbol_path = results_path / "sbol" / "full_build.xml"
+        try:
+            sbol_path.parent.mkdir(parents=True, exist_ok=True)
+            self.sbol_doc.write(str(sbol_path))
+        except Exception as exc:
+            manifest["errors"].append(f"SBOL write failed: {exc}")
+
+        manifest_path = self._write_json(results_path / "full_build_manifest.json", manifest)
+        zip_path = results_path / "full_build_results.zip"
+        try:
+            zip_result = self._zip_full_build_results(
+                source_dir=results_path,
+                zip_path=zip_path,
+                overwrite=overwrite,
+            )
+        except Exception as exc:
+            manifest["errors"].append(f"Result packaging failed: {exc}")
+            self._write_json(manifest_path, manifest)
+            zip_result = zip_path
+
+        status = self._status_from_manifest(manifest)
+        result = {
+            "stage": "full_build",
+            "status": status,
+            "results_dir": str(results_path),
+            "zip_path": str(zip_result),
+            "manifest_path": str(manifest_path),
+            "sbol_path": str(sbol_path),
+            "inputs": manifest["inputs"],
+            "domestication": manifest["domestication"],
+            "assembly_lvl1": manifest["assembly_lvl1"],
+            "transformation": manifest["transformation"],
+            "plating": manifest["plating"],
+            "skipped": manifest["skipped"],
+            "errors": manifest["errors"],
+        }
+        self._write_json(manifest_path, manifest)
+        return result
 
     def _get_or_create_chassis(
         self, doc: sbol2.Document, chassis_name: str
