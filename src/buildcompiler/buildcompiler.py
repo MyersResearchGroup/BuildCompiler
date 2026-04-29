@@ -9,6 +9,7 @@ from buildcompiler.sbol2build import (
     dna_componentdefinition_with_sequence,
     rebase_restriction_enzyme,
 )
+from sbol2build.abstract_translator import enumerate_design_variants
 from .abstract_translator import (
     get_or_pull,
     get_compatible_plasmids,
@@ -49,7 +50,7 @@ class BuildCompiler:
         collections: List[str],
         sbh_registry: str,
         auth_token: str,
-        sbol_doc: sbol2.Document,
+        sbol_doc: sbol2.Document = None,
     ):
         self.sbh = sbol2.PartShop(sbh_registry)
         self.sbh.key = auth_token
@@ -287,7 +288,8 @@ class BuildCompiler:
 
     def assembly_lvl1(
         self,
-        abstract_designs: List[sbol2.ComponentDefinition],
+        abstract_designs: List[sbol2.ComponentDefinition]
+        | sbol2.CombinatorialDerivation,
         final_doc: sbol2.Document = sbol2.Document(),
         product_name: str = "composite",
         backbone: Plasmid = None,
@@ -303,48 +305,109 @@ class BuildCompiler:
         """
 
         assembly_dict = {}
-
-        for abstract_design in abstract_designs:
-            plasmid_dict = self._get_input_plasmids(
-                design=abstract_design, antibiotic_resistance=AMP
+        if type(abstract_designs) is sbol2.CombinatorialDerivation:
+            abstract_design_def = self.sbol_doc.getComponentDefinition(
+                abstract_designs.masterTemplate
             )
 
-            if not backbone:
-                backbone, compatible_plasmids = self._get_backbone(
-                    plasmid_dict, antibiotic_resistance=KAN
-                )
-            else:
-                compatible_plasmids = get_compatible_plasmids(plasmid_dict, backbone)
-
-            if self.BsaI_impl is None:
-                self._create_RE_implementation("BsaI")
-                warnings.warn(
-                    "BsaI Restriction enzyme not found in provided collection(s). Domestication via purchase will be added to protocol.",
-                    RuntimeWarning,
-                )
-
-            if self.T4_ligase_impl is None:
-                self._create_ligase_implementation()
-                warnings.warn(
-                    "No appropriate ligase found in provided collection(s). Domestication of T4 Ligase via purchase will be added to protocol.",
-                    RuntimeWarning,
-                )
-
-            assembly = Assembly(
-                compatible_plasmids,
-                backbone,
-                self.BsaI_impl,
-                self.T4_ligase_impl,
-                self.sbol_doc,
-                final_doc,
-                f"{abstract_design.displayId}_{product_name}",
+            combinatorial_part_dict = self.extract_combinatorial_design_parts(
+                abstract_design_def, abstract_designs
             )
-            composite_plasmids, final_doc = assembly.run()  # TODO upload product_doc?
 
-            self.indexed_plasmids.extend(
-                composite_plasmids
-            )  # see about using a wrapper function to do this, where it checks if the design already exists (like in index_collections). this way we avoid duplicate issues that might come with loading the abstract design definitions into the self.sbol_doc ahead of time
-            assembly_dict[abstract_design.identity] = composite_plasmids
+            enumerated_part_lists = enumerate_design_variants(combinatorial_part_dict)
+
+            for i, list in enumerate(enumerated_part_lists):
+                plasmid_dict = self._construct_plasmid_dict(list, "Ampicillin")
+
+                if not backbone:
+                    backbone, compatible_plasmids = self._get_backbone(
+                        plasmid_dict, antibiotic_resistance=KAN
+                    )
+                else:
+                    compatible_plasmids = get_compatible_plasmids(
+                        plasmid_dict, backbone
+                    )
+
+                if self.BsaI_impl is None:
+                    self._create_RE_implementation("BsaI")
+                    warnings.warn(
+                        "BsaI Restriction enzyme not found in provided collection(s). Domestication via purchase will be added to protocol.",
+                        RuntimeWarning,
+                    )
+
+                if self.T4_ligase_impl is None:
+                    self._create_ligase_implementation()
+                    warnings.warn(
+                        "No appropriate ligase found in provided collection(s). Domestication of T4 Ligase via purchase will be added to protocol.",
+                        RuntimeWarning,
+                    )
+
+                assembly = Assembly(
+                    compatible_plasmids,
+                    backbone,
+                    self.BsaI_impl,
+                    self.T4_ligase_impl,
+                    self.sbol_doc,
+                    final_doc,
+                    f"{abstract_design_def.displayId}_{product_name}_comb{i}",
+                )
+                composite_plasmids, final_doc = (
+                    assembly.run()
+                )  # TODO upload product_doc?
+
+                self.indexed_plasmids.extend(
+                    composite_plasmids
+                )  # see about using a wrapper function to do this, where it checks if the design already exists (like in index_collections). this way we avoid duplicate issues that might come with loading the abstract design definitions into the self.sbol_doc ahead of time
+
+                assembly_dict.setdefault(abstract_design_def.identity, []).extend(
+                    composite_plasmids
+                )
+        else:
+            for abstract_design in abstract_designs:
+                plasmid_dict = self._get_input_plasmids(
+                    design=abstract_designs, antibiotic_resistance=AMP
+                )
+
+                if not backbone:
+                    backbone, compatible_plasmids = self._get_backbone(
+                        plasmid_dict, antibiotic_resistance=KAN
+                    )
+                else:
+                    compatible_plasmids = get_compatible_plasmids(
+                        plasmid_dict, backbone
+                    )
+
+                if self.BsaI_impl is None:
+                    self._create_RE_implementation("BsaI")
+                    warnings.warn(
+                        "BsaI Restriction enzyme not found in provided collection(s). Domestication via purchase will be added to protocol.",
+                        RuntimeWarning,
+                    )
+
+                if self.T4_ligase_impl is None:
+                    self._create_ligase_implementation()
+                    warnings.warn(
+                        "No appropriate ligase found in provided collection(s). Domestication of T4 Ligase via purchase will be added to protocol.",
+                        RuntimeWarning,
+                    )
+
+                assembly = Assembly(
+                    compatible_plasmids,
+                    backbone,
+                    self.BsaI_impl,
+                    self.T4_ligase_impl,
+                    self.sbol_doc,
+                    final_doc,
+                    f"{abstract_design.displayId}_{product_name}",
+                )
+                composite_plasmids, final_doc = (
+                    assembly.run()
+                )  # TODO upload product_doc?
+
+                self.indexed_plasmids.extend(
+                    composite_plasmids
+                )  # see about using a wrapper function to do this, where it checks if the design already exists (like in index_collections). this way we avoid duplicate issues that might come with loading the abstract design definitions into the self.sbol_doc ahead of time
+                assembly_dict[abstract_design.identity] = composite_plasmids
 
         return assembly_dict, final_doc
 
@@ -588,6 +651,48 @@ class BuildCompiler:
             get_or_pull(self.sbol_doc, self.sbh, component.definition)
             for component in component_list
         ]
+
+    def extract_combinatorial_design_parts(
+        self,
+        design: sbol2.ComponentDefinition,
+        derivation: sbol2.CombinatorialDerivation,
+    ) -> Dict[str, List[sbol2.ComponentDefinition]]:
+        """
+        Extracts and returns a mapping of component definitions from a combinatorial design, in order.
+        Variants of combinatinatorial components are entered in a list corresponding to the URI of the component in the abstract design.
+
+        Args:
+            design:
+                The top-level :class:`sbol2.ComponentDefinition` representing the
+                abstract design template whose components should be extracted in
+                sequential order.
+
+            derivation:
+                The :class:`sbol2.CombinatorialDerivation` associated with ``design``
+                that defines variable components and their allowed variants.
+
+        Returns:
+            Dict[str, List[sbol2.ComponentDefinition]]:
+                A dictionary mapping component identities to lists
+                of variable component definitions.
+
+                - Sequential design components map to lists containing a single definition.
+                - Combinatorial variable components map to lists of variant definitions.
+        """
+        component_list = [c for c in design.getInSequentialOrder()]
+        component_dict = {
+            component.identity: [
+                get_or_pull(self.sbol_doc, self.sbh, component.definition)
+            ]
+            for component in component_list
+        }
+
+        for component in derivation.variableComponents:
+            component_dict[component.variable] = [
+                self.sbol_doc.getComponentDefinition(var) for var in component.variants
+            ]
+
+        return component_dict
 
     def _get_abstract_design(self) -> sbol2.ComponentDefinition:
         for definition in self.sbol_doc.componentDefinitions:
