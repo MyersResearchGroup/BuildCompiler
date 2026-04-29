@@ -140,9 +140,17 @@ def get_or_pull(doc, sbh, uri):
     Get an SBOL object from a Document.
     If missing, pull it from SynBioHub and retry.
     """
-    if uri not in doc:
+    try:
+        return doc.get(uri)
+
+    except Exception as e:
+        # Treat lookup failure as "not present"
         sbh.pull(uri, doc)
-    return doc.get(uri)
+
+        try:
+            return doc.get(uri)
+        except Exception:
+            raise e
 
 
 def extract_combinatorial_design_parts(
