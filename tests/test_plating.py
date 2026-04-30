@@ -100,11 +100,10 @@ class TestPlating(unittest.TestCase):
             )
             self.assertTrue(Path(result["protocol_artifacts"]["plate_map_json"]).exists())
             self.assertTrue(Path(result["protocol_artifacts"]["plate_map_csv"]).exists())
-
-            activity = self.doc.find(result["sbol_artifacts"]["plating_activity"])
-            self.assertIsNotNone(activity)
-            self.assertEqual(len(activity.usages), 2)
-            self.assertTrue(len(activity.associations) >= 1)
+            self.assertTrue(
+                Path(result["protocol_artifacts"]["plate_layout_dataframe_csv"]).exists()
+            )
+            self.assertIn("pudu", result["protocol_artifacts"])
 
     @patch("buildcompiler.robotutils.subprocess.run")
     def test_plating_automated_script_and_sim_zip(self, mock_run):

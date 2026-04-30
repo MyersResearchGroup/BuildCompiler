@@ -142,6 +142,125 @@ class Assembly:
         return activity
 
 
+class Transformation:
+    """Create SBOL transformation records from plasmid/chassis inputs.
+
+    Mirrors the orchestration pattern used by :class:`Assembly`, but for
+    chemical transformation into a chassis strain.
+    """
+
+    def __init__(
+        self,
+        plasmids: List[Plasmid],
+        chassis_name: str,
+        source_document: sbol2.Document,
+    ):
+        self.plasmids = plasmids
+        self.chassis_name = chassis_name
+        self.source_document = source_document
+
+    def _add_if_absent(self, obj):
+        if self.source_document.find(obj.identity) is None:
+            self.source_document.add(obj)
+
+    def _get_or_create_chassis(self) -> tuple[sbol2.ModuleDefinition, sbol2.Implementation]:
+        chassis_module = self.source_document.find(self.chassis_name) or sbol2.ModuleDefinition(
+            self.chassis_name
+        )
+        chassis_module.name = self.chassis_name
+        self._add_if_absent(chassis_module)
+
+        chassis_impl_id = f"{self.chassis_name}_impl"
+        chassis_impl = self.source_document.find(chassis_impl_id) or sbol2.Implementation(
+            chassis_impl_id
+        )
+        chassis_impl.built = chassis_module.identity
+        self._add_if_absent(chassis_impl)
+        return chassis_module, chassis_impl
+
+    def chemical_transformation(self) -> list[dict]:
+        chassis_module, chassis_impl = self._get_or_create_chassis()
+        outputs = []
+
+        for index, plasmid in enumerate(self.plasmids, start=1):
+            plasmid_def = plasmid.plasmid_definition
+            plasmid_impl = (
+                plasmid.plasmid_implementations[0]
+                if plasmid.plasmid_implementations
+                else None
+            )
+            if plasmid_impl is None:
+                plasmid_impl_id = f"{plasmid_def.displayId}_impl"
+                plasmid_impl = self.source_document.find(plasmid_impl_id) or sbol2.Implementation(
+                    plasmid_impl_id
+                )
+                plasmid_impl.built = plasmid_def.identity
+                self._add_if_absent(plasmid_impl)
+
+            transform_id = f"transform_{plasmid_def.displayId}_{index}"
+            transformation_activity = sbol2.Activity(transform_id)
+            transformation_activity.name = (
+                f"Transform {self.chassis_name} with {plasmid_def.displayId}"
+            )
+            transformation_activity.types = "http://sbols.org/v2#build"
+
+            chassis_usage = sbol2.Usage(
+                uri=f"{transform_id}_chassis_usage",
+                entity=chassis_impl.identity,
+                role="http://sbols.org/v2#build",
+            )
+            plasmid_usage = sbol2.Usage(
+                uri=f"{transform_id}_plasmid_usage",
+                entity=plasmid_impl.identity,
+                role="http://sbols.org/v2#build",
+            )
+            transformation_activity.usages = [chassis_usage, plasmid_usage]
+
+            transformed_strain = sbol2.ModuleDefinition(
+                f"{self.chassis_name}_with_{plasmid_def.displayId}"
+            )
+            transformed_strain.name = (
+                f"{self.chassis_name} transformed with {plasmid_def.displayId}"
+            )
+            chassis_module_ref = sbol2.Module(
+                uri=f"{transformed_strain.displayId}_chassis_module"
+            )
+            chassis_module_ref.definition = chassis_module.identity
+            plasmid_fc = sbol2.FunctionalComponent(
+                uri=f"{transformed_strain.displayId}_plasmid_fc"
+            )
+            plasmid_fc.definition = plasmid_def.identity
+            transformed_strain.modules = [chassis_module_ref]
+            transformed_strain.functionalComponents = [plasmid_fc]
+
+            transformed_impl = sbol2.Implementation(
+                f"{transformed_strain.displayId}_impl"
+            )
+            transformed_impl.built = transformed_strain.identity
+            transformed_impl.wasGeneratedBy = transformation_activity.identity
+
+            for obj in (
+                transformation_activity,
+                chassis_usage,
+                plasmid_usage,
+                transformed_strain,
+                chassis_module_ref,
+                plasmid_fc,
+                transformed_impl,
+            ):
+                self._add_if_absent(obj)
+
+            outputs.append(
+                {
+                    "transformation_activity": transformation_activity.identity,
+                    "transformed_strain_module": transformed_strain.identity,
+                    "transformed_strain_implementation": transformed_impl.identity,
+                }
+            )
+
+        return outputs
+
+
 def rebase_restriction_enzyme(name: str, **kwargs) -> sbol2.ComponentDefinition:
     """Creates an ComponentDefinition Restriction Enzyme Component from rebase.
 
