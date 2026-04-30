@@ -9,7 +9,11 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from buildcompiler.plasmid import Plasmid
-from buildcompiler.sbol2build import Assembly, dna_componentdefinition_with_sequence
+from buildcompiler.sbol2build import (
+    Assembly,
+    Transformation as SBOL2Transformation,
+    dna_componentdefinition_with_sequence,
+)
 from .abstract_translator import (
     enumerate_design_variants,
     extract_combinatorial_design_parts,
@@ -414,76 +418,32 @@ class BuildCompiler:
         chassis_module, chassis_impl = self._get_or_create_chassis(
             transformation_doc, chassis_name
         )
+        normalized_plasmids = []
+        for product in normalized_products:
+            indexed = self._get_indexed_plasmid(self.indexed_plasmids, product["plasmid"])
+            if indexed is None:
+                indexed = type(
+                    "TransformationPlasmid",
+                    (),
+                    {
+                        "plasmid_definition": product["plasmid"],
+                        "plasmid_implementations": [],
+                        "name": product["plasmid"].displayId,
+                    },
+                )()
+            normalized_plasmids.append(indexed)
 
-        sbol_outputs = []
+        sbol_outputs = SBOL2Transformation(
+            plasmids=normalized_plasmids,
+            chassis_name=chassis_name,
+            source_document=transformation_doc,
+        ).chemical_transformation()
+
         robot_steps = []
         logs = []
 
         for index, product in enumerate(normalized_products, start=1):
             plasmid = product["plasmid"]
-            plasmid_impl = self._get_or_create_plasmid_implementation(
-                transformation_doc, plasmid
-            )
-            transform_id = f"transform_{plasmid.displayId}_{index}"
-
-            transformation_activity = sbol2.Activity(transform_id)
-            transformation_activity.name = f"Transform {chassis_name} with {plasmid.displayId}"
-            transformation_activity.types = "http://sbols.org/v2#build"
-
-            chassis_usage = sbol2.Usage(
-                uri=f"{transform_id}_chassis_usage",
-                entity=chassis_impl.identity,
-                role="http://sbols.org/v2#build",
-            )
-            plasmid_usage = sbol2.Usage(
-                uri=f"{transform_id}_plasmid_usage",
-                entity=plasmid_impl.identity,
-                role="http://sbols.org/v2#build",
-            )
-            transformation_activity.usages = [chassis_usage, plasmid_usage]
-
-            transformed_strain = sbol2.ModuleDefinition(
-                f"{chassis_name}_with_{plasmid.displayId}"
-            )
-            transformed_strain.roles = [ORGANISM_STRAIN]
-            transformed_strain.name = f"{chassis_name} transformed with {plasmid.displayId}"
-
-            chassis_module_ref = sbol2.Module(
-                uri=f"{transformed_strain.displayId}_chassis_module"
-            )
-            chassis_module_ref.definition = chassis_module.identity
-            plasmid_fc = sbol2.FunctionalComponent(
-                uri=f"{transformed_strain.displayId}_plasmid_fc"
-            )
-            plasmid_fc.definition = plasmid.identity
-
-            transformed_strain.modules = [chassis_module_ref]
-            transformed_strain.functionalComponents = [plasmid_fc]
-
-            transformed_impl = sbol2.Implementation(
-                f"{transformed_strain.displayId}_impl"
-            )
-            transformed_impl.built = transformed_strain.identity
-            transformed_impl.wasGeneratedBy = transformation_activity.identity
-
-            for obj in (
-                transformation_activity,
-                chassis_usage,
-                plasmid_usage,
-                transformed_strain,
-                chassis_module_ref,
-                plasmid_fc,
-                transformed_impl,
-            ):
-                self._add_if_absent(transformation_doc, obj)
-
-            sbol_outputs.append(
-                {
-                    "transformation_activity": transformation_activity.identity,
-                    "transformed_strain_module": transformed_strain.identity,
-                    "transformed_strain_implementation": transformed_impl.identity,
-                }
-            )
             robot_steps.append(
                 {
                     "step": index,
