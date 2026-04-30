@@ -5,6 +5,7 @@ import re
 import shutil
 import warnings
 import urllib.parse
+import csv
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -489,14 +490,19 @@ class BuildCompiler:
         plating_doc: sbol2.Document | None = None,
         overwrite: bool = False,
     ) -> Dict[str, Any]:
-        """Generate a plated 96-well output and protocol artifacts."""
+        """Generate plating layout artifacts and protocol metadata.
+
+        This implementation is file/metadata oriented and does not create new
+        SBOL objects for plating.
+        """
         if protocol_type not in {"manual", "automated"}:
             raise ValueError("protocol_type must be one of: 'manual', 'automated'.")
-        if plating_doc is None:
-            plating_doc = self.sbol_doc
         advanced_params = advanced_params or {}
+        doc_ref = plating_doc or self.sbol_doc
 
-        normalized = normalize_plating_input(transformation_results, doc=plating_doc)
+        normalized = normalize_plating_input(
+            transformation_results, doc=doc_ref
+        )
         if len(normalized) > 96:
             raise ValueError("plating supports up to 96 transformed strains.")
 
@@ -505,69 +511,14 @@ class BuildCompiler:
         results_path.mkdir(parents=True, exist_ok=True)
 
         plate_id = plate_name or "solid_96_well_plate"
-        plate_impl = sbol2.Implementation(plate_id)
-        plate_md = plating_doc.find("solid_96_well_plate_md") or sbol2.ModuleDefinition(
-            "solid_96_well_plate_md"
-        )
-        plate_md.name = "Solid 96-well plate"
-        self._add_if_absent(plating_doc, plate_md)
-        plate_impl.built = plate_md.identity
-        self._add_if_absent(plating_doc, plate_impl)
-
-        # Optional SBOLInventory integration with fallback behavior.
-        try:
-            from sbol_inventory import (  # type: ignore
-                make_solid_96_well_plate,
-                make_plated_strain,
-                place_in_plate,
-            )
-
-            inventory_enabled = True
-            inventory_plate = make_solid_96_well_plate(
-                uri=plate_impl.identity, plate_md_uri=plate_md.identity
-            )
-        except Exception:
-            inventory_enabled = False
-            inventory_plate = None
-
-        activity_id = f"plating_{protocol_type}_{plate_id}"
-        plating_activity = sbol2.Activity(activity_id)
-        plating_activity.name = f"Plating activity for {plate_id}"
-        plating_activity.types = "http://sbols.org/v2#build"
-        self._add_if_absent(plating_doc, plating_activity)
-
-        agent_id = (
-            "manual_plating_agent"
-            if protocol_type == "manual"
-            else "opentrons_plating_agent"
-        )
-        agent = plating_doc.find(agent_id) or sbol2.Agent(agent_id)
-        agent.name = "Manual plating agent" if protocol_type == "manual" else "Opentrons plating agent"
-        self._add_if_absent(plating_doc, agent)
-
-        plan_id = f"{plate_id}_{protocol_type}_plating_plan"
-        plan = plating_doc.find(plan_id) or sbol2.Plan(plan_id)
-        plan.name = f"{protocol_type.title()} plating plan for {plate_id}"
-        self._add_if_absent(plating_doc, plan)
-
-        association = sbol2.Association(
-            uri=f"{activity_id}_association",
-            agent=agent.identity,
-            role="http://sbols.org/v2#build",
-        )
-        association.plan = plan.identity
-        plating_activity.associations = [association]
-        self._add_if_absent(plating_doc, association)
-
         plate_rows = []
         plate_map = {}
         bacterium_locations = {}
-        plated_impls = []
 
         for idx, entry in enumerate(normalized):
             well = wells[idx]
             source_impl_uri = entry.get("source_impl_uri")
-            source_impl = plating_doc.find(source_impl_uri) if source_impl_uri else None
+            source_impl = doc_ref.find(source_impl_uri) if source_impl_uri else None
             strain_module_uri = entry.get("strain_module_uri")
             if strain_module_uri is None and source_impl is not None:
                 strain_module_uri = getattr(source_impl, "built", None)
@@ -577,65 +528,31 @@ class BuildCompiler:
             slug = parsed.path.split("/")[-1] if parsed.path else display_source
             slug = slug.replace("#", "_").replace(":", "_")
 
-            plated_module_id = f"{slug}_plated_{well}_md"
-            plated_module = plating_doc.find(plated_module_id) or sbol2.ModuleDefinition(
-                plated_module_id
-            )
-            plated_module.roles = [ORGANISM_STRAIN]
-            plated_module.name = f"Plated strain {slug} at {well}"
-            if strain_module_uri:
-                plated_module.wasDerivedFrom = strain_module_uri
-            self._add_if_absent(plating_doc, plated_module)
-
             plated_impl_id = f"{slug}_plated_{well}_impl"
-            plated_impl = plating_doc.find(plated_impl_id) or sbol2.Implementation(
-                plated_impl_id
-            )
-            plated_impl.built = plated_module.identity
-            plated_impl.wasGeneratedBy = plating_activity.identity
-            if source_impl_uri:
-                plated_impl.wasDerivedFrom = source_impl_uri
-            self._add_if_absent(plating_doc, plated_impl)
-            plated_impls.append(plated_impl.identity)
-
-            usage = sbol2.Usage(
-                uri=f"{activity_id}_usage_{idx+1}",
-                entity=source_impl_uri or plated_module.identity,
-                role=PLATING_ACTIVITY_ROLE,
-            )
-            self._add_if_absent(plating_doc, usage)
-            current_usages = list(plating_activity.usages)
-            current_usages.append(usage)
-            plating_activity.usages = current_usages
-
-            if inventory_enabled:
-                try:
-                    inventory_plated = make_plated_strain(
-                        uri=plated_impl.identity,
-                        strain_md_uri=strain_module_uri or plated_module.identity,
-                        design_uri=source_impl_uri,
-                    )
-                    place_in_plate(inventory_plate, inventory_plated, well)
-                except Exception:
-                    inventory_enabled = False
-
-            plate_map[well] = plated_impl.identity
-            display_name = plated_module.displayId
+            plate_map[well] = plated_impl_id
+            display_name = plated_impl_id
             bacterium_locations[well] = display_name
             plate_rows.append(
                 {
                     "well": well,
                     "source_transformed_strain_implementation": source_impl_uri,
                     "strain_module": strain_module_uri,
-                    "plated_strain_implementation": plated_impl.identity,
+                    "plated_strain_implementation": plated_impl_id,
                     "strain_display_name": display_name,
                 }
             )
 
+        plate_layout_csv = results_path / "plate_layout_dataframe.csv"
+        with plate_layout_csv.open("w", newline="", encoding="utf-8") as handle:
+            writer = csv.DictWriter(handle, fieldnames=list(plate_rows[0].keys()) if plate_rows else ["well"])
+            writer.writeheader()
+            for row in plate_rows:
+                writer.writerow(row)
+
         plate_map_json_path = write_plate_map_json(
             results_path / "plate_map.json",
             {
-                "plate_implementation": plate_impl.identity,
+                "plate_implementation": plate_id,
                 "protocol_type": protocol_type,
                 "well_map": plate_rows,
             },
@@ -650,18 +567,23 @@ class BuildCompiler:
         protocol_artifacts: Dict[str, Any] = {
             "plate_map_json": str(plate_map_json_path),
             "plate_map_csv": str(plate_map_csv_path),
+            "plate_layout_dataframe_csv": str(plate_layout_csv),
             "logs": logs,
+            "pudu": {
+                "runner_script": "https://github.com/MyersResearchGroup/PUDU/blob/main/scripts/run_sbol2plating_with_params.py",
+                "mode": protocol_type,
+                "advanced_params": advanced_params,
+            },
         }
 
         if protocol_type == "manual":
             md_path = write_manual_plating_protocol(
                 results_path / "manual_plating_protocol.md",
-                plate_id=plate_impl.displayId,
+                plate_id=plate_id,
                 plate_rows=plate_rows,
                 advanced_params=advanced_params,
             )
             protocol_artifacts["manual_protocol_markdown"] = str(md_path)
-            plan.description = f"Manual protocol file: {md_path}"
         else:
             script_path = write_plating_protocol_script(
                 results_path / "plating_ot2.py",
@@ -669,7 +591,6 @@ class BuildCompiler:
                 advanced_params=advanced_params,
             )
             protocol_artifacts["ot2_script"] = str(script_path)
-            plan.description = f"Automated protocol script: {script_path}"
             try:
                 sim_zip = run_opentrons_script_to_zip(
                     script_path,
@@ -684,15 +605,12 @@ class BuildCompiler:
             "stage": "plating",
             "protocol_type": protocol_type,
             "plate": {
-                "plate_implementation": plate_impl.identity,
+                "plate_implementation": plate_id,
                 "plate_map": plate_map,
             },
-            "sbol_artifacts": {
-                "plating_activity": plating_activity.identity,
-                "agent": agent.identity,
-                "plan": plan.identity,
-                "plate_implementation": plate_impl.identity,
-                "plated_strain_implementations": plated_impls,
+            "metadata": {
+                "plate_rows": plate_rows,
+                "layout_dataframe_columns": list(plate_rows[0].keys()) if plate_rows else [],
             },
             "json_intermediate": {
                 "plating_data": {"bacterium_locations": bacterium_locations},
