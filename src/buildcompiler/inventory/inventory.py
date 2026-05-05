@@ -66,7 +66,38 @@ class Inventory:
         except ValueError:
             return None
 
+    def _remove_plasmid_from_secondary_indexes(self, plasmid: IndexedPlasmid) -> None:
+        for insert_identity in sorted(plasmid.metadata.get("insert_identities", [])):
+            existing = self.plasmids_by_insert_identity.get(insert_identity, [])
+            filtered = [indexed for indexed in existing if indexed.identity != plasmid.identity]
+            if filtered:
+                self.plasmids_by_insert_identity[insert_identity] = filtered
+            else:
+                self.plasmids_by_insert_identity.pop(insert_identity, None)
+
+        fusion_sites = tuple(plasmid.metadata.get("fusion_sites", ()))
+        if fusion_sites:
+            existing = self.plasmids_by_fusion_sites.get(fusion_sites, [])
+            filtered = [indexed for indexed in existing if indexed.identity != plasmid.identity]
+            if filtered:
+                self.plasmids_by_fusion_sites[fusion_sites] = filtered
+            else:
+                self.plasmids_by_fusion_sites.pop(fusion_sites, None)
+
+        antibiotic = plasmid.metadata.get("antibiotic")
+        if antibiotic:
+            existing = self.plasmids_by_antibiotic.get(antibiotic, [])
+            filtered = [indexed for indexed in existing if indexed.identity != plasmid.identity]
+            if filtered:
+                self.plasmids_by_antibiotic[antibiotic] = filtered
+            else:
+                self.plasmids_by_antibiotic.pop(antibiotic, None)
+
     def _add_plasmid(self, plasmid: IndexedPlasmid) -> None:
+        existing = self.plasmids_by_identity.get(plasmid.identity)
+        if existing is not None:
+            self._remove_plasmid_from_secondary_indexes(existing)
+
         self.plasmids_by_identity[plasmid.identity] = plasmid
         for insert_identity in sorted(plasmid.metadata.get("insert_identities", [])):
             self.plasmids_by_insert_identity[insert_identity].append(plasmid)

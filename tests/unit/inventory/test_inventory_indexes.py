@@ -68,3 +68,33 @@ def test_add_generated_product_updates_indexes_immediately():
     assert inv.find_single_part_plasmids("https://example.org/partG") == [product]
     assert inv.plasmids_by_fusion_sites[("C", "D")] == [product]
     assert inv.plasmids_by_antibiotic["Kanamycin"] == [product]
+
+
+def test_add_generated_product_replaces_existing_secondary_indexes():
+    inv = Inventory()
+    original = _plasmid(
+        "https://example.org/generated2",
+        ["https://example.org/partOld"],
+        fusion_sites=("A", "B"),
+        antibiotic="Ampicillin",
+        state=MaterialState.GENERATED,
+    )
+    updated = _plasmid(
+        "https://example.org/generated2",
+        ["https://example.org/partNew"],
+        fusion_sites=("C", "D"),
+        antibiotic="Kanamycin",
+        state=MaterialState.ASSEMBLED,
+    )
+
+    inv.add_generated_product(original)
+    inv.add_generated_product(updated)
+
+    assert inv.plasmids_by_identity[updated.identity] == updated
+    assert inv.generated_products_by_identity[updated.identity] == updated
+    assert inv.find_single_part_plasmids("https://example.org/partOld") == []
+    assert inv.find_single_part_plasmids("https://example.org/partNew") == [updated]
+    assert inv.plasmids_by_fusion_sites.get(("A", "B"), []) == []
+    assert inv.plasmids_by_fusion_sites[("C", "D")] == [updated]
+    assert inv.plasmids_by_antibiotic.get("Ampicillin", []) == []
+    assert inv.plasmids_by_antibiotic["Kanamycin"] == [updated]
