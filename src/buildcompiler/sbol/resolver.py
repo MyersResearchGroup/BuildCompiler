@@ -39,14 +39,18 @@ class SbolResolver:
 
     def _get(self, identity: str, expected_type: type) -> Any:
         if self.pull_policy == PullPolicy.ALWAYS_REFRESH:
-            self.maybe_pull(identity)
+            pulled = self.maybe_pull(identity)
+            if isinstance(pulled, expected_type):
+                return pulled
 
         obj = self.document.find(identity)
         if isinstance(obj, expected_type):
             return obj
 
         if self.pull_policy == PullPolicy.MISSING_ONLY:
-            self.maybe_pull(identity)
+            pulled = self.maybe_pull(identity)
+            if isinstance(pulled, expected_type):
+                return pulled
             obj = self.document.find(identity)
             if isinstance(obj, expected_type):
                 return obj

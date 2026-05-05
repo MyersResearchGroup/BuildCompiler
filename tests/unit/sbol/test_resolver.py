@@ -14,6 +14,16 @@ class FakePullClient:
         return self.document.find(identity)
 
 
+class ReturnOnlyPullClient:
+    def __init__(self, pulled_objects: dict[str, object]) -> None:
+        self.pulled_objects = pulled_objects
+        self.calls: list[str] = []
+
+    def __call__(self, identity: str):
+        self.calls.append(identity)
+        return self.pulled_objects.get(identity)
+
+
 def _make_doc() -> tuple[sbol2.Document, dict[str, str]]:
     doc = sbol2.Document()
     ns = "https://example.org"
@@ -81,3 +91,19 @@ def test_always_refresh_pulls_even_on_hit():
     resolver.get_component(ids["component"])
 
     assert fake.calls == [ids["component"]]
+
+
+def test_missing_only_returns_object_from_pull_client_without_document_mutation():
+    local_doc = sbol2.Document()
+    ns = "https://example.org"
+    sbol2.setHomespace(ns)
+    remote_component = sbol2.ComponentDefinition(f"{ns}/remote-component")
+    pull_client = ReturnOnlyPullClient({remote_component.identity: remote_component})
+    resolver = SbolResolver(
+        local_doc, pull_policy=PullPolicy.MISSING_ONLY, pull_client=pull_client
+    )
+
+    resolved = resolver.get_component(remote_component.identity)
+
+    assert resolved is remote_component
+    assert pull_client.calls == [remote_component.identity]
