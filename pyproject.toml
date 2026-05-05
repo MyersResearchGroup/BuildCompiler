@@ -7,7 +7,7 @@ name = "synbio-buildcompiler"
 version = "0.0.a1"
 description = "BuildCompiler is an open-source tool that bridges the Design and Build stages of the Synthetic Biology DBTL cycle"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 license = {file = "LICENSE.md"}
 keywords = ["SBOL", "genetic", "automation", "build", "synthetic biology"]
 authors = [
