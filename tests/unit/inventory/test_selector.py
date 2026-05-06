@@ -58,3 +58,16 @@ def test_lvl2_rejected_alternatives_capped_at_3():
     out = sel.select_lvl2_route(request_id="r3", region_identities=["https://e/r0", "https://e/r1", "https://e/r2", "https://e/r3"])
     assert out.selected is not None
     assert len(out.rejected) == 3
+
+
+def test_lvl2_constrained_order_must_match_requested_regions():
+    inv = Inventory(plasmids=[_plasmid("https://e/p0", "https://e/r0"), _plasmid("https://e/p1", "https://e/r1")])
+    sel = CompatibilitySelector(inv)
+    out = sel.select_lvl2_route(
+        request_id="r4",
+        region_identities=["https://e/r0", "https://e/r1"],
+        constraints={"region_order": ["https://e/r0"]},
+    )
+    assert out.selected is None
+    assert out.rejected
+    assert out.rejected[0].missing_region_identities == ("https://e/r0", "https://e/r1")

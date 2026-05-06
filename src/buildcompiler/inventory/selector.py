@@ -97,7 +97,24 @@ class CompatibilitySelector:
         allow_large = self.options.planning.lvl2_search.allow_large_order_search
 
         if "region_order" in active_constraints:
-            orders = [tuple(active_constraints["region_order"])]
+            constrained_order = tuple(active_constraints["region_order"])
+            requested_regions = tuple(region_identities)
+            if sorted(constrained_order) != sorted(requested_regions):
+                blocked = Lvl2Route(
+                    request_id=request_id,
+                    region_order=constrained_order,
+                    selected_lvl1_plasmids=(),
+                    missing_region_identities=requested_regions,
+                    backbone=None,
+                    score=RouteScore(
+                        missing_required_products=len(requested_regions),
+                        missing_lvl1_plasmids=len(requested_regions),
+                        constraint_violations=1,
+                        identity_tiebreak=requested_regions,
+                    ),
+                )
+                return RouteSelection(selected=None, rejected=(blocked,))
+            orders = [constrained_order]
         elif len(region_identities) > max_regions and not allow_large:
             blocked = Lvl2Route(
                 request_id=request_id,
