@@ -31,7 +31,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = [
-  "pytest < 5.0.0",
+  "pytest>=7,<9",
   "pytest-cov[all]"
 ]
 automation = [
@@ -47,4 +47,10 @@ automation = [
 [dependency-groups]
 dev = [
     "ruff>=0.14.0",
+]
+
+
+[tool.pytest.ini_options]
+markers = [
+  "automation: optional/manual automation tests",
 ]
