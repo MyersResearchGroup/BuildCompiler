@@ -128,11 +128,17 @@ def build_report(result: FullBuildResult, graph: BuildGraph | None = None) -> Bu
             if isinstance(route, dict):
                 rejected.append(RouteReport(sr.id, False, route))
 
-    executive_summary = (
-        "Build completed without unresolved blockers."
-        if not result.missing_inputs and not result.required_approvals
-        else f"Build is blocked by {len(result.missing_inputs)} missing inputs and {len(result.required_approvals)} required approvals."
-    )
+    blocker_summary = f"{len(result.missing_inputs)} missing inputs and {len(result.required_approvals)} required approvals"
+    if result.status == BuildStatus.FAILED:
+        executive_summary = (
+            f"Build failed with {blocker_summary}."
+            if result.missing_inputs or result.required_approvals
+            else "Build failed. Review stage logs and warnings for the root cause."
+        )
+    elif result.missing_inputs or result.required_approvals:
+        executive_summary = f"Build is blocked by {blocker_summary}."
+    else:
+        executive_summary = "Build completed without unresolved blockers."
     dependency_chain = [
         DependencyChainStep(e.source, e.relationship, e.target, dict(e.metadata))
         for e in sorted(report_graph.edges, key=lambda x: (x.source, x.target, x.relationship))

@@ -24,3 +24,15 @@ def test_build_report_deterministic(fake_full_build_result):
     result = fake_full_build_result(with_routes=True)
     graph = build_graph(result)
     assert build_report(result, graph=graph).to_json() == build_report(result, graph=graph).to_json()
+
+
+def test_build_report_failed_status_mentions_failure_without_blockers(fake_full_build_result):
+    result = fake_full_build_result(with_routes=False)
+    result.missing_inputs = []
+    result.required_approvals = []
+    result.status = result.status.FAILED
+
+    report = build_report(result)
+
+    assert "failed" in report.executive_summary.lower()
+    assert "completed" not in report.executive_summary.lower()
