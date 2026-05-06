@@ -204,6 +204,9 @@ class AssemblyLvl1Stage:
         ordered = constraints.get("ordered_part_identities")
         if ordered:
             return list(ordered)
+        planner_order = constraints.get("part_order")
+        if planner_order:
+            return list(planner_order)
         unordered = constraints.get("part_identities")
         if unordered:
             return list(unordered)

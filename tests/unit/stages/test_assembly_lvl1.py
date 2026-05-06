@@ -167,3 +167,20 @@ def test_assembly_lvl1_missing_inputs_return_blocked_with_structured_kinds():
         "restriction_enzyme",
         "ligase",
     }.issubset(kinds)
+
+
+def test_assembly_lvl1_accepts_planner_part_order_constraint():
+    inv = _inventory()
+    stage = AssemblyLvl1Stage(inventory=inv, assembly_service=_FakeAssemblyService([]))
+    request = _request()
+    request.constraints = {
+        "part_order": request.constraints["ordered_part_identities"],
+        "fusion_sites": request.constraints["fusion_sites"],
+        "antibiotic": request.constraints["antibiotic"],
+    }
+
+    result = stage.run(
+        request, source_document=sbol2.Document(), target_document=sbol2.Document()
+    )
+
+    assert result.status == StageStatus.SUCCESS
