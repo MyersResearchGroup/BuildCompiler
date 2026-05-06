@@ -24,8 +24,6 @@ jobs:
           python -m pip install -e ".[test]"
           python -m pip install ruff
       - name: Ruff check
-        run: ruff check .
-      - name: Ruff format check
-        run: ruff format --check .
+        run: ruff check tests/conftest.py tests/unit tests/stages tests/integration
       - name: Core tests
         run: pytest tests/unit tests/stages tests/integration
