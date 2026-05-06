@@ -171,17 +171,42 @@ class FullBuildExecutor:
             if (not unresolved and not any(pending[s] for s in pending))
             else (BuildStatus.PARTIAL_SUCCESS if products else BuildStatus.FAILED)
         )
-        return FullBuildResult(
+        from buildcompiler.reporting import build_graph, build_report, build_summary
+
+        preliminary_result = FullBuildResult(
             status=status,
             plan=plan,
             build_document=self.context.build_document,
             stage_results=stage_results,
-            graph=self.context.graph,
+            graph=None,
             final_products=products,
             missing_inputs=unresolved,
             required_approvals=list(approvals.values()),
             warnings=warnings,
+            summary=None,
+            report=None,
         )
+        graph = build_graph(preliminary_result)
+        report = (
+            build_report(preliminary_result, graph=graph)
+            if self.context.options.reporting.include_detailed_report
+            else None
+        )
+        final_result = FullBuildResult(
+            status=status,
+            plan=plan,
+            build_document=self.context.build_document,
+            stage_results=stage_results,
+            graph=graph,
+            final_products=products,
+            missing_inputs=unresolved,
+            required_approvals=list(approvals.values()),
+            warnings=warnings,
+            summary=None,
+            report=report,
+        )
+        final_result.summary = build_summary(final_result)
+        return final_result
 
     def _run_stage(self, stage: Any, request: BuildRequest) -> StageResult:
         source_document = (
