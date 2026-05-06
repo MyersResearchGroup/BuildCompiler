@@ -9,8 +9,16 @@ def test_planner_mixed_inputs_returns_queues_and_warnings():
     multi = sbol2.ComponentDefinition("https://example.org/multi")
     p = sbol2.ComponentDefinition("https://example.org/p")
     p.roles = ["http://identifiers.org/so/SO:0000167"]
+    r = sbol2.ComponentDefinition("https://example.org/r")
+    r.roles = ["http://identifiers.org/so/SO:0000139"]
+    c = sbol2.ComponentDefinition("https://example.org/c")
+    c.roles = ["http://identifiers.org/so/SO:0000316"]
+    t = sbol2.ComponentDefinition("https://example.org/t")
+    t.roles = ["http://identifiers.org/so/SO:0000141"]
     multi.components.create("c1").definition = p.identity
-    multi.components.create("c2").definition = p.identity
+    multi.components.create("c2").definition = r.identity
+    multi.components.create("c3").definition = c.identity
+    multi.components.create("c4").definition = t.identity
     dom = sbol2.ComponentDefinition("https://example.org/dom")
     dom.roles = ["http://identifiers.org/so/SO:0000139"]
 

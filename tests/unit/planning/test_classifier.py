@@ -14,10 +14,30 @@ def test_classifier_maps_module_and_components():
     er = sbol2.ComponentDefinition("https://example.org/er")
     p = sbol2.ComponentDefinition("https://example.org/p")
     p.roles = ["http://identifiers.org/so/SO:0000167"]
+    r = sbol2.ComponentDefinition("https://example.org/r")
+    r.roles = ["http://identifiers.org/so/SO:0000139"]
+    c = sbol2.ComponentDefinition("https://example.org/c")
+    c.roles = ["http://identifiers.org/so/SO:0000316"]
+    t = sbol2.ComponentDefinition("https://example.org/t")
+    t.roles = ["http://identifiers.org/so/SO:0000141"]
     er.components.create("c1").definition = p.identity
-    er.components.create("c2").definition = p.identity
+    er.components.create("c2").definition = r.identity
+    er.components.create("c3").definition = c.identity
+    er.components.create("c4").definition = t.identity
     out2 = classify_non_combinatorial(er)
     assert out2.stage == BuildStage.ASSEMBLY_LVL1
+
+
+def test_classifier_warns_for_invalid_lvl1_part_mix():
+    design = sbol2.ComponentDefinition("https://example.org/invalid")
+    p = sbol2.ComponentDefinition("https://example.org/p2")
+    p.roles = ["http://identifiers.org/so/SO:0000167"]
+    design.components.create("c1").definition = p.identity
+    design.components.create("c2").definition = p.identity
+
+    out = classify_non_combinatorial(design)
+    assert isinstance(out, UnsupportedPlanningRecord)
+    assert "promoter" in out.reason.lower()
 
 
 def test_classifier_domestication_and_unsupported_and_deterministic_id():

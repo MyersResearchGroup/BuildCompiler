@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import re
+from collections import Counter
 
 import sbol2
 
 from buildcompiler.domain import BuildRequest, BuildStage, DesignKind
 from buildcompiler.planning.models import UnsupportedPlanningRecord
 from buildcompiler.planning.validation import classify_part_role
+
+RECOMMENDED_LVL1_PARTS = ("promoter", "rbs", "cds", "terminator")
 
 
 def _stable_slug(identity: str) -> str:
@@ -44,6 +47,36 @@ def classify_non_combinatorial(
     if isinstance(design, sbol2.ComponentDefinition):
         count = len(design.components)
         if count > 1:
+            observed_roles: list[str] = []
+            for component in design.components:
+                target = (
+                    component.doc.find(component.definition)
+                    if getattr(component, "doc", None) is not None
+                    else None
+                )
+                if isinstance(target, sbol2.ComponentDefinition):
+                    role = classify_part_role(target)
+                    if role is not None:
+                        observed_roles.append(role)
+
+            counts = Counter(observed_roles)
+            missing = [role for role in RECOMMENDED_LVL1_PARTS if counts[role] != 1]
+            has_role_evidence = len(observed_roles) > 0
+            if count != 4 or (has_role_evidence and missing):
+                return UnsupportedPlanningRecord(
+                    design.identity,
+                    design.displayId,
+                    DesignKind.COMPONENT_DEFINITION,
+                    "Warning: Level-1 planning expects exactly four parts (promoter, RBS, CDS, terminator).",
+                    {
+                        "component_count": count,
+                        "observed_role_counts": {
+                            role: counts.get(role, 0)
+                            for role in RECOMMENDED_LVL1_PARTS
+                        },
+                        "suggested_parts": list(RECOMMENDED_LVL1_PARTS),
+                    },
+                )
             return BuildRequest(
                 request_id_for(
                     BuildStage.ASSEMBLY_LVL1, design.identity, design.displayId
