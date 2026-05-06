@@ -216,9 +216,6 @@ class AssemblyLvl2Stage:
     def _extract_region_identities(
         self, module_definition: sbol2.ModuleDefinition, constraints: Mapping[str, Any]
     ) -> list[str]:
-        constrained = constraints.get("region_order")
-        if constrained:
-            return list(constrained)
         for key in ("engineered_region_identities", "region_identities"):
             values = constraints.get(key)
             if values:
