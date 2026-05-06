@@ -74,6 +74,22 @@ class AssemblyLvl2Stage:
             region_identities=region_identities,
             constraints=constraints,
         )
+        warning_logs: list[str] = []
+        if route_selection.selected is None and constraints.get("region_order"):
+            relaxed_constraints = {
+                key: value for key, value in constraints.items() if key != "region_order"
+            }
+            relaxed_selection = self.selector.select_lvl2_route(
+                request_id=request.id,
+                region_identities=region_identities,
+                constraints=relaxed_constraints,
+            )
+            if relaxed_selection.selected is not None:
+                route_selection = relaxed_selection
+                warning_logs.append(
+                    "Unable to satisfy region_order constraint; proceeding with an arbitrary compatible order."
+                )
+
         route = route_selection.selected
         artifacts = self._route_artifacts(route, route_selection.rejected)
         if route is None:
@@ -85,7 +101,8 @@ class AssemblyLvl2Stage:
                 protocol_artifacts=artifacts,
                 logs=[
                     "No lvl2 route selected by CompatibilitySelector. Provide explicit region_order "
-                    "or enable large-order search for large designs."
+                    "or enable large-order search for large designs.",
+                    *warning_logs,
                 ],
             )
 
@@ -157,7 +174,8 @@ class AssemblyLvl2Stage:
                 missing_inputs=missing_inputs,
                 protocol_artifacts=artifacts,
                 logs=[
-                    f"Blocked lvl2 assembly for {request.id}; missing {len(missing_inputs)} required input(s)."
+                    *warning_logs,
+                    f"Blocked lvl2 assembly for {request.id}; missing {len(missing_inputs)} required input(s).",
                 ],
             )
 
@@ -208,6 +226,7 @@ class AssemblyLvl2Stage:
             json_intermediate=json_intermediate,
             protocol_artifacts=artifacts,
             logs=[
+                *warning_logs,
                 f"Selected lvl2 route with {len(route.selected_lvl1_plasmids)} lvl1 plasmid(s).",
                 *assembly_result.logs,
             ],
@@ -216,9 +235,6 @@ class AssemblyLvl2Stage:
     def _extract_region_identities(
         self, module_definition: sbol2.ModuleDefinition, constraints: Mapping[str, Any]
     ) -> list[str]:
-        constrained = constraints.get("region_order")
-        if constrained:
-            return list(constrained)
         for key in ("engineered_region_identities", "region_identities"):
             values = constraints.get(key)
             if values:
