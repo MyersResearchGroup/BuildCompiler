@@ -191,7 +191,7 @@ def test_assembly_lvl2_region_order_constraint_is_hard():
     assert result.protocol_artifacts["selected_route"]["region_order"] == order
 
 
-def test_assembly_lvl2_incomplete_region_order_blocks():
+def test_assembly_lvl2_incomplete_region_order_falls_back_with_warning():
     doc, module, regions = _module_doc()
     inv = _inventory(regions)
     stage = AssemblyLvl2Stage(inventory=inv, assembly_service=_FakeAssemblyService([]))
@@ -203,5 +203,6 @@ def test_assembly_lvl2_incomplete_region_order_blocks():
         target_document=sbol2.Document(),
     )
 
-    assert result.status == StageStatus.BLOCKED
-    assert result.protocol_artifacts["selected_route"] is None
+    assert result.status == StageStatus.SUCCESS
+    assert result.protocol_artifacts["selected_route"] is not None
+    assert any("Unable to satisfy region_order constraint" in log for log in result.logs)
