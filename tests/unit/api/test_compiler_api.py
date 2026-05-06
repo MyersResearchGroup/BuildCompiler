@@ -80,12 +80,10 @@ def test_from_synbiohub_raises_when_collection_loading_is_requested():
         BuildCompiler.from_synbiohub(collections=["https://example.org/collection"])
 
 
-def test_plan_execute_raise_without_injected_dependencies():
+def test_execute_raises_clear_error_without_dependencies():
     compiler = BuildCompiler()
-    with pytest.raises(NotImplementedError, match="planning"):
-        compiler.plan({"x": 1})
-
-    with pytest.raises(NotImplementedError, match="execution"):
+    compiler.plan([object()])
+    with pytest.raises(ValueError, match="inventory"):
         compiler.execute({"plan": 1})
 
 

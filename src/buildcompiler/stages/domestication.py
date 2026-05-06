@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sbol2
 
-from buildcompiler.api import BuildOptions, ProtocolMode
+from buildcompiler.api.options import BuildOptions, ProtocolMode
 from buildcompiler.domain import (
     ApprovalStatus,
     BuildRequest,

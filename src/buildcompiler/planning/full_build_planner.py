@@ -6,7 +6,7 @@ from collections.abc import Iterable
 
 import sbol2
 
-from buildcompiler.api import BuildOptions
+from buildcompiler.api.options import BuildOptions
 from buildcompiler.planning.classifier import classify_non_combinatorial
 from buildcompiler.planning.combinatorial import expand_combinatorial_derivation
 from buildcompiler.planning.models import BuildPlan, UnsupportedPlanningRecord
