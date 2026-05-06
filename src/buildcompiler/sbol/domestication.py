@@ -40,14 +40,19 @@ class DomesticationService:
         product_component = sbol2.ComponentDefinition(product_identity)
         product_component.displayId = product_display_id
         product_component.name = f"Domesticated {component.displayId or component.identity.rsplit('/', 1)[-1]}"
-        for role in component.roles:
-            product_component.roles = role
+        product_component.roles = list(component.roles)
         job.target_document.addComponentDefinition(product_component)
+
+        implementation_identity = f"{product_identity}_implementation"
+        product_implementation = sbol2.Implementation(implementation_identity)
+        product_implementation.built = product_component.identity
+        job.target_document.addImplementation(product_implementation)
 
         metadata = {
             "source_stage": "domestication",
             "source_part_identity": job.part_identity,
             "insert_identities": [job.part_identity],
+            "implementation_identity": product_implementation.identity,
             "backbone_identity": job.backbone.identity,
             "restriction_enzyme": {
                 "identity": job.restriction_enzyme.identity,
@@ -57,7 +62,7 @@ class DomesticationService:
             "sequence_edit_proposals": [proposal.__dict__.copy() for proposal in job.sequence_edit_proposals],
         }
         product = IndexedPlasmid(
-            identity=product_identity,
+            identity=product_component.identity,
             display_id=product_display_id,
             name=product_component.name,
             state=MaterialState.GENERATED,
