@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from itertools import permutations
 from typing import Any
 
-from buildcompiler.api import BuildOptions
+from buildcompiler.api.options import BuildOptions
 from buildcompiler.domain import BuildStage, MaterialState
 from buildcompiler.inventory.compatibility import Lvl1Route, Lvl2Route, RouteScore, RouteSelection
 from buildcompiler.inventory.inventory import Inventory

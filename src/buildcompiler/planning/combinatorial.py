@@ -1,7 +1,7 @@
 from __future__ import annotations
 import itertools
 import sbol2
-from buildcompiler.api import BuildOptions
+from buildcompiler.api.options import BuildOptions
 from buildcompiler.domain import BuildRequest, BuildStage, BuildWarning, DesignKind
 from buildcompiler.planning.classifier import request_id_for
 from buildcompiler.planning.models import UnsupportedPlanningRecord
