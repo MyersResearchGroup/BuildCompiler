@@ -9,7 +9,10 @@ from buildcompiler.planning.validation import ROLE_TO_NAME
 
 
 def _collect_variant_sets(derivation):
-    variables = sorted(list(derivation.variableComponents), key=lambda v: v.identity)
+    variables = list(derivation.variableComponents)
+    variables.sort(
+        key=lambda variable: (str(getattr(variable, "variable", "")), variable.identity)
+    )
     return variables, [sorted(list(vc.variants), key=str) for vc in variables]
 
 
