@@ -87,6 +87,15 @@ class AssemblyService:
         legacy_products, final_doc = legacy_assembly.run(
             include_extracted_parts=job.include_extracted_parts
         )
+        if len(legacy_products) != 1:
+            raise ValueError(
+                "Golden Gate ligation must produce exactly one assembled product; "
+                f"found {len(legacy_products)} for {job.product_identity}."
+            )
+        if not getattr(legacy_products[0].plasmid_implementations[0], "wasGeneratedBy", None):
+            legacy_products[0].plasmid_implementations[
+                0
+            ].wasGeneratedBy = legacy_assembly.assembly_activity.identity
 
         products = [
             self._indexed_product_from_legacy_product(plasmid, job)
@@ -95,6 +104,7 @@ class AssemblyService:
         logs = [
             f"Assembled {len(products)} product(s) at stage {job.stage.value}.",
             f"Assembly activity: {legacy_assembly.assembly_activity.identity}",
+            "Golden Gate simulation completed with 1 ligation product.",
         ]
 
         return AssemblySbolResult(

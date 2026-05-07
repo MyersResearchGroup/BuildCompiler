@@ -79,3 +79,52 @@ def test_assembly_service_raises_clear_error_for_missing_component():
                 target_document=sbol2.Document(),
             )
         )
+
+
+def test_assembly_service_requires_single_ligation_product(monkeypatch):
+    source = sbol2.Document()
+    component = sbol2.ComponentDefinition("assembled_product")
+    source.add(component)
+    impl = sbol2.Implementation("assembled_product_impl")
+    impl.built = component.identity
+    source.add(impl)
+
+    class FakeLegacyAssembly:
+        def __init__(self, **kwargs):
+            self.assembly_activity = sbol2.Activity("fake_assembly")
+
+        def run(self, include_extracted_parts=False):
+            product = type(
+                "LegacyProduct",
+                (),
+                {"plasmid_definition": component, "plasmid_implementations": [impl]},
+            )()
+            return [product, product], source
+
+    monkeypatch.setattr("buildcompiler.sbol.assembly.Assembly", FakeLegacyAssembly)
+
+    service = AssemblyService()
+    with pytest.raises(ValueError, match="exactly one assembled product"):
+        service.run(
+            AssemblyJob(
+                stage=BuildStage.ASSEMBLY_LVL1,
+                product_identity="https://example.org/products/p001",
+                product_display_id="p001",
+                part_plasmids=[
+                    IndexedPlasmid(
+                        identity=component.identity,
+                        sbol_component=component,
+                        metadata={"implementation_identity": impl.identity},
+                    )
+                ],
+                backbone=IndexedBackbone(
+                    identity=component.identity,
+                    sbol_component=component,
+                    metadata={"implementation_identity": impl.identity},
+                ),
+                restriction_enzyme=IndexedReagent(identity=impl.identity),
+                ligase=IndexedReagent(identity=impl.identity),
+                source_document=source,
+                target_document=sbol2.Document(),
+            )
+        )
