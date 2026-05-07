@@ -9,7 +9,7 @@ import sbol2
 
 from buildcompiler.domain import BuildRequest, BuildStage, DesignKind
 from buildcompiler.planning.models import UnsupportedPlanningRecord
-from buildcompiler.planning.validation import classify_part_role
+from buildcompiler.planning.validation import classify_part_role, ordered_lvl1_parts
 
 RECOMMENDED_LVL1_PARTS = ("promoter", "rbs", "cds", "terminator")
 
@@ -85,6 +85,14 @@ def classify_non_combinatorial(
                 design.identity,
                 design.displayId,
                 DesignKind.COMPONENT_DEFINITION,
+                constraints={
+                    "ordered_part_identities": (
+                        ordered_lvl1_parts(design)[0]
+                        or [component.definition for component in design.components]
+                    ),
+                    "product_identity": design.identity,
+                    "product_display_id": design.displayId,
+                },
             )
         if count <= 1 and classify_part_role(design) is not None:
             return BuildRequest(

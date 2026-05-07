@@ -26,6 +26,12 @@ def test_classifier_maps_module_and_components():
     er.components.create("c4").definition = t.identity
     out2 = classify_non_combinatorial(er)
     assert out2.stage == BuildStage.ASSEMBLY_LVL1
+    assert out2.constraints["ordered_part_identities"] == [
+        p.identity,
+        r.identity,
+        c.identity,
+        t.identity,
+    ]
 
 
 def test_classifier_warns_for_invalid_lvl1_part_mix():
