@@ -74,11 +74,32 @@ class CompatibilitySelector:
             else:
                 selected.append(choice)
 
+        inferred_fusion_sites = None
+        inferred_backbone_antibiotic = active_constraints.get("backbone_antibiotic")
+        if selected and "fusion_sites" not in active_constraints:
+            inferred_fusion_sites = self._infer_backbone_fusion_sites(selected)
+            if inferred_backbone_antibiotic is None:
+                inferred_backbone_antibiotic = self._infer_backbone_antibiotic(selected)
+
         backbone = self.inventory.find_backbone(
-            fusion_sites=tuple(active_constraints["fusion_sites"]) if "fusion_sites" in active_constraints else None,
-            antibiotic=active_constraints.get("antibiotic"),
+            fusion_sites=(
+                tuple(active_constraints["fusion_sites"])
+                if "fusion_sites" in active_constraints
+                else inferred_fusion_sites
+            ),
+            antibiotic=inferred_backbone_antibiotic,
             stage=BuildStage.ASSEMBLY_LVL1,
         )
+        if backbone is None:
+            backbone = self.inventory.find_backbone(
+                fusion_sites=(
+                    tuple(active_constraints["fusion_sites"])
+                    if "fusion_sites" in active_constraints
+                    else inferred_fusion_sites
+                ),
+                antibiotic=inferred_backbone_antibiotic,
+                stage=None,
+            )
         score = RouteScore(
             missing_required_products=len(missing),
             missing_domestications=len(missing),
@@ -90,6 +111,25 @@ class CompatibilitySelector:
         )
         route = Lvl1Route(request_id, tuple(part_identities), tuple(selected), tuple(missing), backbone, score)
         return RouteSelection(selected=route, rejected=())
+
+    def _infer_backbone_fusion_sites(self, selected: list[Any]) -> tuple[str, ...] | None:
+        if len(selected) < 2:
+            return None
+        parsed = []
+        for plasmid in selected:
+            sites = tuple((plasmid.metadata or {}).get("fusion_sites", ()))
+            if len(sites) != 2:
+                return None
+            parsed.append(sites)
+        first = parsed[0][0]
+        last = parsed[-1][1]
+        return (first, last)
+
+    def _infer_backbone_antibiotic(self, selected: list[Any]) -> str | None:
+        antibiotics = {p.metadata.get("antibiotic") for p in selected if p.metadata.get("antibiotic")}
+        if antibiotics == {"Ampicillin"}:
+            return "Kanamycin"
+        return None
 
     def select_lvl2_route(self, *, request_id: str, region_identities: Sequence[str], constraints: Mapping[str, Any] | None = None) -> RouteSelection:
         active_constraints = constraints or {}

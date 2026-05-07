@@ -1,5 +1,5 @@
 from buildcompiler.api import BuildOptions
-from buildcompiler.domain import IndexedPlasmid, MaterialState
+from buildcompiler.domain import IndexedBackbone, IndexedPlasmid, MaterialState
 from buildcompiler.inventory import CompatibilitySelector, Inventory
 
 
@@ -71,3 +71,24 @@ def test_lvl2_constrained_order_must_match_requested_regions():
     assert out.selected is None
     assert out.rejected
     assert out.rejected[0].missing_region_identities == ("https://e/r0", "https://e/r1")
+
+
+def test_lvl1_infers_backbone_fusion_sites_and_kan_backbone_for_amp_parts():
+    inv = Inventory(
+        plasmids=[
+            IndexedPlasmid(identity="pAB", metadata={"insert_identities": ["A"], "fusion_sites": ["A", "B"], "antibiotic": "Ampicillin"}),
+            IndexedPlasmid(identity="pBC", metadata={"insert_identities": ["B"], "fusion_sites": ["B", "C"], "antibiotic": "Ampicillin"}),
+            IndexedPlasmid(identity="pCD", metadata={"insert_identities": ["C"], "fusion_sites": ["C", "D"], "antibiotic": "Ampicillin"}),
+            IndexedPlasmid(identity="pDE", metadata={"insert_identities": ["D"], "fusion_sites": ["D", "E"], "antibiotic": "Ampicillin"}),
+        ],
+        backbones=[
+            IndexedBackbone(
+                identity="bbAEkan",
+                metadata={"fusion_sites": ["A", "E"], "antibiotic": "Kanamycin"},
+            )
+        ],
+    )
+    sel = CompatibilitySelector(inv)
+    route = sel.select_lvl1_route(request_id="r1", part_identities=["A", "B", "C", "D"]).selected
+    assert route.backbone is not None
+    assert route.backbone.identity == "bbAEkan"
