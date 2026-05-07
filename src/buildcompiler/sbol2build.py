@@ -132,7 +132,7 @@ class Assembly:
             self.ligase,
         )
 
-        self.final_document.add(self.assembly_activity)
+        add_object_to_doc(self.assembly_activity, self.final_document)
 
         composite_plasmid_objs = [
             Plasmid(
@@ -1169,12 +1169,9 @@ def ligation(
         composite_implementation.built = composite_component_definition.identity
         composite_implementation.wasGeneratedBy = assembly_activity.identity
 
-        source_document.add_list(
-            [composite_component_definition, composite_seq, composite_implementation]
-        )
-        final_document.add_list(
-            [composite_component_definition, composite_seq, composite_implementation]
-        )
+        for obj in (composite_component_definition, composite_seq, composite_implementation):
+            add_object_to_doc(obj, source_document)
+            add_object_to_doc(obj, final_document)
 
         product_impl_list.append(composite_implementation)
         composite_number += 1
