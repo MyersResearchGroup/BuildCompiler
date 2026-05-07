@@ -8,7 +8,7 @@ version = "0.0.a1"
 description = "BuildCompiler is an open-source tool that bridges the Design and Build stages of the Synthetic Biology DBTL cycle"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {file = "LICENSE.md"}
+license = {file = "LICENSE"}
 keywords = ["SBOL", "genetic", "automation", "build", "synthetic biology"]
 authors = [
   { name="Gonzalo Vidal", email="gonzalo.vidalpena@colorado.edu" },
@@ -26,7 +26,8 @@ classifiers = [
 dependencies = [
     "sbol2",
     "biopython", 
-    "pydna"
+    "pydna",
+    "regex>=2024.11.6,<2025.0.0"
 ]
 
 [project.optional-dependencies]
