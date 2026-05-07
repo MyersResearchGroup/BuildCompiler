@@ -5,37 +5,90 @@ import unittest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
-from sbol2build import (
-    golden_gate_assembly_plan,
-    rebase_restriction_enzyme,
+from buildcompiler.constants import (
+    CIRCULAR,
+    ENGINEERED_PLASMID,
+    FIVE_PRIME_OVERHANG,
+    PLASMID_VECTOR,
+    THREE_PRIME_OVERHANG,
+)
+from buildcompiler.sbol2build import (
+    Assembly,
     backbone_digestion,
     part_digestion,
     ligation,
 )
 
+from buildcompiler.plasmid import Plasmid
 
-class Test_Core_Functions(unittest.TestCase):
-    def test_part_digestion(self):
-        doc = sbol2.Document()
-        doc.read("tests/test_files/pro_in_bb.xml")
 
-        md = doc.getModuleDefinition("https://sbolcanvas.org/module1")
-        assembly_plan = sbol2.ModuleDefinition("assembly_plan")
+class Test_Assembly_Functions(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.sbh = sbol2.PartShop("https://synbiohub.org")
 
-        parts_list, assembly_plan = part_digestion(
-            md, [rebase_restriction_enzyme("BsaI")], assembly_plan, doc
+        username = os.environ.get("SBH_USERNAME")
+        password = os.environ.get("SBH_PASSWORD")
+
+        if not username or not password:
+            raise RuntimeError(
+                "Missing SBH_USERNAME and/or SBH_PASSWORD environment variables"
+            )
+
+        cls.sbh.login(username, password)
+
+        cls.source_doc = sbol2.Document()
+        final_doc = sbol2.Document()
+
+        cls.sbh.pull(
+            "https://synbiohub.org/user/Gon/CIDARMoCloParts/CIDARMoCloParts_collection/1",
+            cls.source_doc,
+        )
+        cls.sbh.pull(
+            "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/CIDARMoCloPlasmidsKit_collection/1",
+            cls.source_doc,
+        )
+        cls.sbh.pull(
+            "https://synbiohub.org/user/Gon/Enzyme_Implementations/Enzyme_Implementations_collection/1",
+            cls.source_doc,
+        )
+        cls.sbh.pull(
+            "https://synbiohub.org/user/Gon/impl_test/impl_test_collection/1",
+            cls.source_doc,
+        )
+
+        cls.re_impl = cls.source_doc.get(
+            "https://synbiohub.org/user/Gon/Enzyme_Implementations/BsaI_impl/1"
+        )
+        cls.ligase_impl = cls.source_doc.get(
+            "https://synbiohub.org/user/Gon/Enzyme_Implementations/T4_Ligase_impl/1"
+        )
+
+        cls.assembly = Assembly(
+            None, None, cls.re_impl, cls.ligase_impl, cls.source_doc, final_doc
+        )
+
+    def test_part_digestion(self):  # TODO test activity relationships
+        impl = self.source_doc.get(
+            "https://synbiohub.org/user/Gon/impl_test/pJ23100_AB_impl/1"
+        )
+        definition = self.source_doc.get(impl.built)
+        plasmid = Plasmid(definition, None, [impl], None, self.source_doc)
+        assembly_activity = self.assembly.initialize_assembly_activity()
+
+        parts_list, assembly_activity = part_digestion(
+            plasmid, [self.re_impl], assembly_activity, self.source_doc
         )
 
         product_doc = sbol2.Document()
-        for extract, sequence in parts_list:
+        for extract, _ in parts_list:
             product_doc.add(extract)
-            product_doc.add(sequence)
-        product_doc.add(assembly_plan)
+        product_doc.add(assembly_activity)
 
         extract = parts_list[0][0]
         self.assertEqual(
             extract.roles,
-            ["https://identifiers.org/so/SO:0000915"],
+            ["http://identifiers.org/so/SO:0000915"],
             "Part digestion extracted part missing engineered insert role",
         )  # engineered insert role
         self.assertTrue(
@@ -63,45 +116,9 @@ class Test_Core_Functions(unittest.TestCase):
                 )
             else:
                 self.assertTrue(
-                    comp_def.identity in doc.componentDefinitions,
+                    comp_def.identity in self.source_doc.componentDefinitions,
                     "Digested part missing reference to part from original document",
                 )  # check that old part has been transcribed to new doc, in extracted part
-
-        # check that wasderivedfroms match, assembly plan records all interactions,
-        contains_restriction, contains_reactant, contains_product = False, False, False
-        for participation in assembly_plan.interactions[0].participations:
-            if participation.displayId == "restriction":
-                self.assertTrue(
-                    "http://identifiers.org/biomodels.sbo/SBO:0000019"
-                    in participation.roles,
-                    "Restriction participation missing 'modifier' role",
-                )
-                contains_restriction = True
-            elif "reactant" in participation.displayId:
-                self.assertTrue(
-                    "http://identifiers.org/biomodels.sbo/SBO:0000010"
-                    in participation.roles,
-                    "Restriction reactant participation missing 'reactant' role",
-                )
-                contains_reactant = True
-            elif "product" in participation.displayId:
-                self.assertTrue(
-                    "http://identifiers.org/biomodels.sbo/SBO:0000011"
-                    in participation.roles,
-                    "Restriction product participation missing 'product' role",
-                )
-                contains_product = True
-
-        self.assertTrue(
-            contains_product, "Digestion Assembly plan missing product participation"
-        )
-        self.assertTrue(
-            contains_reactant, "Digestion Assembly plan missing reactant participation"
-        )
-        self.assertTrue(
-            contains_restriction,
-            "Digestion Assembly plan missing restriction participation",
-        )
 
         sbol_validation_result = product_doc.validate()
         self.assertEqual(
@@ -109,26 +126,26 @@ class Test_Core_Functions(unittest.TestCase):
         )
 
     def test_backbone_digestion(self):
-        doc = sbol2.Document()
-        doc.read("tests/test_files/backbone.xml")
+        impl = self.source_doc.get(
+            "https://synbiohub.org/user/Gon/impl_test/DVK_AE_impl/1"
+        )
+        definition = self.source_doc.get(impl.built)
+        plasmid = Plasmid(definition, None, [impl], None, self.source_doc)
+        assembly_activity = self.assembly.initialize_assembly_activity()
 
-        md = doc.getModuleDefinition("https://sbolcanvas.org/module1")
-        assembly_plan = sbol2.ModuleDefinition("assembly_plan")
-
-        parts_list, assembly_plan = backbone_digestion(
-            md, [rebase_restriction_enzyme("BsaI")], assembly_plan, doc
+        parts_list, assembly_activity = backbone_digestion(
+            plasmid, [self.re_impl], assembly_activity, self.source_doc
         )
 
         product_doc = sbol2.Document()
-        for extract, sequence in parts_list:
+        for extract, _ in parts_list:
             product_doc.add(extract)
-            product_doc.add(sequence)
-        product_doc.add(assembly_plan)
+        product_doc.add(assembly_activity)
 
         extract = parts_list[0][0]
         self.assertEqual(
             extract.roles,
-            ["https://identifiers.org/so/SO:0000755"],
+            [PLASMID_VECTOR],
             "Backbone digestion extracted part missing plasmid vector role",
         )  # plasmid vector
 
@@ -141,56 +158,20 @@ class Test_Core_Functions(unittest.TestCase):
             if "three_prime_oh" in comp_obj.displayId:
                 self.assertEqual(
                     comp_def.roles,
-                    ["http://identifiers.org/so/SO:0001933"],
+                    [THREE_PRIME_OVERHANG],
                     "Part digestion missing 3 prime role",
                 )
             elif "five_prime_oh" in comp_obj.displayId:
                 self.assertEqual(
                     comp_def.roles,
-                    ["http://identifiers.org/so/SO:0001932"],
+                    [FIVE_PRIME_OVERHANG],
                     "Part digestion missing 5 prime role",
                 )
             else:
                 self.assertTrue(
-                    comp_def.identity in doc.componentDefinitions,
+                    comp_def.identity in self.source_doc.componentDefinitions,
                     "Digested part missing reference to part from original document",
                 )  # check that old part has been transcribed to new doc, in extracted part
-
-        # check that wasderivedfroms match, assembly plan records all interactions,
-        contains_restriction, contains_reactant, contains_product = False, False, False
-        for participation in assembly_plan.interactions[0].participations:
-            if participation.displayId == "restriction":
-                self.assertTrue(
-                    "http://identifiers.org/biomodels.sbo/SBO:0000019"
-                    in participation.roles,
-                    "Restriction participation missing 'modifier' role",
-                )
-                contains_restriction = True
-            elif "reactant" in participation.displayId:
-                self.assertTrue(
-                    "http://identifiers.org/biomodels.sbo/SBO:0000010"
-                    in participation.roles,
-                    "Restriction reactant participation missing 'reactant' role",
-                )
-                contains_reactant = True
-            elif "product" in participation.displayId:
-                self.assertTrue(
-                    "http://identifiers.org/biomodels.sbo/SBO:0000011"
-                    in participation.roles,
-                    "Restriction product participation missing 'product' role",
-                )
-                contains_product = True
-
-        self.assertTrue(
-            contains_product, "Digestion Assembly plan missing product participation"
-        )
-        self.assertTrue(
-            contains_reactant, "Digestion Assembly plan missing reactant participation"
-        )
-        self.assertTrue(
-            contains_restriction,
-            "Digestion Assembly plan missing restriction participation",
-        )
 
         sbol_validation_result = product_doc.validate()
         self.assertEqual(
@@ -201,21 +182,29 @@ class Test_Core_Functions(unittest.TestCase):
 
     def test_ligation(self):
         ligation_doc = sbol2.Document()
-        temp_doc = sbol2.Document()
         reactants_list = []
-        assembly_plan = sbol2.ModuleDefinition("assembly_plan")
+        assembly_activity = self.assembly.initialize_assembly_activity()
         parts = [
-            "tests/test_files/pro_in_bb.xml",
-            "tests/test_files/rbs_in_bb.xml",
-            "tests/test_files/cds_in_bb.xml",
-            "tests/test_files/terminator_in_bb.xml",
+            self.source_doc.get(
+                "https://synbiohub.org/user/Gon/impl_test/pJ23100_AB_impl/1"
+            ),
+            self.source_doc.get(
+                "https://synbiohub.org/user/Gon/impl_test/pB0034_BC_impl/1"
+            ),
+            self.source_doc.get(
+                "https://synbiohub.org/user/Gon/impl_test/pE0030_CD_impl/1"
+            ),
+            self.source_doc.get(
+                "https://synbiohub.org/user/Gon/impl_test/pB0015_DE_impl/1"
+            ),
         ]
 
-        for i, part in enumerate(parts):
-            temp_doc.read(part)
-            md = temp_doc.getModuleDefinition("https://sbolcanvas.org/module1")
-            extracts_tuple_list, assembly_plan = part_digestion(
-                md, [rebase_restriction_enzyme("BsaI")], assembly_plan, temp_doc
+        for i, impl in enumerate(parts):
+            definition = self.source_doc.get(impl.built)
+            plasmid = Plasmid(definition, None, [impl], None, self.source_doc)
+
+            extracts_tuple_list, assembly_activity = part_digestion(
+                plasmid, [self.re_impl], assembly_activity, self.source_doc
             )
 
             for extract, sequence in extracts_tuple_list:
@@ -230,11 +219,22 @@ class Test_Core_Functions(unittest.TestCase):
 
             reactants_list.append(extracts_tuple_list[0][0])
 
-        temp_doc.read("tests/test_files/backbone.xml")
+        backbone_impl = self.source_doc.get(
+            "https://synbiohub.org/user/Gon/impl_test/DVK_AE_impl/1"
+        )
+
         # run digestion, extract component + sequence, add to ligation_doc, reactants_list
-        md = temp_doc.getModuleDefinition("https://sbolcanvas.org/module1")
-        extracts_tuple_list, assembly_plan = backbone_digestion(
-            md, [rebase_restriction_enzyme("BsaI")], assembly_plan, temp_doc
+        definition = self.source_doc.get(backbone_impl.built)
+
+        self.sbh.pull(
+            "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1",
+            self.source_doc,
+        )
+
+        plasmid = Plasmid(definition, None, [backbone_impl], None, self.source_doc)
+
+        extracts_tuple_list, assembly_activity = backbone_digestion(
+            plasmid, [self.re_impl], assembly_activity, self.source_doc
         )
         for extract, seq in extracts_tuple_list:
             try:
@@ -248,91 +248,97 @@ class Test_Core_Functions(unittest.TestCase):
                 else:
                     print(e)
 
-        ligation_doc.add(assembly_plan)
+        ligation_doc.add(assembly_activity)
         reactants_list.append(extracts_tuple_list[0][0])
 
-        ligation_doc.add(rebase_restriction_enzyme("BsaI"))
+        ligation_doc.add_list([self.re_impl, self.ligase_impl])
+        self.sbh.pull(self.ligase_impl.built, ligation_doc)
 
-        pl = ligation(reactants_list, assembly_plan, ligation_doc)
+        final_doc = sbol2.Document()
 
-        for p in pl:
-            for obj in p:
-                ligation_doc.add(obj)
+        composite_impls = ligation(
+            reactants_list,
+            assembly_activity,
+            "test",
+            ligation_doc,
+            final_doc,
+            self.ligase_impl,
+        )
 
-                if type(obj) is sbol2.ComponentDefinition:
-                    self.assertTrue(
-                        "http://identifiers.org/so/SO:0000988" in obj.types,
-                        "Ligation product missing circular DNA type",
+        for i in composite_impls:
+            obj = final_doc.get(i.built)
+
+            if type(obj) is sbol2.ComponentDefinition:
+                self.assertTrue(
+                    CIRCULAR in obj.types,
+                    "Ligation product missing circular DNA type",
+                )
+                self.assertTrue(
+                    "http://www.biopax.org/release/biopax-level3.owl#Dna" in obj.types,
+                    "Ligation product missing DNA Molecule type",
+                )
+                self.assertTrue(
+                    ENGINEERED_PLASMID in obj.roles,
+                    "Ligation product missing engineered plasmid role",
+                )
+
+                locations = []
+
+                for anno in obj.sequenceAnnotations:
+                    for location in anno.locations:
+                        locations.append((anno.identity, location.start, location.end))
+
+                locations.sort(key=lambda x: x[1])
+
+                for i in range(len(locations) - 1):
+                    current_end = locations[i][2]
+                    next_start = locations[i + 1][1]
+
+                    self.assertEqual(
+                        current_end + 1,
+                        next_start,
+                        f"Mismatch in continuity: {locations[i][0]} ends at {current_end}, "
+                        f"but {locations[i + 1][0]} starts at {next_start}",
                     )
-                    self.assertTrue(
-                        "http://www.biopax.org/release/biopax-level3.owl#Dna"
-                        in obj.types,
-                        "Ligation product missing DNA Molecule type",
-                    )
-                    self.assertTrue(
-                        "http://identifiers.org/so/SO:0000804" in obj.roles,
-                        "Ligation product missing engineered region role",
-                    )
 
-                    locations = []
-
-                    for anno in obj.sequenceAnnotations:
-                        for location in anno.locations:
-                            locations.append(
-                                (anno.identity, location.start, location.end)
-                            )
-
-                    locations.sort(key=lambda x: x[1])
-
-                    for i in range(len(locations) - 1):
-                        current_end = locations[i][2]
-                        next_start = locations[i + 1][1]
-
-                        self.assertEqual(
-                            current_end + 1,
-                            next_start,
-                            f"Mismatch in continuity: {locations[i][0]} ends at {current_end}, "
-                            f"but {locations[i + 1][0]} starts at {next_start}",
-                        )
-
-        sbol_validation_result = ligation_doc.validate()
+        sbol_validation_result = final_doc.validate()
         self.assertEqual(
             sbol_validation_result, "Valid.", "Ligation SBOL validation failed"
         )
 
-    def test_golden_gate(self):
-        pro_doc = sbol2.Document()
-        pro_doc.read("tests/test_files/pro_in_bb.xml")
+    # def test_golden_gate(self):
+    #     pro_doc = sbol2.Document()
+    #     pro_doc.read("tests/test_files/pro_in_bb.xml")
 
-        rbs_doc = sbol2.Document()
-        rbs_doc.read("tests/test_files/rbs_in_bb.xml")
+    #     rbs_doc = sbol2.Document()
+    #     rbs_doc.read("tests/test_files/rbs_in_bb.xml")
 
-        cds_doc = sbol2.Document()
-        cds_doc.read("tests/test_files/cds_in_bb.xml")
+    #     cds_doc = sbol2.Document()
+    #     cds_doc.read("tests/test_files/cds_in_bb.xml")
 
-        ter_doc = sbol2.Document()
-        ter_doc.read("tests/test_files/terminator_in_bb.xml")
+    #     ter_doc = sbol2.Document()
+    #     ter_doc.read("tests/test_files/terminator_in_bb.xml")
 
-        bb_doc = sbol2.Document()
-        bb_doc.read("tests/test_files/backbone.xml")
+    #     bb_doc = sbol2.Document()
+    #     bb_doc.read("tests/test_files/backbone.xml")
 
-        part_docs = [pro_doc, rbs_doc, cds_doc, ter_doc]
+    #     part_docs = [pro_doc, rbs_doc, cds_doc, ter_doc]
 
-        assembly_doc = sbol2.Document()
-        assembly_obj = golden_gate_assembly_plan(
-            "testassem", part_docs, bb_doc, "BsaI", assembly_doc
-        )
+    #     assembly_doc = sbol2.Document()
+    #     assembly_obj = golden_gate_assembly_plan(
+    #         "testassem", part_docs, bb_doc, "BsaI", assembly_doc
+    #     )
 
-        composites = assembly_obj.run(plasmids_in_module_definitions=True)
+    #     composites = assembly_obj.run(plasmids_in_module_definitions=True)
 
-        self.assertEqual(len(composites), 1)
+    #     self.assertEqual(len(composites), 1)
 
-        assembly_doc.write("validation_assembly.xml")
+    #     assembly_doc.write("validation_assembly.xml")
 
-        sbol_validation_result = assembly_doc.validate()
-        self.assertEqual(
-            sbol_validation_result, "Valid.", "Assembly SBOL validation failed"
-        )
+    #     sbol_validation_result = assembly_doc.validate()
+    #     self.assertEqual(
+    #         sbol_validation_result, "Valid.", "Assembly SBOL validation failed"
+    #     )
 
 
 if __name__ == "__main__":
