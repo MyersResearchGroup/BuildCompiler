@@ -23,6 +23,14 @@ class FakePartShop:
         return "fake-key"
 
 
+class FakeLegacyBuildCompiler:
+    def __init__(self, collections, sbh_registry, auth_token, sbol_doc):
+        self.indexed_plasmids = []
+        self.indexed_backbones = []
+        self.restriction_enzyme_implementations = []
+        self.ligase_implementations = []
+
+
 class FakePlanner:
     def __init__(self):
         self.calls = []
@@ -110,6 +118,9 @@ def test_from_synbiohub_rejects_mixed_auth_modes():
 
 def test_from_synbiohub_pulls_collections_with_authenticated_client(monkeypatch):
     monkeypatch.setattr("buildcompiler.sbol.repository.sbol2.PartShop", FakePartShop)
+    monkeypatch.setattr(
+        "buildcompiler.buildcompiler.BuildCompiler", FakeLegacyBuildCompiler
+    )
     doc = sbol2.Document()
     collection = "https://example.org/collection"
 
@@ -122,6 +133,7 @@ def test_from_synbiohub_pulls_collections_with_authenticated_client(monkeypatch)
 
     assert compiler.repository_client is not None
     assert compiler.repository_client.part_shop.pull_calls == [(collection, True)]
+    assert compiler.inventory is not None
 
 
 def test_execute_raises_clear_error_without_dependencies():

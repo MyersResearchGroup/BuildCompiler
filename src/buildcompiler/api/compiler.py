@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from buildcompiler.planning import FullBuildPlanner
+from buildcompiler.domain import IndexedBackbone, IndexedPlasmid, IndexedReagent
+from buildcompiler.inventory import Inventory
 from buildcompiler.sbol import PartShopRepositoryClient
 
 from .options import BuildOptions
@@ -67,7 +69,17 @@ class BuildCompiler:
             for identity in collections:
                 repository_client.pull_identity(identity)
 
+        inventory = kwargs.pop("inventory", None)
+        if inventory is None and collections and resolved_repository_url:
+            inventory = _inventory_from_collections(
+                collections=collections,
+                repository_url=resolved_repository_url,
+                auth_token=repository_client.auth_token if repository_client else None,
+                sbol_doc=document,
+            )
+
         return cls(
+            inventory=inventory,
             sbol_document=document,
             repository_client=repository_client,
             options=options or BuildOptions(),
@@ -111,6 +123,91 @@ class BuildCompiler:
     ) -> Any:
         plan = self.plan(abstract_designs, options=options)
         return self.execute(plan, options=options)
+
+
+def _inventory_from_collections(
+    *,
+    collections: list[str],
+    repository_url: str,
+    auth_token: str | None,
+    sbol_doc: Any,
+) -> Inventory:
+    from buildcompiler.buildcompiler import BuildCompiler as LegacyBuildCompiler
+
+    legacy = LegacyBuildCompiler(
+        collections=collections,
+        sbh_registry=repository_url,
+        auth_token=auth_token or "",
+        sbol_doc=sbol_doc,
+    )
+
+    plasmids = []
+    for entry in legacy.indexed_plasmids:
+        plasmids.append(
+            IndexedPlasmid(
+                identity=entry.plasmid_definition.identity,
+                display_id=entry.plasmid_definition.displayId,
+                name=entry.name,
+                metadata={
+                    "fusion_sites": list(entry.fusion_sites or []),
+                    "antibiotic": entry.antibiotic_resistance,
+                    "insert_identities": [
+                        c.definition for c in entry.plasmid_definition.components
+                    ],
+                    "implementation_identity": (
+                        entry.plasmid_implementations[0].identity
+                        if entry.plasmid_implementations
+                        else None
+                    ),
+                },
+                sbol_component=entry.plasmid_definition,
+            )
+        )
+
+    backbones = []
+    for entry in legacy.indexed_backbones:
+        backbones.append(
+            IndexedBackbone(
+                identity=entry.plasmid_definition.identity,
+                display_id=entry.plasmid_definition.displayId,
+                name=entry.name,
+                metadata={
+                    "fusion_sites": list(entry.fusion_sites or []),
+                    "antibiotic": entry.antibiotic_resistance,
+                    "implementation_identity": (
+                        entry.plasmid_implementations[0].identity
+                        if entry.plasmid_implementations
+                        else None
+                    ),
+                },
+                sbol_component=entry.plasmid_definition,
+            )
+        )
+
+    reagents = []
+    for impl in legacy.restriction_enzyme_implementations:
+        built = sbol_doc.find(impl.built)
+        reagents.append(
+            IndexedReagent(
+                identity=impl.identity,
+                display_id=impl.displayId,
+                name=getattr(built, "displayId", None),
+                reagent_type="restriction_enzyme",
+                metadata={"implementation_identity": impl.identity},
+            )
+        )
+    for impl in legacy.ligase_implementations:
+        built = sbol_doc.find(impl.built)
+        reagents.append(
+            IndexedReagent(
+                identity=impl.identity,
+                display_id=impl.displayId,
+                name=getattr(built, "displayId", None),
+                reagent_type="ligase",
+                metadata={"implementation_identity": impl.identity},
+            )
+        )
+    return Inventory(plasmids=plasmids, backbones=backbones, reagents=reagents)
 
 
 def full_build(
