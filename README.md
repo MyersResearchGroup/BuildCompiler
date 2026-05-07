@@ -163,6 +163,27 @@ plan = compiler.plan(abstract_designs)
 result = compiler.execute(plan)
 ```
 
+
+Authenticated and anonymous repository access are both supported:
+
+```python
+compiler = BuildCompiler.from_synbiohub(
+    collections=["https://synbiohub.org/public/igem/igem_collection/1"],
+    repository_url="https://synbiohub.org",
+    auth_token="<token>",
+)
+
+compiler = BuildCompiler.from_synbiohub(
+    repository_url="https://synbiohub.org",
+    email="user@example.org",
+    password="<password>",
+)
+
+compiler = BuildCompiler.from_synbiohub(
+    repository_url="https://synbiohub.org",
+)
+```
+
 A convenience wrapper may exist:
 
 ```python

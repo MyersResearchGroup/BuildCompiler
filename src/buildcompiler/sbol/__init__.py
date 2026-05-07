@@ -2,6 +2,7 @@
 
 from .assembly import AssemblyJob, AssemblySbolResult, AssemblyService
 from .domestication import DomesticationJob, DomesticationSbolResult, DomesticationService
+from .repository import PartShopRepositoryClient
 from .resolver import PullPolicy, SbolResolver
 
 __all__ = [
@@ -11,6 +12,7 @@ __all__ = [
     "DomesticationJob",
     "DomesticationSbolResult",
     "DomesticationService",
+    "PartShopRepositoryClient",
     "PullPolicy",
     "SbolResolver",
 ]

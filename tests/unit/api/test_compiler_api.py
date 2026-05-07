@@ -1,8 +1,26 @@
 import sys
 
 import pytest
+import sbol2
 
 from buildcompiler.api import BuildCompiler, BuildOptions, full_build
+
+
+class FakePartShop:
+    def __init__(self, *_args, **_kwargs):
+        self.key = None
+        self.pull_calls = []
+
+    def pull(self, identity, document, recursive=True):
+        self.pull_calls.append((identity, recursive))
+        if document.find(identity) is None:
+            document.add(sbol2.ComponentDefinition(identity))
+
+    def login(self, *_args, **_kwargs):
+        return None
+
+    def getKey(self):
+        return "fake-key"
 
 
 class FakePlanner:
@@ -75,9 +93,35 @@ def test_from_synbiohub_placeholder_without_collection_loading():
     assert isinstance(compiler, BuildCompiler)
 
 
-def test_from_synbiohub_raises_when_collection_loading_is_requested():
-    with pytest.raises(NotImplementedError, match="collection loading/indexing"):
+def test_from_synbiohub_requires_repository_url_for_collections():
+    with pytest.raises(ValueError, match="repository_url"):
         BuildCompiler.from_synbiohub(collections=["https://example.org/collection"])
+
+
+def test_from_synbiohub_rejects_mixed_auth_modes():
+    with pytest.raises(ValueError, match="auth_token"):
+        BuildCompiler.from_synbiohub(
+            repository_url="https://example.org",
+            auth_token="token",
+            password="secret",
+            email="user@example.org",
+        )
+
+
+def test_from_synbiohub_pulls_collections_with_authenticated_client(monkeypatch):
+    monkeypatch.setattr("buildcompiler.sbol.repository.sbol2.PartShop", FakePartShop)
+    doc = sbol2.Document()
+    collection = "https://example.org/collection"
+
+    compiler = BuildCompiler.from_synbiohub(
+        collections=[collection],
+        repository_url="https://example.org",
+        auth_token="token",
+        sbol_doc=doc,
+    )
+
+    assert compiler.repository_client is not None
+    assert compiler.repository_client.part_shop.pull_calls == [(collection, True)]
 
 
 def test_execute_raises_clear_error_without_dependencies():

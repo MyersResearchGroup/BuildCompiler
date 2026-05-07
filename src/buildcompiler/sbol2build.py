@@ -26,6 +26,33 @@ sbol2.Config.setOption(sbol2.ConfigOptions.SBOL_COMPLIANT_URIS, True)
 sbol2.Config.setOption(sbol2.ConfigOptions.SBOL_TYPED_URIS, False)
 
 
+def _select_expected_digest_fragment(
+    *,
+    digested_reactant,
+    reactant_component_definition: sbol2.ComponentDefinition,
+    expected_role: str,
+):
+    """Validate digest count and select expected fragment.
+
+    Golden Gate simulation expects exactly two fragments after digest:
+    smaller insert + larger backbone.
+    """
+    fragment_count = len(digested_reactant)
+    if fragment_count != 2:
+        raise ValueError(
+            "Golden Gate simulation failed for "
+            f"{reactant_component_definition.displayId}: expected exactly 2 digestion "
+            f"fragments and found {fragment_count}. Check sequence/restriction sites."
+        )
+
+    smaller, larger = sorted(digested_reactant, key=len)
+    if expected_role == "insert":
+        return smaller
+    if expected_role == "backbone":
+        return larger
+    raise ValueError(f"Unknown expected digest role: {expected_role}")
+
+
 class Assembly:
     """Creates an Assembly Plan.
 
@@ -522,18 +549,11 @@ def part_digestion(
     ds_reactant = Dseqrecord(reactant_seq, circular=circular)
     digested_reactant = ds_reactant.cut(restriction_enzymes_pydna)
 
-    if len(digested_reactant) < 2 or len(digested_reactant) > 3:
-        raise ValueError(
-            f"Not supported number of products. Found{len(digested_reactant)}"
-        )
-    elif circular and len(digested_reactant) == 2:
-        part_extract, _ = sorted(digested_reactant, key=len)
-    elif linear and len(digested_reactant) == 3:
-        _, part_extract, _ = digested_reactant
-    else:
-        raise ValueError(
-            f"Reactant {reactant_component_definition.displayId} has no valid topology type, with {len(digested_reactant)} digested products, types: {reactant_component_definition.types}, and roles: {reactant_component_definition.roles}"
-        )
+    part_extract = _select_expected_digest_fragment(
+        digested_reactant=digested_reactant,
+        reactant_component_definition=reactant_component_definition,
+        expected_role="insert",
+    )
 
     # Compute the length of single strand sticky ends or fusion sites
     product_5_prime_ss_strand, product_5_prime_ss_end = (
@@ -745,19 +765,11 @@ def backbone_digestion(
     ds_reactant = Dseqrecord(reactant_seq, circular=circular)
     digested_reactant = ds_reactant.cut(restriction_enzymes_pydna)
 
-    if len(digested_reactant) < 2 or len(digested_reactant) > 3:
-        raise ValueError(
-            f"Not supported number of products. Found: {len(digested_reactant)}"
-        )
-    # TODO select them based on content rather than size.
-    elif circular and len(digested_reactant) == 2:
-        _, backbone = sorted(digested_reactant, key=len)
-    elif linear and len(digested_reactant) == 3:
-        prefix, part_extract, suffix = digested_reactant
-    else:
-        raise ValueError(
-            f"Reactant {reactant_component_definition.displayId} has no valid topology type, with {len(digested_reactant)} digested products, types: {reactant_component_definition.types}, and roles: {reactant_component_definition.roles}"
-        )
+    backbone = _select_expected_digest_fragment(
+        digested_reactant=digested_reactant,
+        reactant_component_definition=reactant_component_definition,
+        expected_role="backbone",
+    )
 
     # Compute the length of single strand sticky ends or fusion sites
     product_5_prime_ss_strand, product_5_prime_ss_end = backbone.seq.five_prime_end()
