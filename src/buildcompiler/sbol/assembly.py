@@ -3,6 +3,8 @@
 from dataclasses import dataclass, field
 
 import sbol2
+from Bio import Restriction
+from pydna.dseqrecord import Dseqrecord
 
 from buildcompiler.domain import (
     BuildStage,
@@ -74,6 +76,13 @@ class AssemblyService:
         )
         ligase_impl = self._implementation_from_record(job.ligase, job.source_document)
 
+        self._simulate_golden_gate(
+            part_components=[p.plasmid_definition for p in legacy_parts],
+            backbone_component=legacy_backbone.plasmid_definition,
+            restriction_impl=restriction_impl,
+            source_document=job.source_document,
+        )
+
         composite_prefix = job.product_display_id or job.product_identity.split("/")[-1]
         legacy_assembly = Assembly(
             part_plasmids=legacy_parts,
@@ -103,6 +112,63 @@ class AssemblyService:
             activity_identity=legacy_assembly.assembly_activity.identity,
             logs=logs,
         )
+
+    def _simulate_golden_gate(
+        self,
+        *,
+        part_components: list[sbol2.ComponentDefinition],
+        backbone_component: sbol2.ComponentDefinition,
+        restriction_impl: sbol2.Implementation,
+        source_document: sbol2.Document,
+    ) -> None:
+        enzyme_definition = source_document.find(restriction_impl.built)
+        enzyme_name = getattr(enzyme_definition, "displayId", None) or getattr(
+            enzyme_definition, "name", None
+        )
+        if not enzyme_name or not hasattr(Restriction, enzyme_name):
+            return
+        enzyme = getattr(Restriction, enzyme_name)
+
+        part_inserts = []
+        for component in part_components:
+            fragments = self._digest_component(component, enzyme, source_document)
+            if len(fragments) != 2:
+                raise ValueError(
+                    f"Part plasmid {component.displayId} digestion with {enzyme_name} produced {len(fragments)} fragments; expected 2"
+                )
+            part_inserts.append(min(fragments, key=len))
+
+        backbone_fragments = self._digest_component(
+            backbone_component, enzyme, source_document
+        )
+        if len(backbone_fragments) != 2:
+            raise ValueError(
+                f"Backbone {backbone_component.displayId} digestion with {enzyme_name} produced {len(backbone_fragments)} fragments; expected 2"
+            )
+        open_backbone = max(backbone_fragments, key=len)
+
+        assembled = open_backbone
+        for part_insert in part_inserts:
+            assembled = assembled + part_insert
+        ligated = assembled.looped()
+        if ligated is None or len(ligated) == 0:
+            raise ValueError("Golden Gate ligation failed: expected one circular product")
+
+    def _digest_component(
+        self,
+        component: sbol2.ComponentDefinition,
+        enzyme: Restriction.RestrictionType,
+        source_document: sbol2.Document,
+    ) -> list[Dseqrecord]:
+        if len(component.sequences) != 1:
+            raise ValueError(
+                f"Component {component.displayId} must have exactly one sequence for digestion simulation"
+            )
+        sequence_obj = source_document.find(component.sequences[0])
+        if not isinstance(sequence_obj, sbol2.Sequence):
+            raise ValueError(f"Missing sequence for component {component.displayId}")
+        ds_record = Dseqrecord(sequence_obj.elements, circular=True)
+        return ds_record.cut([enzyme])
 
     def _record_to_legacy_plasmid(
         self,

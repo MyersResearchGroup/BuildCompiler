@@ -179,6 +179,34 @@ result = full_build(
 
 `BuildCompiler.__init__` should stay lightweight and dependency-injected. Automatic SynBioHub collection indexing belongs in `BuildCompiler.from_synbiohub(...)`.
 
+### SynBioHub repository authentication
+
+`BuildCompiler.from_synbiohub(...)` supports anonymous pulls, auth-token reuse, or login via email/password:
+
+```python
+from buildcompiler.api import BuildCompiler
+
+# Anonymous/public access
+public_compiler = BuildCompiler.from_synbiohub(
+    repository_url="https://synbiohub.org",
+    collections=["https://synbiohub.org/public/igem"],
+)
+
+# Existing auth token
+token_compiler = BuildCompiler.from_synbiohub(
+    repository_url="https://synbiohub.org",
+    auth_token="<token>",
+    collections=["https://synbiohub.org/user/private_collection"],
+)
+
+# Email/password login (token kept in-memory)
+login_compiler = BuildCompiler.from_synbiohub(
+    repository_url="https://synbiohub.org",
+    email="user@example.org",
+    password="<password>",
+)
+```
+
 ## Local development
 
 Recommended local workflow:

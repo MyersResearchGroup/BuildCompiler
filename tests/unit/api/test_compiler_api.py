@@ -1,6 +1,8 @@
 import sys
+from unittest.mock import patch
 
 import pytest
+import sbol2
 
 from buildcompiler.api import BuildCompiler, BuildOptions, full_build
 
@@ -75,9 +77,34 @@ def test_from_synbiohub_placeholder_without_collection_loading():
     assert isinstance(compiler, BuildCompiler)
 
 
-def test_from_synbiohub_raises_when_collection_loading_is_requested():
-    with pytest.raises(NotImplementedError, match="collection loading/indexing"):
-        BuildCompiler.from_synbiohub(collections=["https://example.org/collection"])
+def test_from_synbiohub_pulls_collections_when_requested():
+    doc = sbol2.Document()
+
+    with patch("buildcompiler.api.compiler.PartShopRepositoryClient") as client_cls:
+        client = client_cls.return_value
+        BuildCompiler.from_synbiohub(
+            collections=["https://example.org/collection"],
+            repository_url="https://example.org",
+            auth_token="token",
+            sbol_doc=doc,
+        )
+
+    client_cls.assert_called_once()
+    client.pull_collection.assert_called_once_with("https://example.org/collection")
+
+
+def test_from_synbiohub_requires_repository_when_credentials_present():
+    with pytest.raises(ValueError, match="repository_url"):
+        BuildCompiler.from_synbiohub(auth_token="token")
+
+
+def test_from_synbiohub_rejects_auth_token_and_password_together():
+    with pytest.raises(ValueError, match="auth_token"):
+        BuildCompiler.from_synbiohub(
+            repository_url="https://example.org",
+            auth_token="token",
+            password="secret",
+        )
 
 
 def test_execute_raises_clear_error_without_dependencies():

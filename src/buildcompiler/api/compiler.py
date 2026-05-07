@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from buildcompiler.planning import FullBuildPlanner
+from buildcompiler.sbol import PartShopRepositoryClient
 
 from .options import BuildOptions
 
@@ -17,6 +18,7 @@ class BuildCompiler:
     planner: Any = None
     executor: Any = None
     adapters: Any = None
+    repository_client: PartShopRepositoryClient | None = None
     options: BuildOptions = field(default_factory=BuildOptions)
 
     @classmethod
@@ -24,17 +26,47 @@ class BuildCompiler:
         cls,
         *,
         collections: list[str] | None = None,
+        repository_url: str | None = None,
         sbh_registry: str | None = None,
         auth_token: str | None = None,
+        email: str | None = None,
+        password: str | None = None,
         sbol_doc: Any = None,
         options: BuildOptions | None = None,
         **kwargs: Any,
     ) -> "BuildCompiler":
-        if collections:
-            raise NotImplementedError(
-                "Automatic SynBioHub collection loading/indexing is not implemented yet. Inject inventory dependencies directly for now."
+        resolved_repository_url = repository_url or sbh_registry
+        if auth_token and password:
+            raise ValueError("auth_token cannot be combined with password")
+
+        requires_repository = bool(
+            collections or resolved_repository_url or auth_token or email or password
+        )
+        if requires_repository and not resolved_repository_url:
+            raise ValueError("repository_url (or sbh_registry) is required")
+
+        document = sbol_doc
+        repository_client = None
+        if resolved_repository_url:
+            import sbol2
+
+            document = document or sbol2.Document()
+            repository_client = PartShopRepositoryClient(
+                repository_url=resolved_repository_url,
+                document=document,
+                auth_token=auth_token,
+                email=email,
+                password=password,
             )
-        return cls(sbol_document=sbol_doc, options=options or BuildOptions(), **kwargs)
+            for collection_uri in collections or []:
+                repository_client.pull_collection(collection_uri)
+
+        return cls(
+            sbol_document=document,
+            repository_client=repository_client,
+            options=options or BuildOptions(),
+            **kwargs,
+        )
 
     def plan(self, abstract_designs: Any, options: BuildOptions | None = None) -> Any:
         effective_options = options or self.options
@@ -60,6 +92,11 @@ class BuildCompiler:
                 sbol_document=self.sbol_document,
                 options=effective_options,
                 adapters=self.adapters,
+                pull_client=(
+                    self.repository_client.pull_identity
+                    if self.repository_client is not None
+                    else None
+                ),
             )
         return executor.execute(plan, options=effective_options)
 
@@ -80,8 +117,11 @@ def full_build(
     adapters: Any = None,
     options: BuildOptions | None = None,
     collections: list[str] | None = None,
+    repository_url: str | None = None,
     sbh_registry: str | None = None,
     auth_token: str | None = None,
+    email: str | None = None,
+    password: str | None = None,
     sbol_doc: Any = None,
     **kwargs: Any,
 ) -> Any:
@@ -89,13 +129,19 @@ def full_build(
     if (
         collections is not None
         or sbh_registry is not None
+        or repository_url is not None
         or auth_token is not None
+        or email is not None
+        or password is not None
         or sbol_doc is not None
     ):
         compiler = BuildCompiler.from_synbiohub(
             collections=collections,
+            repository_url=repository_url,
             sbh_registry=sbh_registry,
             auth_token=auth_token,
+            email=email,
+            password=password,
             sbol_doc=sbol_doc,
             options=compiler_options,
             inventory=inventory,
