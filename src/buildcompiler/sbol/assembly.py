@@ -101,11 +101,20 @@ class AssemblyService:
             self._indexed_product_from_legacy_product(plasmid, job)
             for plasmid in legacy_products
         ]
+        self._ensure_minimal_assembly_links(
+            job=job,
+            final_doc=final_doc,
+            activity_identity=legacy_assembly.assembly_activity.identity,
+            product_identity=legacy_products[0].plasmid_implementations[0].identity,
+        )
+        validation_warning = self._maybe_validate_document(final_doc)
         logs = [
             f"Assembled {len(products)} product(s) at stage {job.stage.value}.",
             f"Assembly activity: {legacy_assembly.assembly_activity.identity}",
             "Golden Gate simulation completed with 1 ligation product.",
         ]
+        if validation_warning:
+            logs.append(validation_warning)
 
         return AssemblySbolResult(
             products=products,
@@ -113,6 +122,63 @@ class AssemblyService:
             activity_identity=legacy_assembly.assembly_activity.identity,
             logs=logs,
         )
+
+    def _ensure_minimal_assembly_links(
+        self,
+        *,
+        job: AssemblyJob,
+        final_doc: sbol2.Document,
+        activity_identity: str,
+        product_identity: str,
+    ) -> None:
+        activity = final_doc.find(activity_identity)
+        if not isinstance(activity, sbol2.Activity):
+            activity = sbol2.Activity(activity_identity)
+            final_doc.add(activity)
+
+        usage_entities = {usage.entity for usage in activity.usages}
+
+        def _add_usage(entity_identity: str, usage_id: str) -> None:
+            if entity_identity in usage_entities:
+                return
+            usage = sbol2.Usage(uri=usage_id, entity=entity_identity, role=sbol2.SBO_REACTANT)
+            activity.usages.add(usage)
+            usage_entities.add(entity_identity)
+
+        for idx, plasmid in enumerate(job.part_plasmids):
+            impl = self._implementation_from_plasmid_record(plasmid, job.source_document)
+            _add_usage(impl.identity, f"part_{idx}")
+
+        backbone_impl = self._implementation_from_plasmid_record(
+            IndexedPlasmid(
+                identity=job.backbone.identity,
+                display_id=job.backbone.display_id,
+                name=job.backbone.name,
+                metadata=job.backbone.metadata,
+                sbol_component=job.backbone.sbol_component,
+            ),
+            job.source_document,
+        )
+        _add_usage(backbone_impl.identity, "backbone")
+
+        restriction_impl = self._implementation_from_record(job.restriction_enzyme, job.source_document)
+        ligase_impl = self._implementation_from_record(job.ligase, job.source_document)
+        _add_usage(restriction_impl.identity, "restriction_enzyme")
+        _add_usage(ligase_impl.identity, "ligase")
+
+        product_impl = final_doc.find(product_identity)
+        if isinstance(product_impl, sbol2.Implementation):
+            product_impl.wasGeneratedBy = activity.identity
+
+    def _maybe_validate_document(self, document: sbol2.Document) -> str | None:
+        try:
+            document.validate()
+            return None
+        except Exception:
+            return (
+                "Document validation skipped due to unavailable SBOL validator service; "
+                "run build_doc.validate() in a network-enabled environment."
+            )
 
     def _record_to_legacy_plasmid(
         self,
