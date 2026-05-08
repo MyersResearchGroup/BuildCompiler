@@ -12,8 +12,8 @@ class Plasmid:
         self,
         definition: sbol2.ComponentDefinition,
         strain_definition: sbol2.ModuleDefinition,
-        plasmid_implementations: sbol2.Implementation,
-        strain_implementations: sbol2.Implementation,
+        plasmid_implementations: List[sbol2.Implementation],
+        strain_implementations: List[sbol2.Implementation],
         doc: sbol2.document,
     ):
         self.plasmid_definition = definition
@@ -93,26 +93,3 @@ class Plasmid:
 
     def __hash__(self):
         return hash(self.plasmid_definition)
-
-
-# def _extract_fusion_sites(
-#         plasmid: sbol2.ComponentDefinition,
-#         doc: sbol2.Document,
-#         sbh: sbol2.PartShop
-#     ) -> List[sbol2.ComponentDefinition]:
-#         """
-#         Returns all fusion site component definitions from a plasmid.
-
-#         Args:
-#             plasmid: :class:`sbol2.ComponentDefinition` representing the plasmid.
-
-#         Returns:
-#             A list of fusion site component definitions.
-#         """
-#         fusion_sites = []
-#         for component in plasmid.components:
-#             definition = get_or_pull(doc, sbh, component.definition)
-#             if RESTRICTION_ENZYME_ASSEMBLY_SCAR in definition.roles:
-#                 fusion_sites.append(definition)
-
-#         return fusion_sites
