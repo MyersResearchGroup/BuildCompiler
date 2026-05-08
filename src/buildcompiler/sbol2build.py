@@ -20,7 +20,7 @@ from .constants import (
     THREE_PRIME_OVERHANG,
 )
 
-sbol2.Config.setHomespace("https://SBOL2Build.org")
+sbol2.Config.setHomespace("http://buildcompiler.org")
 sbol2.Config.setOption(sbol2.ConfigOptions.SBOL_COMPLIANT_URIS, True)
 sbol2.Config.setOption(sbol2.ConfigOptions.SBOL_TYPED_URIS, False)
 
@@ -99,9 +99,8 @@ class Assembly:
                 append_extracts_to_doc(extracts_tuple_list, self.final_document)
             self.extracted_parts.append(extracts_tuple_list[0][0])
 
-        backbone_impl = self.backbone.plasmid_implementations[0]
         extracts_tuple_list, _ = backbone_digestion(
-            backbone_impl,
+            self.backbone,
             [self.restriction_enzyme],
             self.assembly_activity,
             self.source_document,
@@ -343,7 +342,7 @@ def part_digestion(
     restriction_enzymes: List[sbol2.Implementation],
     assembly_activity: sbol2.Activity,
     document: sbol2.Document,
-) -> Tuple[List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]]:
+) -> Tuple[List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]], sbol2.Activity]:
     """Simulate restriction digestion of a part plasmid and extract the insert.
 
     Uses PyDNA to cut the reactant sequence, then constructs SBOL representations
@@ -574,11 +573,11 @@ def part_digestion(
 
 
 def backbone_digestion(
-    reactant: sbol2.Implementation,
+    reactant: Plasmid,
     restriction_enzymes: List[sbol2.Implementation],
     assembly_activity: sbol2.Activity,
     document: sbol2.Document,
-) -> Tuple[List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]]:
+) -> Tuple[List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]], sbol2.Activity]:
     """Simulate restriction digestion of a backbone plasmid and extract the linearised vector.
 
     Mirrors :func:`part_digestion` but targets the backbone: for a circular reactant
@@ -601,7 +600,8 @@ def backbone_digestion(
     :raises ValueError: If the reactant does not have exactly one sequence, or if
         the number of digest products is unsupported for the reactant topology.
     """
-    reactant_component_definition = document.get(reactant.built)
+    reactant_impl = reactant.plasmid_implementations[0]
+    reactant_component_definition = document.get(reactant_impl.built)
     reactant_displayId = reactant_component_definition.displayId
 
     types = set(reactant_component_definition.types or [])
@@ -619,8 +619,8 @@ def backbone_digestion(
 
     assembly_activity.usages.add(
         sbol2.Usage(
-            uri=f"{reactant.displayId}",
-            entity=reactant.identity,
+            uri=f"{reactant_impl.displayId}",
+            entity=reactant_impl.identity,
             role="http://sbols.org/v2#build",
         )
     )
@@ -665,7 +665,7 @@ def backbone_digestion(
 
     if len(digested_reactant) < 2 or len(digested_reactant) > 3:
         raise ValueError(
-            f"Not supported number of products. Found: {len(digested_reactant)}"
+            f"Not supported number of products. Found: {len(digested_reactant)} after digesting {reactant_displayId}"
         )
     # TODO select them based on content rather than size.
     elif circular and len(digested_reactant) == 2:
