@@ -76,6 +76,33 @@ class BuildCompiler:
 
         self._index_collections(collections)
 
+    @classmethod
+    def from_local_documents(
+        cls,
+        collection_docs: list[sbol2.Document],
+        design_doc: sbol2.Document | None = None,
+    ):
+        """Create a BuildCompiler instance from already-loaded local SBOL documents."""
+        compiler = cls.__new__(cls)
+        compiler.sbh = None
+        compiler.sbol_doc = sbol2.Document()
+        compiler.indexed_plasmids = []
+        compiler.indexed_backbones = []
+        compiler.restriction_enzyme_implementations = []
+        compiler.ligase_implementations = []
+
+        if design_doc is not None:
+            compiler.index_document(design_doc)
+
+        for collection_doc in collection_docs:
+            compiler.index_document(collection_doc)
+
+        return compiler
+
+    def index_document(self, collection_doc: sbol2.Document):
+        self._merge_document(collection_doc)
+        self._index_current_document()
+
     def _index_collections(self, collections: List[str]):
         """Index input collections into plasmids and backbones.
 
@@ -91,9 +118,34 @@ class BuildCompiler:
         for uri in collections:
             print(f"Indexing collection: {uri}")
             self.sbh.pull(uri, self.sbol_doc)
+        self._index_current_document()
 
+    def _merge_document(self, source_doc: sbol2.Document):
+        try:
+            self.sbol_doc.appendString(source_doc.writeString())
+        except RuntimeError as exc:
+            if "SBOL_ERROR_URI_NOT_UNIQUE" in str(exc):
+                for top_level in source_doc.SBOLObjects.values():
+                    if top_level.identity in self.sbol_doc:
+                        continue
+                    self.sbol_doc.add(top_level.copy())
+            else:
+                raise
+
+    def _resolve_object(self, uri: str):
+        existing = self.sbol_doc.find(uri)
+        if existing is not None:
+            return existing
+        if self.sbh is None:
+            raise ValueError(
+                f"Referenced SBOL object not found in local documents: {uri}. "
+                "Local mode does not pull from SynBioHub."
+            )
+        return get_or_pull(self.sbol_doc, self.sbh, uri)
+
+    def _index_current_document(self):
         for implementation in self.sbol_doc.implementations:
-            built_object = get_or_pull(self.sbol_doc, self.sbh, implementation.built)
+            built_object = self._resolve_object(implementation.built)
             if (
                 type(built_object) is sbol2.ModuleDefinition
                 and ORGANISM_STRAIN in built_object.roles
@@ -627,7 +679,7 @@ class BuildCompiler:
     ):
         # strain_implementation = optional param
         for plasmid in strain.functionalComponents:
-            plasmid_definition = get_or_pull(doc, self.sbh, plasmid.definition)
+            plasmid_definition = self._resolve_object(plasmid.definition)
 
             if ENGINEERED_PLASMID in plasmid_definition.roles:
                 existing = self._get_indexed_plasmid(
@@ -761,7 +813,7 @@ class BuildCompiler:
         """
         component_list = [c for c in design.getInSequentialOrder()]
         return [
-            get_or_pull(self.sbol_doc, self.sbh, component.definition)
+            self._resolve_object(component.definition)
             for component in component_list
         ]
 
@@ -775,7 +827,7 @@ class BuildCompiler:
                 continue
 
             component_definitions = [
-                get_or_pull(self.sbol_doc, self.sbh, component.definition)
+                self._resolve_object(component.definition)
                 for component in definition.getInSequentialOrder()
             ]
             if any(
@@ -837,7 +889,7 @@ class BuildCompiler:
             return False
         else:
             component_definitions = [
-                get_or_pull(self.sbol_doc, self.sbh, comp.definition)
+                self._resolve_object(comp.definition)
                 for comp in plasmid.getInSequentialOrder()
             ]
 
@@ -1017,7 +1069,7 @@ class BuildCompiler:
         derivation: sbol2.CombinatorialDerivation,
         product_name_prefix: str = None,
     ) -> list[sbol2.ComponentDefinition]:
-        master_template = get_or_pull(self.sbol_doc, self.sbh, derivation.masterTemplate)
+        master_template = self._resolve_object(derivation.masterTemplate)
         component_variants = extract_combinatorial_design_parts(
             master_template, self.sbol_doc, self.sbol_doc
         )
