@@ -13,7 +13,6 @@ from sbol2build.abstract_translator import enumerate_design_variants
 from .abstract_translator import (
     get_or_pull,
     get_compatible_plasmids,
-    extract_toplevel_definition,
 )
 from .constants import (
     AMP,
@@ -292,7 +291,7 @@ class BuildCompiler:
         | sbol2.CombinatorialDerivation,
         final_doc: sbol2.Document = sbol2.Document(),
         product_name: str = "composite",
-        backbone: Plasmid = None,
+        backbone: Plasmid | Dict[str, Plasmid] | None = None,
     ) -> Tuple[Dict, sbol2.Document]:
         """Assemble level-1 plasmids for each gene/transcriptional unit.
 
@@ -317,13 +316,18 @@ class BuildCompiler:
             enumerated_part_lists = enumerate_design_variants(combinatorial_part_dict)
 
             for i, list in enumerate(enumerated_part_lists):
-                plasmid_dict = self._construct_plasmid_dict(list, "Ampicillin")
+                plasmid_dict = self._construct_plasmid_dict(list, AMP)
 
-                if not backbone:
+                if isinstance(backbone, dict):
+                    raise ValueError(
+                        "A backbone dictionary cannot be used with a CombinatorialDerivation. "
+                        "All variants share the same template, so supply a single Plasmid or None to auto-select."
+                    )
+                elif not backbone:
                     backbone, compatible_plasmids = self._get_backbone(
                         plasmid_dict, antibiotic_resistance=KAN
                     )
-                else:
+                elif type(backbone) is Plasmid:
                     compatible_plasmids = get_compatible_plasmids(
                         plasmid_dict, backbone
                     )
@@ -362,19 +366,30 @@ class BuildCompiler:
                 assembly_dict.setdefault(abstract_design_def.identity, []).extend(
                     composite_plasmids
                 )
-        else:
+        else:  # list of designs
             for abstract_design in abstract_designs:
                 plasmid_dict = self._get_input_plasmids(
-                    design=abstract_designs, antibiotic_resistance=AMP
+                    design=abstract_design, antibiotic_resistance=AMP
                 )
 
                 if not backbone:
-                    backbone, compatible_plasmids = self._get_backbone(
+                    resolved_backbone, compatible_plasmids = self._get_backbone(
                         plasmid_dict, antibiotic_resistance=KAN
                     )
-                else:
+                elif isinstance(backbone, dict):
+                    resolved_backbone = backbone.get(abstract_design.displayId)
+                    if resolved_backbone is None:
+                        raise ValueError(
+                            f"Backbone dict provided but no entry found for design '{abstract_design.displayId}'. "
+                            f"Available keys: {list(backbone.keys())}"
+                        )
                     compatible_plasmids = get_compatible_plasmids(
-                        plasmid_dict, backbone
+                        plasmid_dict, resolved_backbone
+                    )
+                else:
+                    resolved_backbone, compatible_plasmids = (
+                        backbone,
+                        get_compatible_plasmids(plasmid_dict, backbone),
                     )
 
                 if self.BsaI_impl is None:
@@ -393,7 +408,7 @@ class BuildCompiler:
 
                 assembly = Assembly(
                     compatible_plasmids,
-                    backbone,
+                    resolved_backbone,
                     self.BsaI_impl,
                     self.T4_ligase_impl,
                     self.sbol_doc,
@@ -438,6 +453,7 @@ class BuildCompiler:
         # send original abstract_design to get a new dictionary
         # send new dictionary to _get_backbone or get_compatible plasmids with AMP
         TUs = _extract_lvl2_TUs(abstract_design_doc)
+        backbone_dict = {}
         lvl1_plasmids = []
 
         for i, TU in enumerate(TUs):
@@ -452,16 +468,16 @@ class BuildCompiler:
                 and plasmid.antibiotic_resistance == KAN
             )
 
-            print(backbone)
+            backbone_dict[TU.displayId] = backbone
 
             # TODO insert check here to see if the TU exists already (#43). should not be too expensive, as long as we search only indexed_plasmids where AR=KAN
-            composite_plasmids, final_doc = self.assembly_lvl1(
-                TU, backbone=backbone, product_name=f"{TU.displayId}_plas"
-            )
 
-            simplified_representation, new_defs = self._encapsulate_TU(
-                composite_plasmids[0]
-            )
+        composite_plasmid_dict, final_doc = self.assembly_lvl1(
+            TUs, backbone=backbone_dict, product_name=f"{TU.displayId}_plas"
+        )
+
+        for key, composites in composite_plasmid_dict.items():
+            simplified_representation, new_defs = self._encapsulate_TU(composites[0])
             final_doc.add_list(new_defs)
             lvl1_plasmids.append(simplified_representation)
             print(simplified_representation)
@@ -1091,7 +1107,7 @@ def _extract_lvl2_TUs(  # TODO send to misc helper file instead of buildcompiler
     Returns:
         A list of TU component definitions in sequential order.
     """
-    top_design = extract_toplevel_definition(design_doc)
+    top_design = design_doc.componentDefinitions[0]
 
     return [
         design_doc.get(comp.definition) for comp in top_design.getInSequentialOrder()
