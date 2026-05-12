@@ -1,13 +1,8 @@
-# test 1: test same abstract design with each possible circuit selection, ensure the promoter and terminator shift accordingly
-
-# test 2: inaccessible part in abstract design -> should throw informative error message
-
-# test 3: (FUTURE) abstract design with multiple TUs
-
 import sbol2
 import unittest
 import sys
 import os
+from collections import Counter
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
@@ -16,7 +11,7 @@ from buildcompiler.buildcompiler import BuildCompiler
 from buildcompiler.abstract_translator import extract_toplevel_definition, get_or_pull
 
 
-class Test_Abstract_Translation_Functions(unittest.TestCase):
+class Test_Buildcompiler_Functions(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         username = os.environ.get("SBH_USERNAME")
@@ -38,7 +33,9 @@ class Test_Abstract_Translation_Functions(unittest.TestCase):
 
         source = sbol2.Document()
 
-        source.read("tests/test_files/combinatorial_1.xml")
+        # preload combinatorial designs into buildcompiler context
+        source.read("tests/test_files/complex_combinatorial_abstract.xml")
+        source.append("tests/test_files/combinatorial_1.xml", True)
 
         cls.buildcompiler = BuildCompiler(
             collections, "https://synbiohub.org", auth, source
@@ -60,7 +57,7 @@ class Test_Abstract_Translation_Functions(unittest.TestCase):
         )
 
         assembly_activity = product_doc.get(
-            "https://SBOL2Build.org/qlSBuNBL_composite_assembly/1"
+            "http://buildcompiler.org/qlSBuNBL_composite_assembly/1"
         )
 
         self.assertEqual(
@@ -72,13 +69,13 @@ class Test_Abstract_Translation_Functions(unittest.TestCase):
         usage_uris = {u.identity for u in assembly_activity.usages}
 
         expected_usage_uris = {
-            "https://SBOL2Build.org/qlSBuNBL_composite_assembly/pJ23100_AB_impl/1",
-            "https://SBOL2Build.org/qlSBuNBL_composite_assembly/pB0034_BC_impl/1",
-            "https://SBOL2Build.org/qlSBuNBL_composite_assembly/pE0030_CD_impl/1",
-            "https://SBOL2Build.org/qlSBuNBL_composite_assembly/pB0015_DE_impl/1",
-            "https://SBOL2Build.org/qlSBuNBL_composite_assembly/DVK_AE_impl/1",
-            "https://SBOL2Build.org/qlSBuNBL_composite_assembly/BsaI_enzyme/1",
-            "https://SBOL2Build.org/qlSBuNBL_composite_assembly/T4_Ligase/1",
+            "http://buildcompiler.org/qlSBuNBL_composite_assembly/pJ23100_AB_impl/1",
+            "http://buildcompiler.org/qlSBuNBL_composite_assembly/pB0034_BC_impl/1",
+            "http://buildcompiler.org/qlSBuNBL_composite_assembly/pE0030_CD_impl/1",
+            "http://buildcompiler.org/qlSBuNBL_composite_assembly/pB0015_DE_impl/1",
+            "http://buildcompiler.org/qlSBuNBL_composite_assembly/DVK_AE_impl/1",
+            "http://buildcompiler.org/qlSBuNBL_composite_assembly/BsaI_enzyme/1",
+            "http://buildcompiler.org/qlSBuNBL_composite_assembly/T4_Ligase/1",
         }
 
         for expected_uri in expected_usage_uris:
@@ -110,7 +107,7 @@ class Test_Abstract_Translation_Functions(unittest.TestCase):
                 f"Implementation {impl.identity} should reference a built object",
             )
 
-        expected_product_uri = "https://SBOL2Build.org/qlSBuNBL_composite_1_impl/1"
+        expected_product_uri = "http://buildcompiler.org/qlSBuNBL_composite_1_impl/1"
 
         product_impl = product_doc.get(expected_product_uri)
         product_def = product_doc.get(product_impl.built)
@@ -128,11 +125,9 @@ class Test_Abstract_Translation_Functions(unittest.TestCase):
 
         self.assertEqual(
             product_def.identity,
-            "https://SBOL2Build.org/qlSBuNBL_composite_1/1",
+            "http://buildcompiler.org/qlSBuNBL_composite_1/1",
             f"Implementation {product_impl} must build {product_def}",
         )
-
-        product_doc.write("test_simple_lvl1_assembly.xml")
 
     def test_two_rbs_combinatorial_translation(self):
         comb_doc = sbol2.Document()
@@ -141,8 +136,6 @@ class Test_Abstract_Translation_Functions(unittest.TestCase):
         design = comb_doc.combinatorialderivations[0]
 
         result_dict, assembly_doc = self.buildcompiler.assembly_lvl1(design)
-
-        assembly_doc.write("comb_assembly.xml")
 
         self.assertEqual(
             len(result_dict),
@@ -179,48 +172,86 @@ class Test_Abstract_Translation_Functions(unittest.TestCase):
         self.assertTrue(has_b0033, "No composite has B0033")
         self.assertTrue(has_b0032, "No composite has B0032")
 
-    # def test_complex_combinatorial_translation(
-    #     self,
-    # ):  # testing combinatorial design with 3 variable promoters and RBSs
-    #     complex_comb_doc = sbol2.Document()
-    #     complex_comb_doc.read("tests/test_files/complex_combinatorial_abstract.xml")
+    def test_complex_combinatorial_translation(
+        self,
+    ):  # testing combinatorial design with 3 variable promoters and RBSs
+        complex_comb_doc = sbol2.Document()
+        complex_comb_doc.read("tests/test_files/complex_combinatorial_abstract.xml")
 
-    #     comb_plasmid_list = translate_abstract_to_plasmids(
-    #         complex_comb_doc, self.plasmid_collection, self.DVK_AE_doc
-    #     )
+        design = complex_comb_doc.combinatorialderivations[0]
 
-    #     self.assertEqual(
-    #         len(comb_plasmid_list),
-    #         8,
-    #         f"There should be 8 plasmids in the abstract translation, found {len(comb_plasmid_list)}",
-    #     )
+        result_dict, assembly_doc = self.buildcompiler.assembly_lvl1(design)
 
-    #     # Run through sbol2build to test composite count
-    #     part_documents = []
+        assembly_doc.write("comb_assembly.xml")
 
-    #     for mocloPlasmid in comb_plasmid_list:
-    #         temp_doc = sbol2.Document()
-    #         mocloPlasmid.definition.copy(temp_doc)
-    #         copy_sequences(mocloPlasmid.definition, temp_doc, self.plasmid_collection)
-    #         part_documents.append(temp_doc)
+        self.assertEqual(
+            len(result_dict),
+            1,
+            "Expected one combinatorial derivation key in result dictionary",
+        )
 
-    #     assembly_doc = sbol2.Document()
-    #     assembly_obj = golden_gate_assembly_plan(
-    #         "complex_combinatorial_assembly_plan",
-    #         part_documents,
-    #         self.DVK_AE_doc,
-    #         "BsaI",
-    #         assembly_doc,
-    #     )
+        derivation_uri = "https://sbolcanvas.org/dEOuAjnj/1"
 
-    #     composite_list = assembly_obj.run()
-    #     assembly_doc.write("complex_comb_assembly.xml")
+        self.assertIn(
+            derivation_uri,
+            result_dict,
+            "Expected combinatorial derivation URI missing from results",
+        )
 
-    #     self.assertEqual(
-    #         len(composite_list),
-    #         9,
-    #         f"Combinatorial assembly failed to produce 9 composites, found {len(composite_list)}",
-    #     )
+        composites = result_dict[derivation_uri]
+
+        self.assertEqual(
+            len(composites),
+            9,
+            f"Combinatorial assembly failed to produce 9 composites, found {len(composites)}",
+        )
+
+        promoter_counts = Counter()
+        rbs_counts = Counter()
+
+        for composite in composites:
+            components = composite.plasmid_definition.getInSequentialOrder()
+            display_ids = [component.displayId for component in components]
+            print(display_ids)
+
+            promoter_counts[components[1].displayId] += 1  # index 1 = promoter
+            rbs_counts[components[3].displayId] += 1  # index 3 = RBS
+
+        self.assertEqual(
+            promoter_counts["J23100"],
+            3,
+            f"Expected J23100 to appear 3 times across the composite dictionary, found {promoter_counts['J23100']}",
+        )
+
+        self.assertEqual(
+            promoter_counts["J23106"],
+            3,
+            f"Expected J23106 to appear 3 times across the composite dictionary, found {promoter_counts['J23106']}",
+        )
+
+        self.assertEqual(
+            promoter_counts["J23116"],
+            3,
+            f"Expected J23116 to appear 3 times across the composite dictionary, found {promoter_counts['J23116']}",
+        )
+
+        self.assertEqual(
+            rbs_counts["B0034"],
+            3,
+            f"Expected B0034 to appear 3 times across the composite dictionary, found {rbs_counts['B0034']}",
+        )
+
+        self.assertEqual(
+            rbs_counts["B0032"],
+            3,
+            f"Expected B0032 to appear 3 times across the composite dictionary, found {rbs_counts['B0032']}",
+        )
+
+        self.assertEqual(
+            rbs_counts["B0033"],
+            3,
+            f"Expected B0033 to appear 3 times across the composite dictionary, found {rbs_counts['B0033']}",
+        )
 
 
 if __name__ == "__main__":
