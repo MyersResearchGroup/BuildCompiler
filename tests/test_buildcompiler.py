@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../s
 
 from buildcompiler.buildcompiler import BuildCompiler
 
-from buildcompiler.abstract_translator import extract_toplevel_definition
+from buildcompiler.abstract_translator import extract_toplevel_definition, get_or_pull
 
 
 class Test_Abstract_Translation_Functions(unittest.TestCase):
@@ -36,8 +36,12 @@ class Test_Abstract_Translation_Functions(unittest.TestCase):
             "https://synbiohub.org/user/Gon/Enzyme_Implementations/Enzyme_Implementations_collection/1",
         ]
 
+        source = sbol2.Document()
+
+        source.read("tests/test_files/combinatorial_1.xml")
+
         cls.buildcompiler = BuildCompiler(
-            collections, "https://synbiohub.org", auth, sbol2.Document()
+            collections, "https://synbiohub.org", auth, source
         )
 
     def test_simple_lvl1_assembly(self):
@@ -78,18 +82,32 @@ class Test_Abstract_Translation_Functions(unittest.TestCase):
         }
 
         for expected_uri in expected_usage_uris:
-            usage = product_doc.get(expected_uri)
-            impl = product_doc.get(usage.entity)
-
             self.assertIn(
                 expected_uri,
                 usage_uris,
                 f"Expected usage {expected_uri} was not found in assembly activity usages",
             )
 
+            usage = next(
+                u for u in assembly_activity.usages if str(u.identity) == expected_uri
+            )
+
+            impl = get_or_pull(product_doc, self.buildcompiler.sbh, usage.entity)
+
             self.assertIsNotNone(
                 impl,
-                f"Entity {impl} should exist in the activity",
+                f"Entity {usage.entity} should exist in the document or on SynBioHub",
+            )
+
+            self.assertIsInstance(
+                impl,
+                sbol2.Implementation,
+                f"Entity {usage.entity} should be an SBOL Implementation",
+            )
+
+            self.assertIsNotNone(
+                impl.built,
+                f"Implementation {impl.identity} should reference a built object",
             )
 
         expected_product_uri = "https://SBOL2Build.org/qlSBuNBL_composite_1_impl/1"
@@ -104,56 +122,62 @@ class Test_Abstract_Translation_Functions(unittest.TestCase):
 
         self.assertEqual(
             product_impl.wasGeneratedBy,
-            assembly_activity.identity,
+            [assembly_activity.identity],
             f"Implementation {product_impl} must include wasGeneratedBy {assembly_activity.identity}",
         )
 
         self.assertEqual(
-            product_def,
+            product_def.identity,
             "https://SBOL2Build.org/qlSBuNBL_composite_1/1",
             f"Implementation {product_impl} must build {product_def}",
         )
 
         product_doc.write("test_simple_lvl1_assembly.xml")
 
-    # def test_two_rbs_combinatorial_translation(self):
-    #     comb_doc = sbol2.Document()
-    #     comb_doc.read("tests/test_files/combinatorial_1.xml")
+    def test_two_rbs_combinatorial_translation(self):
+        comb_doc = sbol2.Document()
+        comb_doc.read("tests/test_files/combinatorial_1.xml")
 
-    #     design = extract_toplevel_definition(comb_doc)
+        design = comb_doc.combinatorialderivations[0]
 
-    #     self.assertEqual(
-    #         len(comb_plasmid_list),
-    #         5,
-    #         "There should be 5 plasmids in the abstract translation",
-    #     )
+        result_dict, assembly_doc = self.buildcompiler.assembly_lvl1(design)
 
-    #     # Run through sbol2build to test composite count
-    #     part_documents = []
+        assembly_doc.write("comb_assembly.xml")
 
-    #     for mocloPlasmid in comb_plasmid_list:
-    #         temp_doc = sbol2.Document()
-    #         mocloPlasmid.definition.copy(temp_doc)
-    #         copy_sequences(mocloPlasmid.definition, temp_doc, self.plasmid_collection)
-    #         part_documents.append(temp_doc)
+        self.assertEqual(
+            len(result_dict),
+            1,
+            "Expected one combinatorial derivation key in result dictionary",
+        )
 
-    #     assembly_doc = sbol2.Document()
-    #     assembly_obj = golden_gate_assembly_plan(
-    #         "combinatorial_rbs_assembly_plan",
-    #         part_documents,
-    #         self.DVK_AE_doc,
-    #         "BsaI",
-    #         assembly_doc,
-    #     )
+        derivation_uri = "https://sbolcanvas.org/abstract_combinatorial/1"
 
-    #     composite_list = assembly_obj.run()
-    #     assembly_doc.write("comb_assembly.xml")
+        self.assertIn(
+            derivation_uri,
+            result_dict,
+            "Expected combinatorial derivation URI missing from results",
+        )
 
-    #     self.assertEqual(
-    #         len(composite_list),
-    #         2,
-    #         "Combinatorial assembly failed to produce 2 composites",
-    #     )
+        composites = result_dict[derivation_uri]
+
+        self.assertEqual(
+            len(composites),
+            2,
+            "Combinatorial assembly failed to produce 2 composites",
+        )
+
+        # ensure cobinatorial feature is satsified
+        for composite in composites:
+            components = composite.plasmid_definition.getInSequentialOrder()
+
+            if len(components) > 3:
+                if components[3].displayId == "B0033":
+                    has_b0033 = True
+                elif components[3].displayId == "B0032":
+                    has_b0032 = True
+
+        self.assertTrue(has_b0033, "No composite has B0033")
+        self.assertTrue(has_b0032, "No composite has B0032")
 
     # def test_complex_combinatorial_translation(
     #     self,
