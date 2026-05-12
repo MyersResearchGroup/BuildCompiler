@@ -6,7 +6,7 @@ from itertools import product
 from typing import List, Union, Tuple
 from .constants import DNA_TYPES
 
-sbol2.Config.setHomespace("https://SBOL2Build.org")
+sbol2.Config.setHomespace("http://buildcompiler.org")
 sbol2.Config.setOption(sbol2.ConfigOptions.SBOL_COMPLIANT_URIS, True)
 sbol2.Config.setOption(sbol2.ConfigOptions.SBOL_TYPED_URIS, False)
 
@@ -1010,7 +1010,6 @@ def append_extracts_to_doc(
     """
     for extract, sequence in extract_tuples:
         try:
-            print("adding: " + extract.displayId)
             add_object_to_doc(extract, doc)
             add_object_to_doc(sequence, doc)
         except Exception as e:

@@ -321,9 +321,6 @@ def get_compatible_plasmids(
                 and plasmid.fusion_sites[0] == match_to.fusion_sites[match_idx]
                 and plasmid.fusion_sites[1] == backbone.fusion_sites[1]
             ):
-                print(
-                    f"matched final component {plasmid.name} with {match_to.name} and {backbone.name} on fusion sites ({plasmid.fusion_sites[0]}, {plasmid.fusion_sites[1]})!"
-                )
                 selected_plasmids.append(plasmid)
                 found = True
                 break
@@ -331,9 +328,6 @@ def get_compatible_plasmids(
                 i < len(plasmid_dict) - 1
                 and plasmid.fusion_sites[0] == match_to.fusion_sites[match_idx]
             ):
-                print(
-                    f"matched {plasmid.name} with {match_to.name} on fusion site {plasmid.fusion_sites[0]}!"
-                )
                 selected_plasmids.append(plasmid)
                 found = True
                 match_to = plasmid
