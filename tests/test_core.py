@@ -7,8 +7,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../s
 
 from buildcompiler.constants import (
     CIRCULAR,
+    ENGINEERED_INSERT,
     ENGINEERED_PLASMID,
     FIVE_PRIME_OVERHANG,
+    LINEAR,
     PLASMID_VECTOR,
     THREE_PRIME_OVERHANG,
 )
@@ -85,14 +87,37 @@ class Test_Assembly_Functions(unittest.TestCase):
             product_doc.add(extract)
         product_doc.add(assembly_activity)
 
+        usages = list(assembly_activity.usages)
+
+        # Expect: 1 reactant + at least 1 enzyme
+        self.assertTrue(
+            len(usages) >= 2,
+            "assembly activity should include reactant and enzyme usages",
+        )
+
+        entities = [u.entity for u in usages]
+
+        # reactant implementation should be present
+        self.assertIn(
+            plasmid.plasmid_implementations[0].identity,
+            entities,
+            "Reactant implementation missing from activity usages",
+        )
+
+        # restriction enzyme should be present
+        self.assertIn(
+            self.re_impl.identity,
+            entities,
+            "Restriction enzyme missing from activity usages",
+        )
+
         extract = parts_list[0][0]
-        self.assertEqual(
-            extract.roles,
-            ["http://identifiers.org/so/SO:0000915"],
+        self.assertTrue(
+            ENGINEERED_INSERT in extract.roles,
             "Part digestion extracted part missing engineered insert role",
         )  # engineered insert role
         self.assertTrue(
-            "http://identifiers.org/so/SO:0000987" in extract.types,
+            LINEAR in extract.types,
             "Part digestion extracted part missing linear DNA type",
         )
 
@@ -141,6 +166,30 @@ class Test_Assembly_Functions(unittest.TestCase):
         for extract, _ in parts_list:
             product_doc.add(extract)
         product_doc.add(assembly_activity)
+
+        usages = list(assembly_activity.usages)
+
+        # Expect: 1 reactant + at least 1 enzyme
+        self.assertTrue(
+            len(usages) >= 2,
+            "Digestion activity should include reactant and enzyme usages",
+        )
+
+        entities = [u.entity for u in usages]
+
+        # reactant implementation should be present
+        self.assertIn(
+            plasmid.plasmid_implementations[0].identity,
+            entities,
+            "Reactant implementation missing from activity usages",
+        )
+
+        # restriction enzyme should be present
+        self.assertIn(
+            self.re_impl.identity,
+            entities,
+            "Restriction enzyme missing from activity usages",
+        )
 
         extract = parts_list[0][0]
         self.assertEqual(
@@ -265,8 +314,30 @@ class Test_Assembly_Functions(unittest.TestCase):
             self.ligase_impl,
         )
 
+        usages = list(assembly_activity.usages)
+        entities = [u.entity for u in usages]
+
+        self.assertIn(
+            self.ligase_impl.identity,
+            entities,
+            "Ligase missing from assembly activity usages",
+        )
+
+        for part_impl in parts:
+            self.assertIn(
+                part_impl.identity,
+                entities,
+                f"{part_impl.displayId} missing from assembly activity usages",
+            )
+
         for i in composite_impls:
             obj = final_doc.get(i.built)
+
+            self.assertEqual(
+                i.wasGeneratedBy,
+                [assembly_activity.identity],
+                "Composite implementation not linked to assembly activity",
+            )
 
             if type(obj) is sbol2.ComponentDefinition:
                 self.assertTrue(
@@ -305,40 +376,6 @@ class Test_Assembly_Functions(unittest.TestCase):
         self.assertEqual(
             sbol_validation_result, "Valid.", "Ligation SBOL validation failed"
         )
-
-    # def test_golden_gate(self):
-    #     pro_doc = sbol2.Document()
-    #     pro_doc.read("tests/test_files/pro_in_bb.xml")
-
-    #     rbs_doc = sbol2.Document()
-    #     rbs_doc.read("tests/test_files/rbs_in_bb.xml")
-
-    #     cds_doc = sbol2.Document()
-    #     cds_doc.read("tests/test_files/cds_in_bb.xml")
-
-    #     ter_doc = sbol2.Document()
-    #     ter_doc.read("tests/test_files/terminator_in_bb.xml")
-
-    #     bb_doc = sbol2.Document()
-    #     bb_doc.read("tests/test_files/backbone.xml")
-
-    #     part_docs = [pro_doc, rbs_doc, cds_doc, ter_doc]
-
-    #     assembly_doc = sbol2.Document()
-    #     assembly_obj = golden_gate_assembly_plan(
-    #         "testassem", part_docs, bb_doc, "BsaI", assembly_doc
-    #     )
-
-    #     composites = assembly_obj.run(plasmids_in_module_definitions=True)
-
-    #     self.assertEqual(len(composites), 1)
-
-    #     assembly_doc.write("validation_assembly.xml")
-
-    #     sbol_validation_result = assembly_doc.validate()
-    #     self.assertEqual(
-    #         sbol_validation_result, "Valid.", "Assembly SBOL validation failed"
-    #     )
 
 
 if __name__ == "__main__":
