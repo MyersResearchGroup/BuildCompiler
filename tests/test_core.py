@@ -60,10 +60,10 @@ class Test_Assembly_Functions(unittest.TestCase):
         )
 
         cls.re_impl = cls.source_doc.get(
-            "https://api.synbiohub.org/user/Gon/Enzyme_Implementations/BsaI_impl/1"
+            "https://synbiohub.org/user/Gon/Enzyme_Implementations/BsaI_impl/1"
         )
         cls.ligase_impl = cls.source_doc.get(
-            "https://api.synbiohub.org/user/Gon/Enzyme_Implementations/T4_Ligase_impl/1"
+            "https://synbiohub.org/user/Gon/Enzyme_Implementations/T4_Ligase_impl/1"
         )
 
         cls.assembly = Assembly(
@@ -72,7 +72,7 @@ class Test_Assembly_Functions(unittest.TestCase):
 
     def test_part_digestion(self):  # TODO test activity relationships
         impl = self.source_doc.get(
-            "https://api.synbiohub.org/user/Gon/impl_test/pJ23100_AB_impl/1"
+            "https://synbiohub.org/user/Gon/impl_test/pJ23100_AB_impl/1"
         )
         definition = self.source_doc.get(impl.built)
         plasmid = Plasmid(definition, None, [impl], None, self.source_doc)
@@ -152,7 +152,7 @@ class Test_Assembly_Functions(unittest.TestCase):
 
     def test_backbone_digestion(self):
         impl = self.source_doc.get(
-            "https://api.synbiohub.org/user/Gon/impl_test/DVK_AE_impl/1"
+            "https://synbiohub.org/user/Gon/impl_test/DVK_AE_impl/1"
         )
         definition = self.source_doc.get(impl.built)
         plasmid = Plasmid(definition, None, [impl], None, self.source_doc)
@@ -235,16 +235,16 @@ class Test_Assembly_Functions(unittest.TestCase):
         assembly_activity = self.assembly.initialize_assembly_activity()
         parts = [
             self.source_doc.get(
-                "https://api.synbiohub.org/user/Gon/impl_test/pJ23100_AB_impl/1"
+                "https://synbiohub.org/user/Gon/impl_test/pJ23100_AB_impl/1"
             ),
             self.source_doc.get(
-                "https://api.synbiohub.org/user/Gon/impl_test/pB0034_BC_impl/1"
+                "https://synbiohub.org/user/Gon/impl_test/pB0034_BC_impl/1"
             ),
             self.source_doc.get(
-                "https://api.synbiohub.org/user/Gon/impl_test/pE0030_CD_impl/1"
+                "https://synbiohub.org/user/Gon/impl_test/pE0030_CD_impl/1"
             ),
             self.source_doc.get(
-                "https://api.synbiohub.org/user/Gon/impl_test/pB0015_DE_impl/1"
+                "https://synbiohub.org/user/Gon/impl_test/pB0015_DE_impl/1"
             ),
         ]
 
@@ -269,7 +269,7 @@ class Test_Assembly_Functions(unittest.TestCase):
             reactants_list.append(extracts_tuple_list[0][0])
 
         backbone_impl = self.source_doc.get(
-            "https://api.synbiohub.org/user/Gon/impl_test/DVK_AE_impl/1"
+            "https://synbiohub.org/user/Gon/impl_test/DVK_AE_impl/1"
         )
 
         # run digestion, extract component + sequence, add to ligation_doc, reactants_list
@@ -301,7 +301,11 @@ class Test_Assembly_Functions(unittest.TestCase):
         reactants_list.append(extracts_tuple_list[0][0])
 
         ligation_doc.add_list([self.re_impl, self.ligase_impl])
-        self.sbh.pull(self.ligase_impl.built, ligation_doc)
+
+        pull_uri = self.ligase_impl.built.replace(
+            "https://synbiohub.org", "https://api.synbiohub.org"
+        )
+        self.sbh.pull(pull_uri, ligation_doc)
 
         final_doc = sbol2.Document()
 

@@ -27,8 +27,8 @@ class Test_Buildcompiler_Functions(unittest.TestCase):
         auth = sbh.key
 
         collections = [
-            "https://api.synbiohub.org/user/Gon/impl_test/impl_test_collection/1",
-            "https://api.synbiohub.org/user/Gon/Enzyme_Implementations/Enzyme_Implementations_collection/1",
+            "https://synbiohub.org/user/Gon/impl_test/impl_test_collection/1",
+            "https://synbiohub.org/user/Gon/Enzyme_Implementations/Enzyme_Implementations_collection/1",
         ]
 
         source = sbol2.Document()
@@ -38,7 +38,7 @@ class Test_Buildcompiler_Functions(unittest.TestCase):
         source.append("tests/test_files/combinatorial_1.xml", True)
 
         cls.buildcompiler = BuildCompiler(
-            collections, "https://api.synbiohub.org", auth, source
+            collections, "https://synbiohub.org", auth, source
         )
 
     def test_simple_lvl1_assembly(self):
