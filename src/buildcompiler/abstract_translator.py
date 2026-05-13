@@ -135,17 +135,26 @@ def copy_sequences(component_definition, target_doc, collection_doc):
                 seq_obj.copy(target_doc)
 
 
-def get_or_pull(doc, sbh, uri):
+def get_or_pull(
+    doc: sbol2.Document, sbh: sbol2.PartShop, uri: str, server_mode: bool = False
+):
     """
     Get an SBOL object from a Document.
     If missing, pull it from SynBioHub and retry.
     """
+
     try:
         return doc.get(uri)
 
     except Exception as e:
-        # Treat lookup failure as "not present"
-        sbh.pull(uri, doc)
+        pull_uri = uri
+
+        if server_mode:
+            canonical_resource = sbh.resource.replace("://api.", "://")
+
+            pull_uri = uri.replace(canonical_resource, sbh.resource)
+
+        sbh.pull(pull_uri, doc)
 
         try:
             return doc.get(uri)

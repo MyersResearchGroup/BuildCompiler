@@ -38,7 +38,7 @@ class Test_Buildcompiler_Functions(unittest.TestCase):
         source.append("tests/test_files/combinatorial_1.xml", True)
 
         cls.buildcompiler = BuildCompiler(
-            collections, "https://synbiohub.org", auth, source
+            collections, "https://api.synbiohub.org", auth, source, server_mode=True
         )
 
     def test_simple_lvl1_assembly(self):
@@ -89,7 +89,7 @@ class Test_Buildcompiler_Functions(unittest.TestCase):
                 u for u in assembly_activity.usages if str(u.identity) == expected_uri
             )
 
-            impl = get_or_pull(product_doc, self.buildcompiler.sbh, usage.entity)
+            impl = get_or_pull(product_doc, self.buildcompiler.sbh, usage.entity, True)
 
             self.assertIsNotNone(
                 impl,

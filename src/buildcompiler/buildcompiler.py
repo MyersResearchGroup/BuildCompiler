@@ -50,6 +50,7 @@ class BuildCompiler:
         sbh_registry: str,
         auth_token: str,
         sbol_doc: sbol2.Document = None,
+        server_mode: bool = False,
     ):
         self.sbh = sbol2.PartShop(sbh_registry)
         self.sbh.key = auth_token
@@ -59,6 +60,7 @@ class BuildCompiler:
         self.BsaI_impl = None
         self.BbsI_impl = None
         self.T4_ligase_impl = None
+        self.server_mode = server_mode
 
         self._index_collections(collections)
 
@@ -75,11 +77,16 @@ class BuildCompiler:
         :rtype: None
         """
         for uri in collections:
+            if self.server_mode:
+                canonical_resource = self.sbh.resource.replace("://api.", "://")
+                uri = uri.replace(canonical_resource, self.sbh.resource)
             print(f"Indexing collection: {uri}")
             self.sbh.pull(uri, self.sbol_doc)
 
         for implementation in self.sbol_doc.implementations:
-            built_object = get_or_pull(self.sbol_doc, self.sbh, implementation.built)
+            built_object = get_or_pull(
+                self.sbol_doc, self.sbh, implementation.built, self.server_mode
+            )
             if (
                 type(built_object) is sbol2.ModuleDefinition
                 and ORGANISM_STRAIN in built_object.roles
@@ -531,7 +538,9 @@ class BuildCompiler:
     ):
         # strain_implementation = optional param
         for plasmid in strain.functionalComponents:
-            plasmid_definition = get_or_pull(doc, self.sbh, plasmid.definition)
+            plasmid_definition = get_or_pull(
+                doc, self.sbh, plasmid.definition, self.server_mode
+            )
 
             if ENGINEERED_PLASMID in plasmid_definition.roles:
                 existing = self._get_indexed_plasmid(
@@ -664,7 +673,7 @@ class BuildCompiler:
         """
         component_list = [c for c in design.getInSequentialOrder()]
         return [
-            get_or_pull(self.sbol_doc, self.sbh, component.definition)
+            get_or_pull(self.sbol_doc, self.sbh, component.definition, self.server_mode)
             for component in component_list
         ]
 
@@ -698,7 +707,9 @@ class BuildCompiler:
         component_list = [c for c in design.getInSequentialOrder()]
         component_dict = {
             component.identity: [
-                get_or_pull(self.sbol_doc, self.sbh, component.definition)
+                get_or_pull(
+                    self.sbol_doc, self.sbh, component.definition, self.server_mode
+                )
             ]
             for component in component_list
         }
@@ -720,7 +731,9 @@ class BuildCompiler:
                 continue
 
             component_definitions = [
-                get_or_pull(self.sbol_doc, self.sbh, component.definition)
+                get_or_pull(
+                    self.sbol_doc, self.sbh, component.definition, self.server_mode
+                )
                 for component in definition.getInSequentialOrder()
             ]
             if any(
@@ -782,7 +795,7 @@ class BuildCompiler:
             return False
         else:
             component_definitions = [
-                get_or_pull(self.sbol_doc, self.sbh, comp.definition)
+                get_or_pull(self.sbol_doc, self.sbh, comp.definition, self.server_mode)
                 for comp in plasmid.getInSequentialOrder()
             ]
 
