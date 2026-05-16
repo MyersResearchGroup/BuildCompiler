@@ -904,6 +904,14 @@ def ligation(
             for part in remaining_parts:
                 # match insert sequence 5' to part 3'
                 part_sequence_uri = part.sequences[0]
+                # check reverse match
+                if (
+                    source_document.getSequence(part_sequence_uri)
+                    .elements[-fusion_site_length:]
+                    .lower()
+                    == insert_sequence[:fusion_site_length].lower()
+                ):
+                    insert_3prime_match_id = part.identity
                 if (
                     source_document.getSequence(part_sequence_uri)
                     .elements[:fusion_site_length]
@@ -928,13 +936,6 @@ def ligation(
                         list_of_parts_per_composite.append(part)
                         remaining_parts.remove(part)
                 # match backbone 5' to insert sequence 3', set flag
-                elif (
-                    source_document.getSequence(part_sequence_uri)
-                    .elements[-fusion_site_length:]
-                    .lower()
-                    == insert_sequence[:fusion_site_length].lower()
-                ):
-                    insert_3prime_match_id = part.identity
                 remaining_parts_after = len(remaining_parts)
 
             if remaining_parts_before == remaining_parts_after:
@@ -948,9 +949,8 @@ def ligation(
 
     # transform list_of_parts_per_assembly into list of composites
     product_impl_list = []
-    composite_number = 1
+    composite_number = 0
 
-    # TODO: use componentinstances to append "subcomponents" to each definition that is a composite component. all composites share the "subcomponents"
     for composite in list_of_composites_per_assembly:  # a composite of the form [A,B,C]
         # calculate sequence
         composite_sequence_str = ""
@@ -1027,15 +1027,25 @@ def ligation(
                         source_document.getComponentDefinition(prev_three_prime)
                     )
                 else:
+                    anno_prefix = comp.displayId
+
+                    matching_anno_prefix = [
+                        a.displayId
+                        for a in anno_list
+                        if a.displayId.startswith(f"{comp.displayId}_")
+                    ]
+                    if matching_anno_prefix:
+                        anno_prefix = f"{comp.displayId}_{len(matching_anno_prefix)}"
+
                     temp_extract_components.append(comp.definition)
                     comp_location = sbol2.Range(
-                        uri=f"{comp.displayId}_location",
+                        uri=f"{anno_prefix}_location",
                         start=len(composite_sequence_str) + fusion_site_length + 1,
                         end=len(composite_sequence_str)
                         + len(part_extract_sequence[:-4]),
-                    )  # TODO check if seq len is correct
+                    )
                     comp_anno = sbol2.SequenceAnnotation(
-                        uri=f"{comp.displayId}_annotation"
+                        uri=f"{anno_prefix}_annotation"
                     )
                     comp_anno.locations.add(comp_location)
                     anno_list.append(comp_anno)
@@ -1046,15 +1056,17 @@ def ligation(
                 composite_sequence_str + part_extract_sequence[:-fusion_site_length]
             )  # needs a version for linear
 
+        suffix = f"_{composite_number}" if composite_number > 0 else ""
+
         # create dna component and sequence
         composite_component_definition, composite_seq = (
             dna_componentdefinition_with_sequence(
-                f"{composite_prefix}_{composite_number}",
+                f"{composite_prefix}{suffix}",
                 composite_sequence_str,
                 molecule=True,
             )
         )
-        composite_component_definition.name = f"{composite_prefix}_{composite_number}"
+        composite_component_definition.name = f"{composite_prefix}{suffix}"
         composite_component_definition.addRole(ENGINEERED_PLASMID)
         composite_component_definition.addType(CIRCULAR)
 
