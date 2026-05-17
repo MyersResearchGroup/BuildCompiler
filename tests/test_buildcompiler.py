@@ -107,7 +107,7 @@ class Test_Buildcompiler_Functions(unittest.TestCase):
                 f"Implementation {impl.identity} should reference a built object",
             )
 
-        expected_product_uri = "http://buildcompiler.org/qlSBuNBL_composite_1_impl/1"
+        expected_product_uri = "http://buildcompiler.org/qlSBuNBL_composite_impl/1"
 
         product_impl = product_doc.get(expected_product_uri)
         product_def = product_doc.get(product_impl.built)
@@ -125,7 +125,7 @@ class Test_Buildcompiler_Functions(unittest.TestCase):
 
         self.assertEqual(
             product_def.identity,
-            "http://buildcompiler.org/qlSBuNBL_composite_1/1",
+            "http://buildcompiler.org/qlSBuNBL_composite/1",
             f"Implementation {product_impl} must build {product_def}",
         )
 
@@ -251,6 +251,175 @@ class Test_Buildcompiler_Functions(unittest.TestCase):
             rbs_counts["B0033"],
             3,
             f"Expected B0033 to appear 3 times across the composite dictionary, found {rbs_counts['B0033']}",
+        )
+
+    def test_simple_lvl2_assembly(self):
+        """
+        High-level integration test for lvl2 assembly.
+
+        Validates:
+        - lvl2 plasmid generation succeeds
+        - lvl1 intermediates are used as assembly inputs
+        - correct enzymes are included
+        - correct backbone selection occurs
+        - TU ordering is preserved
+        - SBOL provenance relationships are intact
+        """
+
+        abstract_design_doc = sbol2.Document()
+        abstract_design_doc.read("tests/test_files/ExampleLvl2_design.xml")
+
+        # ------------------------------------------------------------
+        # Run lvl2 assembly
+        # ------------------------------------------------------------
+        lvl2_plasmids, final_doc = self.buildcompiler.assembly_lvl2(
+            abstract_design_doc,
+            product_name="lvl2",
+        )
+
+        self.assertEqual(
+            len(lvl2_plasmids),
+            1,
+            "Expected exactly one lvl2 plasmid to be produced",
+        )
+
+        lvl2_plasmid = lvl2_plasmids[0]
+
+        # ------------------------------------------------------------
+        # Validate provenance / implementation relationships
+        # ------------------------------------------------------------
+        product_impl = lvl2_plasmid.plasmid_implementations[0]
+        product_def = lvl2_plasmid.plasmid_definition
+
+        self.assertIsNotNone(
+            product_impl,
+            "Lvl2 plasmid implementation should exist",
+        )
+
+        self.assertIsNotNone(
+            product_def,
+            "Lvl2 plasmid definition should exist",
+        )
+
+        self.assertEqual(
+            product_impl.built,
+            product_def.identity,
+            "Implementation should reference the built lvl2 construct",
+        )
+
+        # test level 1 assembly activities
+        lvl1_activities = [
+            "http://buildcompiler.org/Gen1_Gen1_plas_assembly/1",
+            "http://buildcompiler.org/Gen_Gen1_plas_assembly/1",
+        ]
+
+        lvl1_activities
+
+        # TODO add same tests for lvl1 as with the level 2 activities
+
+        # test level2 assembly activity
+        lvl2_assembly_activity = final_doc.get(
+            "http://buildcompiler.org/lvl2_assembly/1"
+        )
+
+        self.assertIsNotNone(
+            lvl2_assembly_activity,
+            "Assembly activity should exist in final document",
+        )
+
+        self.assertEqual(
+            product_impl.wasGeneratedBy,
+            [lvl2_assembly_activity.identity],
+            "Lvl2 implementation should reference generating assembly activity",
+        )
+
+        # ------------------------------------------------------------
+        # Validate expected assembly usages
+        # ------------------------------------------------------------
+        usage_entities = [
+            get_or_pull(final_doc, self.buildcompiler.sbh, u.entity, True)
+            for u in lvl2_assembly_activity.usages
+        ]
+
+        usage_display_ids = {
+            entity.displayId for entity in usage_entities if entity is not None
+        }
+
+        self.assertIn(
+            "BbsI_impl",
+            usage_display_ids,
+            "Lvl2 assembly should use BbsI",
+        )
+
+        self.assertIn(
+            "T4_Ligase_impl",
+            usage_display_ids,
+            "Lvl2 assembly should use T4 ligase",
+        )
+
+        # ------------------------------------------------------------
+        # Ensure lvl1 plasmids were used as inputs
+        # ------------------------------------------------------------
+        lvl1_inputs = [
+            entity
+            for entity in usage_entities
+            if entity is not None and "_plas" in entity.displayId.lower()
+        ]
+
+        self.assertEqual(
+            len(lvl1_inputs),
+            2,
+            "Lvl2 assembly should consume 2 lvl1 plasmids as inputs",
+        )
+
+        # ------------------------------------------------------------
+        # Validate final construct ordering
+        # ------------------------------------------------------------
+        components = product_def.getInSequentialOrder()
+        display_ids = [component.displayId for component in components]
+
+        expected_order = [
+            "Ligation_Scar_A",
+            "Gen_Gen1_plas_TU",
+            "Ligation_Scar_E",
+            "Gen1_Gen1_plas_TU",
+            "Ligation_Scar_F",
+            "dva_backbone_core",
+        ]
+
+        self.assertEqual(
+            display_ids,
+            expected_order,
+            "Lvl2 construct does not preserve expected TU ordering",
+        )
+
+        # ------------------------------------------------------------
+        # Validate all usage entities are valid implementations
+        # ------------------------------------------------------------
+        for entity in usage_entities:
+            self.assertIsNotNone(
+                entity,
+                "All assembly usage entities should resolve correctly",
+            )
+
+            self.assertIsInstance(
+                entity,
+                sbol2.Implementation,
+                "Assembly usages should reference SBOL implementations",
+            )
+
+            self.assertIsNotNone(
+                entity.built,
+                f"Implementation {entity.identity} should reference a built object",
+            )
+
+        # Ensure no duplicate lvl1 intermediates were generated
+        lvl1_ids = [entity.displayId for entity in lvl1_inputs]
+
+        self.assertEqual(
+            len(lvl1_ids),
+            len(set(lvl1_ids)),
+            "Duplicate lvl1 intermediates detected",
         )
 
 
