@@ -9,7 +9,7 @@ import sbol2
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
 from buildcompiler.buildcompiler import BuildCompiler
-from buildcompiler.constants import RESTRICTION_ENZYME
+from buildcompiler.constants import LIGASE, RESTRICTION_ENZYME
 
 
 class TestBuildCompilerLocalIndexing(unittest.TestCase):
@@ -39,6 +39,31 @@ class TestBuildCompilerLocalIndexing(unittest.TestCase):
         self.assertEqual(len(compiler.restriction_enzyme_implementations), 1)
         self.assertIsInstance(compiler.restriction_enzyme_implementations, list)
         self.assertIsInstance(compiler.ligase_implementations, list)
+
+
+    def test_from_local_documents_does_not_reindex_prior_documents(self):
+        restriction_doc = sbol2.Document()
+        enzyme = sbol2.ComponentDefinition('BsaI')
+        enzyme.types = [sbol2.BIOPAX_PROTEIN]
+        enzyme.roles = [RESTRICTION_ENZYME]
+        restriction_doc.add(enzyme)
+        restriction_impl = sbol2.Implementation('BsaI_impl')
+        restriction_impl.built = enzyme.identity
+        restriction_doc.add(restriction_impl)
+
+        ligase_doc = sbol2.Document()
+        ligase = sbol2.ComponentDefinition('T4Ligase')
+        ligase.types = [sbol2.BIOPAX_PROTEIN]
+        ligase.roles = [LIGASE]
+        ligase_doc.add(ligase)
+        ligase_impl = sbol2.Implementation('T4Ligase_impl')
+        ligase_impl.built = ligase.identity
+        ligase_doc.add(ligase_impl)
+
+        compiler = BuildCompiler.from_local_documents([restriction_doc, ligase_doc])
+
+        self.assertEqual(len(compiler.restriction_enzyme_implementations), 1)
+        self.assertEqual(len(compiler.ligase_implementations), 1)
 
     def test_local_mode_raises_when_reference_missing(self):
         doc = sbol2.Document()

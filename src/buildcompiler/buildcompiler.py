@@ -101,7 +101,7 @@ class BuildCompiler:
 
     def index_document(self, collection_doc: sbol2.Document):
         self._merge_document(collection_doc)
-        self._index_current_document()
+        self._index_document_objects(collection_doc)
 
     def _index_collections(self, collections: List[str]):
         """Index input collections into plasmids and backbones.
@@ -144,7 +144,14 @@ class BuildCompiler:
         return get_or_pull(self.sbol_doc, self.sbh, uri)
 
     def _index_current_document(self):
-        for implementation in self.sbol_doc.implementations:
+        self._index_document_objects(self.sbol_doc)
+
+    def _append_implementation_once(self, implementations: list, implementation):
+        if not any(existing.identity == implementation.identity for existing in implementations):
+            implementations.append(implementation)
+
+    def _index_document_objects(self, source_doc: sbol2.Document):
+        for implementation in source_doc.implementations:
             built_object = self._resolve_object(implementation.built)
             if (
                 type(built_object) is sbol2.ModuleDefinition
@@ -162,7 +169,9 @@ class BuildCompiler:
                         self.indexed_plasmids, built_object
                     )
                     if existing_plasmid:
-                        existing_plasmid.plasmid_implementations.append(implementation)
+                        self._append_implementation_once(
+                            existing_plasmid.plasmid_implementations, implementation
+                        )
                     else:
                         self.indexed_plasmids.append(
                             Plasmid(
@@ -174,7 +183,9 @@ class BuildCompiler:
                         self.indexed_backbones, built_object
                     )
                     if existing_backbone:
-                        existing_backbone.plasmid_implementations.append(implementation)
+                        self._append_implementation_once(
+                            existing_backbone.plasmid_implementations, implementation
+                        )
                     else:
                         self.indexed_backbones.append(
                             Plasmid(
@@ -183,15 +194,19 @@ class BuildCompiler:
                         )
             elif sbol2.BIOPAX_PROTEIN in built_object.types:
                 if RESTRICTION_ENZYME in built_object.roles:
-                    self.restriction_enzyme_implementations.append(implementation)
+                    self._append_implementation_once(
+                        self.restriction_enzyme_implementations, implementation
+                    )
                 elif LIGASE in built_object.roles:
-                    self.ligase_implementations.append(implementation)
+                    self._append_implementation_once(
+                        self.ligase_implementations, implementation
+                    )
 
-        for strain in self.sbol_doc.moduleDefinitions:
+        for strain in source_doc.moduleDefinitions:
             if ORGANISM_STRAIN in strain.roles:
                 self._extract_plasmids_from_strain(strain, None, self.sbol_doc)
 
-        for definition in self.sbol_doc.componentDefinitions:
+        for definition in source_doc.componentDefinitions:
             self._sort_plasmid_components(definition, self.sbol_doc)
 
     def domestication(
@@ -818,7 +833,7 @@ class BuildCompiler:
         ]
 
     def _get_abstract_design(self) -> sbol2.ComponentDefinition:
-        for definition in self.sbol_doc.componentDefinitions:
+        for definition in source_doc.componentDefinitions:
             if (
                 ENGINEERED_PLASMID in definition.roles
                 or PLASMID_CLONING_VECTOR in definition.roles
