@@ -76,6 +76,33 @@ class BuildCompiler:
 
         self._index_collections(collections)
 
+    @classmethod
+    def from_local_documents(
+        cls,
+        collection_docs: list[sbol2.Document],
+        design_doc: sbol2.Document | None = None,
+    ):
+        """Create a BuildCompiler instance from already-loaded local SBOL documents."""
+        compiler = cls.__new__(cls)
+        compiler.sbh = None
+        compiler.sbol_doc = sbol2.Document()
+        compiler.indexed_plasmids = []
+        compiler.indexed_backbones = []
+        compiler.restriction_enzyme_implementations = []
+        compiler.ligase_implementations = []
+
+        if design_doc is not None:
+            compiler.index_document(design_doc)
+
+        for collection_doc in collection_docs:
+            compiler.index_document(collection_doc)
+
+        return compiler
+
+    def index_document(self, collection_doc: sbol2.Document):
+        self._merge_document(collection_doc)
+        self._index_document_objects(collection_doc)
+
     def _index_collections(self, collections: List[str]):
         """Index input collections into plasmids and backbones.
 
@@ -91,9 +118,41 @@ class BuildCompiler:
         for uri in collections:
             print(f"Indexing collection: {uri}")
             self.sbh.pull(uri, self.sbol_doc)
+        self._index_current_document()
 
-        for implementation in self.sbol_doc.implementations:
-            built_object = get_or_pull(self.sbol_doc, self.sbh, implementation.built)
+    def _merge_document(self, source_doc: sbol2.Document):
+        try:
+            self.sbol_doc.appendString(source_doc.writeString())
+        except RuntimeError as exc:
+            if "SBOL_ERROR_URI_NOT_UNIQUE" in str(exc):
+                for top_level in source_doc.SBOLObjects.values():
+                    if top_level.identity in self.sbol_doc:
+                        continue
+                    self.sbol_doc.add(top_level.copy())
+            else:
+                raise
+
+    def _resolve_object(self, uri: str):
+        existing = self.sbol_doc.find(uri)
+        if existing is not None:
+            return existing
+        if self.sbh is None:
+            raise ValueError(
+                f"Referenced SBOL object not found in local documents: {uri}. "
+                "Local mode does not pull from SynBioHub."
+            )
+        return get_or_pull(self.sbol_doc, self.sbh, uri)
+
+    def _index_current_document(self):
+        self._index_document_objects(self.sbol_doc)
+
+    def _append_implementation_once(self, implementations: list, implementation):
+        if not any(existing.identity == implementation.identity for existing in implementations):
+            implementations.append(implementation)
+
+    def _index_document_objects(self, source_doc: sbol2.Document):
+        for implementation in source_doc.implementations:
+            built_object = self._resolve_object(implementation.built)
             if (
                 type(built_object) is sbol2.ModuleDefinition
                 and ORGANISM_STRAIN in built_object.roles
@@ -110,7 +169,9 @@ class BuildCompiler:
                         self.indexed_plasmids, built_object
                     )
                     if existing_plasmid:
-                        existing_plasmid.plasmid_implementations.append(implementation)
+                        self._append_implementation_once(
+                            existing_plasmid.plasmid_implementations, implementation
+                        )
                     else:
                         self.indexed_plasmids.append(
                             Plasmid(
@@ -122,7 +183,9 @@ class BuildCompiler:
                         self.indexed_backbones, built_object
                     )
                     if existing_backbone:
-                        existing_backbone.plasmid_implementations.append(implementation)
+                        self._append_implementation_once(
+                            existing_backbone.plasmid_implementations, implementation
+                        )
                     else:
                         self.indexed_backbones.append(
                             Plasmid(
@@ -131,15 +194,19 @@ class BuildCompiler:
                         )
             elif sbol2.BIOPAX_PROTEIN in built_object.types:
                 if RESTRICTION_ENZYME in built_object.roles:
-                    self.restriction_enzyme_implementations.append(implementation)
+                    self._append_implementation_once(
+                        self.restriction_enzyme_implementations, implementation
+                    )
                 elif LIGASE in built_object.roles:
-                    self.ligase_implementations.append(implementation)
+                    self._append_implementation_once(
+                        self.ligase_implementations, implementation
+                    )
 
-        for strain in self.sbol_doc.moduleDefinitions:
+        for strain in source_doc.moduleDefinitions:
             if ORGANISM_STRAIN in strain.roles:
                 self._extract_plasmids_from_strain(strain, None, self.sbol_doc)
 
-        for definition in self.sbol_doc.componentDefinitions:
+        for definition in source_doc.componentDefinitions:
             self._sort_plasmid_components(definition, self.sbol_doc)
 
     def domestication(
@@ -627,7 +694,7 @@ class BuildCompiler:
     ):
         # strain_implementation = optional param
         for plasmid in strain.functionalComponents:
-            plasmid_definition = get_or_pull(doc, self.sbh, plasmid.definition)
+            plasmid_definition = self._resolve_object(plasmid.definition)
 
             if ENGINEERED_PLASMID in plasmid_definition.roles:
                 existing = self._get_indexed_plasmid(
@@ -761,12 +828,12 @@ class BuildCompiler:
         """
         component_list = [c for c in design.getInSequentialOrder()]
         return [
-            get_or_pull(self.sbol_doc, self.sbh, component.definition)
+            self._resolve_object(component.definition)
             for component in component_list
         ]
 
     def _get_abstract_design(self) -> sbol2.ComponentDefinition:
-        for definition in self.sbol_doc.componentDefinitions:
+        for definition in source_doc.componentDefinitions:
             if (
                 ENGINEERED_PLASMID in definition.roles
                 or PLASMID_CLONING_VECTOR in definition.roles
@@ -775,7 +842,7 @@ class BuildCompiler:
                 continue
 
             component_definitions = [
-                get_or_pull(self.sbol_doc, self.sbh, component.definition)
+                self._resolve_object(component.definition)
                 for component in definition.getInSequentialOrder()
             ]
             if any(
@@ -837,7 +904,7 @@ class BuildCompiler:
             return False
         else:
             component_definitions = [
-                get_or_pull(self.sbol_doc, self.sbh, comp.definition)
+                self._resolve_object(comp.definition)
                 for comp in plasmid.getInSequentialOrder()
             ]
 
@@ -1017,7 +1084,7 @@ class BuildCompiler:
         derivation: sbol2.CombinatorialDerivation,
         product_name_prefix: str = None,
     ) -> list[sbol2.ComponentDefinition]:
-        master_template = get_or_pull(self.sbol_doc, self.sbh, derivation.masterTemplate)
+        master_template = self._resolve_object(derivation.masterTemplate)
         component_variants = extract_combinatorial_design_parts(
             master_template, self.sbol_doc, self.sbol_doc
         )
