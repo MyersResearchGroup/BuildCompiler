@@ -2,7 +2,7 @@ import inspect
 import os
 import sys
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import sbol2
 
@@ -77,6 +77,74 @@ class TestBuildCompilerLocalIndexing(unittest.TestCase):
             BuildCompiler.from_local_documents([doc])
 
         self.assertIn('Local mode does not pull from SynBioHub', str(ctx.exception))
+
+
+
+
+class TestBuildCompilerCollectionIndexing(unittest.TestCase):
+    def _make_compiler_without_init(self):
+        compiler = BuildCompiler.__new__(BuildCompiler)
+        compiler.sbh = MagicMock()
+        compiler.sbol_doc = sbol2.Document()
+        compiler.indexed_plasmids = []
+        compiler.indexed_backbones = []
+        compiler.restriction_enzyme_implementations = []
+        compiler.ligase_implementations = []
+        return compiler
+
+    def test_index_sbol_document_local_does_not_pull(self):
+        compiler = self._make_compiler_without_init()
+
+        enzyme = sbol2.ComponentDefinition('BsaI_local')
+        enzyme.types = [sbol2.BIOPAX_PROTEIN]
+        enzyme.roles = [RESTRICTION_ENZYME]
+        compiler.sbol_doc.add(enzyme)
+        implementation = sbol2.Implementation('BsaI_local_impl')
+        implementation.built = enzyme.identity
+        compiler.sbol_doc.add(implementation)
+
+        compiler.index_sbol_document(compiler.sbol_doc, source='local')
+
+        compiler.sbh.pull.assert_not_called()
+        self.assertEqual(len(compiler.restriction_enzyme_implementations), 1)
+
+    def test_index_collections_pulls_then_indexes(self):
+        compiler = self._make_compiler_without_init()
+        call_order = []
+
+        def fake_pull(uris):
+            call_order.append('pull')
+            return compiler.sbol_doc
+
+        def fake_index(doc, source='local'):
+            call_order.append(f'index:{source}')
+
+        compiler.pull_collection_uris = fake_pull
+        compiler.index_sbol_document = fake_index
+
+        compiler._index_collections(['https://example.org/collection'])
+
+        self.assertEqual(call_order, ['pull', 'index:synbiohub'])
+
+    def test_pull_failure_has_uri_context(self):
+        compiler = self._make_compiler_without_init()
+        compiler.sbh.pull.side_effect = ValueError('network timeout')
+
+        with self.assertRaises(RuntimeError) as ctx:
+            compiler.pull_collection_uris(['https://example.org/fail'])
+
+        self.assertIn('Failed to pull collection URI: https://example.org/fail', str(ctx.exception))
+
+    def test_indexing_failure_is_distinct_from_pull_failure(self):
+        compiler = self._make_compiler_without_init()
+        bad_doc = sbol2.Document()
+        bad_impl = sbol2.Implementation('impl_missing_built')
+        bad_doc.add(bad_impl)
+
+        with self.assertRaises(Exception) as ctx:
+            compiler.index_sbol_document(bad_doc, source='local')
+
+        self.assertNotIn('Failed to pull collection URI', str(ctx.exception))
 
 
 if __name__ == '__main__':

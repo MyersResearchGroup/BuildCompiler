@@ -42,7 +42,6 @@ from .constants import (
     ENGINEERED_PLASMID,
     PLASMID_CLONING_VECTOR,
     ORGANISM_STRAIN,
-    PLATING_ACTIVITY_ROLE,
 )
 
 
@@ -103,22 +102,24 @@ class BuildCompiler:
         self._merge_document(collection_doc)
         self._index_document_objects(collection_doc)
 
-    def _index_collections(self, collections: List[str]):
-        """Index input collections into plasmids and backbones.
-
-        Parses the provided collections (which may contain plasmids, backbones, strains, and enzymes)
-        and normalizes them into internal Plasmid/enzyme records that remain linked to
-        their originating strain and implementation definitions.
-
-        :param collections: Iterable of user-provided collections/documents.
-        :type collections: Iterable
-        :returns: None. Updates ``self.indexed_plasmids`` in place.
-        :rtype: None
-        """
-        for uri in collections:
+    def pull_collection_uris(self, uris: list[str]) -> sbol2.Document:
+        """Pull SynBioHub collection URIs into ``self.sbol_doc``."""
+        for uri in uris:
             print(f"Indexing collection: {uri}")
-            self.sbh.pull(uri, self.sbol_doc)
-        self._index_current_document()
+            try:
+                self.sbh.pull(uri, self.sbol_doc)
+            except Exception as exc:
+                raise RuntimeError(f"Failed to pull collection URI: {uri}") from exc
+        return self.sbol_doc
+
+    def index_sbol_document(self, doc: sbol2.Document, source: str = "local"):
+        """Index plasmids, backbones, and reagents from an SBOL document."""
+        self._index_document_objects(doc, source=source)
+
+    def _index_collections(self, collections: List[str]):
+        """Compatibility wrapper for URI pull + indexing."""
+        doc = self.pull_collection_uris(collections)
+        self.index_sbol_document(doc, source="synbiohub")
 
     def _merge_document(self, source_doc: sbol2.Document):
         try:
@@ -144,70 +145,77 @@ class BuildCompiler:
         return get_or_pull(self.sbol_doc, self.sbh, uri)
 
     def _index_current_document(self):
-        self._index_document_objects(self.sbol_doc)
+        self._index_document_objects(self.sbol_doc, source="current")
 
     def _append_implementation_once(self, implementations: list, implementation):
         if not any(existing.identity == implementation.identity for existing in implementations):
             implementations.append(implementation)
 
-    def _index_document_objects(self, source_doc: sbol2.Document):
+    def _index_document_objects(self, source_doc: sbol2.Document, source: str = "local"):
         for implementation in source_doc.implementations:
-            built_object = self._resolve_object(implementation.built)
-            if (
-                type(built_object) is sbol2.ModuleDefinition
-                and ORGANISM_STRAIN in built_object.roles
-            ):
-                self._extract_plasmids_from_strain(
-                    built_object, implementation, self.sbol_doc
-                )
-            elif (
-                type(built_object) is sbol2.ComponentDefinition
-                and len(built_object.components) > 1
-            ):
-                if ENGINEERED_PLASMID in built_object.roles:
-                    existing_plasmid = self._get_indexed_plasmid(
-                        self.indexed_plasmids, built_object
-                    )
-                    if existing_plasmid:
-                        self._append_implementation_once(
-                            existing_plasmid.plasmid_implementations, implementation
-                        )
-                    else:
-                        self.indexed_plasmids.append(
-                            Plasmid(
-                                built_object, None, [implementation], [], self.sbol_doc
-                            )
-                        )
-                elif PLASMID_CLONING_VECTOR in built_object.roles:
-                    existing_backbone = self._get_indexed_plasmid(
-                        self.indexed_backbones, built_object
-                    )
-                    if existing_backbone:
-                        self._append_implementation_once(
-                            existing_backbone.plasmid_implementations, implementation
-                        )
-                    else:
-                        self.indexed_backbones.append(
-                            Plasmid(
-                                built_object, None, [implementation], [], self.sbol_doc
-                            )
-                        )
-            elif sbol2.BIOPAX_PROTEIN in built_object.types:
-                if RESTRICTION_ENZYME in built_object.roles:
-                    self._append_implementation_once(
-                        self.restriction_enzyme_implementations, implementation
-                    )
-                elif LIGASE in built_object.roles:
-                    self._append_implementation_once(
-                        self.ligase_implementations, implementation
-                    )
+            self._index_implementation(implementation)
 
         for strain in source_doc.moduleDefinitions:
-            if ORGANISM_STRAIN in strain.roles:
-                self._extract_plasmids_from_strain(strain, None, self.sbol_doc)
+            self._index_strain_module(strain, implementation=None)
 
-        for definition in source_doc.componentDefinitions:
-            self._sort_plasmid_components(definition, self.sbol_doc)
+        for definition in self.sbol_doc.componentDefinitions:
+            self._index_plasmid_or_backbone_definition(definition, implementation=None)
+
+    def _index_implementation(self, implementation: sbol2.Implementation):
+        built_object = self._resolve_object(implementation.built)
+        if type(built_object) is sbol2.ModuleDefinition:
+            self._index_strain_module(built_object, implementation=implementation)
+        elif type(built_object) is sbol2.ComponentDefinition:
+            self._index_plasmid_or_backbone_definition(
+                built_object, implementation=implementation
+            )
+            self._index_reagent_implementation(implementation, built_object)
+
+    def _index_strain_module(
+        self, strain: sbol2.ModuleDefinition, implementation: sbol2.Implementation | None
+    ):
+        if ORGANISM_STRAIN in strain.roles:
+            self._extract_plasmids_from_strain(strain, implementation, self.sbol_doc)
+
+    def _index_plasmid_or_backbone_definition(
+        self, definition: sbol2.ComponentDefinition, implementation: sbol2.Implementation | None
+    ):
+        if implementation is not None and len(definition.components) > 1:
+            if ENGINEERED_PLASMID in definition.roles:
+                existing_plasmid = self._get_indexed_plasmid(self.indexed_plasmids, definition)
+                if existing_plasmid:
+                    self._append_implementation_once(
+                        existing_plasmid.plasmid_implementations, implementation
+                    )
+                else:
+                    self.indexed_plasmids.append(
+                        Plasmid(definition, None, [implementation], [], self.sbol_doc)
+                    )
+            elif PLASMID_CLONING_VECTOR in definition.roles:
+                existing_backbone = self._get_indexed_plasmid(
+                    self.indexed_backbones, definition
+                )
+                if existing_backbone:
+                    self._append_implementation_once(
+                        existing_backbone.plasmid_implementations, implementation
+                    )
+                else:
+                    self.indexed_backbones.append(
+                        Plasmid(definition, None, [implementation], [], self.sbol_doc)
+                    )
+
+        self._sort_plasmid_components(definition, self.sbol_doc)
+
+    def _index_reagent_implementation(
+        self, implementation: sbol2.Implementation, built_object: sbol2.ComponentDefinition
+    ):
+        if sbol2.BIOPAX_PROTEIN in built_object.types:
+            if RESTRICTION_ENZYME in built_object.roles:
+                self._append_implementation_once(
+                    self.restriction_enzyme_implementations, implementation
+                )
+            elif LIGASE in built_object.roles:
+                self._append_implementation_once(self.ligase_implementations, implementation)
 
     def domestication(
         self,
@@ -833,7 +841,7 @@ class BuildCompiler:
         ]
 
     def _get_abstract_design(self) -> sbol2.ComponentDefinition:
-        for definition in source_doc.componentDefinitions:
+        for definition in self.sbol_doc.componentDefinitions:
             if (
                 ENGINEERED_PLASMID in definition.roles
                 or PLASMID_CLONING_VECTOR in definition.roles
