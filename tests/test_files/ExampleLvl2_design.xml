@@ -1,0 +1,593 @@
+<?xml version="1.0" ?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:sbh="http://wiki.synbiohub.org/wiki/Terms/synbiohub#" xmlns:sbol="http://sbols.org/v2#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:ns0="https://wiki.synbiohub.org/wiki/Terms/synbiohub#" xmlns:prov="http://www.w3.org/ns/prov#" xmlns:obo="http://purl.obolibrary.org/obo/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <sbol:ComponentDefinition rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/1">
+    <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes"/>
+    <sbol:displayId>Two_genes</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes_SBOLDesignerActivity/1"/>
+    <dcterms:description></dcterms:description>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000804"/>
+    <sbol:component>
+      <sbol:Component rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/Gen1_Component/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/Gen1_Component"/>
+        <sbol:displayId>Gen1_Component</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/Gen_Component/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/Gen_Component"/>
+        <sbol:displayId>Gen_Component</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/Two_genes_SequenceAnnotation/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/Two_genes_SequenceAnnotation"/>
+        <sbol:displayId>Two_genes_SequenceAnnotation</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/Two_genes_SequenceAnnotation/Two_genes_SequenceAnnotation_Range/1">
+            <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/Two_genes_SequenceAnnotation/Two_genes_SequenceAnnotation_Range"/>
+            <sbol:displayId>Two_genes_SequenceAnnotation_Range</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>1</sbol:start>
+            <sbol:end>906</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/Gen_Component/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/Two_genes_SequenceAnnotation1/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/Two_genes_SequenceAnnotation1"/>
+        <sbol:displayId>Two_genes_SequenceAnnotation1</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/Two_genes_SequenceAnnotation1/Two_genes_SequenceAnnotation1_Range/1">
+            <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/Two_genes_SequenceAnnotation1/Two_genes_SequenceAnnotation1_Range"/>
+            <sbol:displayId>Two_genes_SequenceAnnotation1_Range</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>907</sbol:start>
+            <sbol:end>1771</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/Gen1_Component/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/Two_genes_SequenceConstraint/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/Two_genes_SequenceConstraint"/>
+        <sbol:displayId>Two_genes_SequenceConstraint</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/Gen_Component/1"/>
+        <sbol:object rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes/Gen1_Component/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequence rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genesSequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen1/1">
+    <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1"/>
+    <sbol:displayId>Gen1</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes_SBOLDesignerActivity/1"/>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000804"/>
+    <sbol:component>
+      <sbol:Component rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen1/RBS1_Component/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/RBS1_Component"/>
+        <sbol:displayId>RBS1_Component</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0033/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Pro1_Component/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Pro1_Component"/>
+        <sbol:displayId>Pro1_Component</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23116/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Ter1_Component/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Ter1_Component"/>
+        <sbol:displayId>Ter1_Component</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0015/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen1/CDS1_Component/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/CDS1_Component"/>
+        <sbol:displayId>CDS1_Component</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/E1010m_rfp/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceAnnotation2/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceAnnotation2"/>
+        <sbol:displayId>Gen1_SequenceAnnotation2</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceAnnotation2/Gen1_SequenceAnnotation2_Range/1">
+            <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceAnnotation2/Gen1_SequenceAnnotation2_Range"/>
+            <sbol:displayId>Gen1_SequenceAnnotation2_Range</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>56</sbol:start>
+            <sbol:end>736</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/CDS1_Component/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceAnnotation3/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceAnnotation3"/>
+        <sbol:displayId>Gen1_SequenceAnnotation3</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceAnnotation3/Gen1_SequenceAnnotation3_Range/1">
+            <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceAnnotation3/Gen1_SequenceAnnotation3_Range"/>
+            <sbol:displayId>Gen1_SequenceAnnotation3_Range</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>737</sbol:start>
+            <sbol:end>865</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Ter1_Component/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceAnnotation1/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceAnnotation1"/>
+        <sbol:displayId>Gen1_SequenceAnnotation1</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceAnnotation1/Gen1_SequenceAnnotation1_Range/1">
+            <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceAnnotation1/Gen1_SequenceAnnotation1_Range"/>
+            <sbol:displayId>Gen1_SequenceAnnotation1_Range</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>36</sbol:start>
+            <sbol:end>55</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/RBS1_Component/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceAnnotation/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceAnnotation"/>
+        <sbol:displayId>Gen1_SequenceAnnotation</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceAnnotation/Gen1_SequenceAnnotation_Range/1">
+            <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceAnnotation/Gen1_SequenceAnnotation_Range"/>
+            <sbol:displayId>Gen1_SequenceAnnotation_Range</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>1</sbol:start>
+            <sbol:end>35</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Pro1_Component/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceConstraint1/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceConstraint1"/>
+        <sbol:displayId>Gen1_SequenceConstraint1</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/RBS1_Component/1"/>
+        <sbol:object rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/CDS1_Component/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceConstraint2/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceConstraint2"/>
+        <sbol:displayId>Gen1_SequenceConstraint2</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/CDS1_Component/1"/>
+        <sbol:object rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Ter1_Component/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceConstraint/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Gen1_SequenceConstraint"/>
+        <sbol:displayId>Gen1_SequenceConstraint</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/Pro1_Component/1"/>
+        <sbol:object rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1/RBS1_Component/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequence rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1Sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0015/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0015"/>
+    <sbol:displayId>B0015</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>B0015</dcterms:title>
+    <dcterms:description>MoClo Basic Part: Double terminator (B0010:B0012)</dcterms:description>
+    <ns0:sourceOrganism rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_562"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0015/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000141"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0015_sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0032/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0032"/>
+    <sbol:displayId>B0032</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>B0032</dcterms:title>
+    <dcterms:description>MoClo Basic Part: RBS - Weiss RBS, medium strength. Modified from Bba_B0032 to adjust spacing in MC system.</dcterms:description>
+    <ns0:sourceOrganism rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_562"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0032/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000139"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0032_sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23116/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23116"/>
+    <sbol:displayId>J23116</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>J23116</dcterms:title>
+    <dcterms:description>MoClo Basic Part: Constitutive promoter - Anderson series - low strength</dcterms:description>
+    <ns0:sourceOrganism rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_562"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23116/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000167"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23116_sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/E1010m_rfp/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/E1010m_rfp"/>
+    <sbol:displayId>E1010m_rfp</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>E1010m_rfp</dcterms:title>
+    <dcterms:description>MoClo Basic Part: CDS - Fluorescent protein. Red. Modified from Bba_E1010 to fix illegal sites.</dcterms:description>
+    <ns0:sourceOrganism rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_562"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/E1010m_rfp/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000316"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/E1010m_rfp_sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0033/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0033"/>
+    <sbol:displayId>B0033</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>B0033</dcterms:title>
+    <dcterms:description>MoClo Basic Part: RBS - Weiss RBS, low strength. Modified from Bba_B0033 to adjust spacing in MC system.</dcterms:description>
+    <ns0:sourceOrganism rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_562"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0033/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000139"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0033_sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/E0040m_gfp/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/E0040m_gfp"/>
+    <sbol:displayId>E0040m_gfp</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>E0040m_gfp</dcterms:title>
+    <dcterms:description>MoClo Basic Part: CDS - Fluorescent protein. Green. Modified from Bba_E0040 to fix illegal site.</dcterms:description>
+    <ns0:sourceOrganism rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_562"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/E0040m_gfp/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000316"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/E0040m_gfp_sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen/1">
+    <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen"/>
+    <sbol:displayId>Gen</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes_SBOLDesignerActivity/1"/>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000804"/>
+    <sbol:component>
+      <sbol:Component rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen/CDS_Component/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/CDS_Component"/>
+        <sbol:displayId>CDS_Component</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/E0040m_gfp/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen/Pro_Component/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/Pro_Component"/>
+        <sbol:displayId>Pro_Component</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen/RBS_Component/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/RBS_Component"/>
+        <sbol:displayId>RBS_Component</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0032/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen/Ter_Component/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/Ter_Component"/>
+        <sbol:displayId>Ter_Component</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0015/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceAnnotation2/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceAnnotation2"/>
+        <sbol:displayId>Gen_SequenceAnnotation2</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceAnnotation2/Gen_SequenceAnnotation2_Range/1">
+            <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceAnnotation2/Gen_SequenceAnnotation2_Range"/>
+            <sbol:displayId>Gen_SequenceAnnotation2_Range</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>58</sbol:start>
+            <sbol:end>777</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/CDS_Component/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceAnnotation/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceAnnotation"/>
+        <sbol:displayId>Gen_SequenceAnnotation</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceAnnotation/Gen_SequenceAnnotation_Range/1">
+            <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceAnnotation/Gen_SequenceAnnotation_Range"/>
+            <sbol:displayId>Gen_SequenceAnnotation_Range</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>1</sbol:start>
+            <sbol:end>35</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/Pro_Component/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceAnnotation3/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceAnnotation3"/>
+        <sbol:displayId>Gen_SequenceAnnotation3</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceAnnotation3/Gen_SequenceAnnotation3_Range/1">
+            <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceAnnotation3/Gen_SequenceAnnotation3_Range"/>
+            <sbol:displayId>Gen_SequenceAnnotation3_Range</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>778</sbol:start>
+            <sbol:end>906</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/Ter_Component/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceAnnotation1/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceAnnotation1"/>
+        <sbol:displayId>Gen_SequenceAnnotation1</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceAnnotation1/Gen_SequenceAnnotation1_Range/1">
+            <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceAnnotation1/Gen_SequenceAnnotation1_Range"/>
+            <sbol:displayId>Gen_SequenceAnnotation1_Range</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>36</sbol:start>
+            <sbol:end>57</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/RBS_Component/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceConstraint2/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceConstraint2"/>
+        <sbol:displayId>Gen_SequenceConstraint2</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/CDS_Component/1"/>
+        <sbol:object rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/Ter_Component/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceConstraint1/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceConstraint1"/>
+        <sbol:displayId>Gen_SequenceConstraint1</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/RBS_Component/1"/>
+        <sbol:object rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/CDS_Component/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceConstraint/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/Gen_SequenceConstraint"/>
+        <sbol:displayId>Gen_SequenceConstraint</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/Pro_Component/1"/>
+        <sbol:object rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen/RBS_Component/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequence rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/GenSequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100"/>
+    <sbol:displayId>J23100</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>J23100</dcterms:title>
+    <dcterms:description>MoClo Basic Part: Constitutive promoter - Anderson series - high strength</dcterms:description>
+    <ns0:sourceOrganism rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_562"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000167"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100_sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:Sequence rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Two_genesSequence/1">
+    <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genesSequence"/>
+    <sbol:displayId>Two_genesSequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes_SBOLDesignerActivity/1"/>
+    <sbol:elements>TTGACGGCTAGCTCAGTCCTAGGTACAGTGCTAGCAGAGTCACACAGGAAAGTACTAATGCGTAAAGGAGAAGAACTTTTCACTGGAGTTGTCCCAATTCTTGTTGAATTAGATGGTGATGTTAATGGGCACAAATTTTCTGTCAGTGGAGAGGGTGAAGGTGATGCAACATACGGAAAACTTACCCTTAAATTTATTTGCACTACTGGAAAACTACCTGTTCCATGGCCAACACTTGTCACTACTTTCGGTTATGGTGTTCAATGCTTTGCGAGATACCCAGATCATATGAAACAGCATGACTTTTTCAAGAGTGCCATGCCCGAAGGTTATGTACAGGAAAGAACTATATTTTTCAAAGATGACGGGAACTACAAGACACGTGCTGAAGTCAAGTTTGAAGGTGATACCCTTGTTAATAGAATCGAGTTAAAAGGTATTGATTTTAAAGAAGATGGAAACATTCTTGGACACAAATTGGAATACAACTATAACTCACACAATGTATACATCATGGCAGACAAACAAAAGAATGGAATCAAAGTTAACTTCAAAATTAGACACAACATTGAAGATGGAAGCGTTCAACTAGCAGACCATTATCAACAAAATACTCCAATTGGCGATGGCCCTGTCCTTTTACCAGACAACCATTACCTGTCCACACAATCTGCCCTTTCGAAAGATCCCAACGAAAAGAGAGATCACATGGTCCTTCTTGAGTTTGTAACAGCTGCTGGGATTACACATGGCATGGATGAACTATACAAATAATAACCAGGCATCAAATAAAACGAAAGGCTCAGTCGAAAGACTGGGCCTTTCGTTTTATCTGTTGTTTGTCGGTGAACGCTCTCTACTAGAGTCACACTGGCTCACCTTCGGGTGGGCCTTTCTGCGTTTATATTGACAGCTAGCTCAGTCCTAGGGACTATGCTAGCAGAGTCACACAGGACTACTAATGGCTTCCTCCGAGGATGTTATCAAAGAGTTCATGCGTTTCAAAGTTCGTATGGAAGGTTCCGTTAACGGTCACGAGTTCGAAATCGAAGGTGAAGGTGAAGGTCGTCCGTACGAAGGTACCCAGACCGCTAAACTGAAAGTTACCAAAGGTGGTCCGCTGCCGTTCGCTTGGGACATCCTGTCCCCGCAGTTCCAGTACGGTTCCAAAGCTTACGTTAAACACCCGGCTGACATCCCGGACTACCTGAAACTGTCCTTCCCGGAAGGTTTCAAATGGGAACGTGTTATGAACTTCGAAGATGGTGGTGTTGTTACCGTTACCCAGGACTCCTCCCTGCAAGACGGTGAGTTCATCTACAAAGTTAAACTGCGTGGTACCAACTTCCCGTCCGACGGTCCGGTTATGCAGAAAAAAACCATGGGTTGGGAAGCTTCCACCGAACGTATGTACCCGGAGGATGGTGCTCTGAAAGGTGAAATCAAAATGCGTCTGAAACTGAAAGACGGTGGTCACTACGACGCTGAAGTTAAAACCACCTACATGGCTAAAAAACCGGTTCAGCTGCCGGGTGCTTACAAAACCGACATCAAACTGGACATCACCTCCCACAACGAGGACTACACCATCGTTGAACAGTACGAACGTGCTGAAGGTCGTCACTCCACCGGTGCTTAATAACCAGGCATCAAATAAAACGAAAGGCTCAGTCGAAAGACTGGGCCTTTCGTTTTATCTGTTGTTTGTCGGTGAACGCTCTCTACTAGAGTCACACTGGCTCACCTTCGGGTGGGCCTTTCTGCGTTTATA</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Gen1Sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Gen1Sequence"/>
+    <sbol:displayId>Gen1Sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes_SBOLDesignerActivity/1"/>
+    <sbol:elements>TTGACAGCTAGCTCAGTCCTAGGGACTATGCTAGCAGAGTCACACAGGACTACTAATGGCTTCCTCCGAGGATGTTATCAAAGAGTTCATGCGTTTCAAAGTTCGTATGGAAGGTTCCGTTAACGGTCACGAGTTCGAAATCGAAGGTGAAGGTGAAGGTCGTCCGTACGAAGGTACCCAGACCGCTAAACTGAAAGTTACCAAAGGTGGTCCGCTGCCGTTCGCTTGGGACATCCTGTCCCCGCAGTTCCAGTACGGTTCCAAAGCTTACGTTAAACACCCGGCTGACATCCCGGACTACCTGAAACTGTCCTTCCCGGAAGGTTTCAAATGGGAACGTGTTATGAACTTCGAAGATGGTGGTGTTGTTACCGTTACCCAGGACTCCTCCCTGCAAGACGGTGAGTTCATCTACAAAGTTAAACTGCGTGGTACCAACTTCCCGTCCGACGGTCCGGTTATGCAGAAAAAAACCATGGGTTGGGAAGCTTCCACCGAACGTATGTACCCGGAGGATGGTGCTCTGAAAGGTGAAATCAAAATGCGTCTGAAACTGAAAGACGGTGGTCACTACGACGCTGAAGTTAAAACCACCTACATGGCTAAAAAACCGGTTCAGCTGCCGGGTGCTTACAAAACCGACATCAAACTGGACATCACCTCCCACAACGAGGACTACACCATCGTTGAACAGTACGAACGTGCTGAAGGTCGTCACTCCACCGGTGCTTAATAACCAGGCATCAAATAAAACGAAAGGCTCAGTCGAAAGACTGGGCCTTTCGTTTTATCTGTTGTTTGTCGGTGAACGCTCTCTACTAGAGTCACACTGGCTCACCTTCGGGTGGGCCTTTCTGCGTTTATA</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://www.sboldesigner.github.io/gonzalovidal/GenSequence/1">
+    <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/GenSequence"/>
+    <sbol:displayId>GenSequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes_SBOLDesignerActivity/1"/>
+    <sbol:elements>TTGACGGCTAGCTCAGTCCTAGGTACAGTGCTAGCAGAGTCACACAGGAAAGTACTAATGCGTAAAGGAGAAGAACTTTTCACTGGAGTTGTCCCAATTCTTGTTGAATTAGATGGTGATGTTAATGGGCACAAATTTTCTGTCAGTGGAGAGGGTGAAGGTGATGCAACATACGGAAAACTTACCCTTAAATTTATTTGCACTACTGGAAAACTACCTGTTCCATGGCCAACACTTGTCACTACTTTCGGTTATGGTGTTCAATGCTTTGCGAGATACCCAGATCATATGAAACAGCATGACTTTTTCAAGAGTGCCATGCCCGAAGGTTATGTACAGGAAAGAACTATATTTTTCAAAGATGACGGGAACTACAAGACACGTGCTGAAGTCAAGTTTGAAGGTGATACCCTTGTTAATAGAATCGAGTTAAAAGGTATTGATTTTAAAGAAGATGGAAACATTCTTGGACACAAATTGGAATACAACTATAACTCACACAATGTATACATCATGGCAGACAAACAAAAGAATGGAATCAAAGTTAACTTCAAAATTAGACACAACATTGAAGATGGAAGCGTTCAACTAGCAGACCATTATCAACAAAATACTCCAATTGGCGATGGCCCTGTCCTTTTACCAGACAACCATTACCTGTCCACACAATCTGCCCTTTCGAAAGATCCCAACGAAAAGAGAGATCACATGGTCCTTCTTGAGTTTGTAACAGCTGCTGGGATTACACATGGCATGGATGAACTATACAAATAATAACCAGGCATCAAATAAAACGAAAGGCTCAGTCGAAAGACTGGGCCTTTCGTTTTATCTGTTGTTTGTCGGTGAACGCTCTCTACTAGAGTCACACTGGCTCACCTTCGGGTGGGCCTTTCTGCGTTTATA</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0015_sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0015_sequence"/>
+    <sbol:displayId>B0015_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>B0015 Sequence</dcterms:title>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0015_sequence/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbol:elements>CCAGGCATCAAATAAAACGAAAGGCTCAGTCGAAAGACTGGGCCTTTCGTTTTATCTGTTGTTTGTCGGTGAACGCTCTCTACTAGAGTCACACTGGCTCACCTTCGGGTGGGCCTTTCTGCGTTTATA</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0032_sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0032_sequence"/>
+    <sbol:displayId>B0032_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>B0032 Sequence</dcterms:title>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0032_sequence/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbol:elements>AGAGTCACACAGGAAAGTACTA</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100_sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100_sequence"/>
+    <sbol:displayId>J23100_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>J23100 Sequence</dcterms:title>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23100_sequence/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbol:elements>TTGACGGCTAGCTCAGTCCTAGGTACAGTGCTAGC</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23116_sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23116_sequence"/>
+    <sbol:displayId>J23116_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>J23116 Sequence</dcterms:title>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/J23116_sequence/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbol:elements>TTGACAGCTAGCTCAGTCCTAGGGACTATGCTAGC</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/E0040m_gfp_sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/E0040m_gfp_sequence"/>
+    <sbol:displayId>E0040m_gfp_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>E0040m_gfp Sequence</dcterms:title>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/E0040m_gfp_sequence/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbol:elements>ATGCGTAAAGGAGAAGAACTTTTCACTGGAGTTGTCCCAATTCTTGTTGAATTAGATGGTGATGTTAATGGGCACAAATTTTCTGTCAGTGGAGAGGGTGAAGGTGATGCAACATACGGAAAACTTACCCTTAAATTTATTTGCACTACTGGAAAACTACCTGTTCCATGGCCAACACTTGTCACTACTTTCGGTTATGGTGTTCAATGCTTTGCGAGATACCCAGATCATATGAAACAGCATGACTTTTTCAAGAGTGCCATGCCCGAAGGTTATGTACAGGAAAGAACTATATTTTTCAAAGATGACGGGAACTACAAGACACGTGCTGAAGTCAAGTTTGAAGGTGATACCCTTGTTAATAGAATCGAGTTAAAAGGTATTGATTTTAAAGAAGATGGAAACATTCTTGGACACAAATTGGAATACAACTATAACTCACACAATGTATACATCATGGCAGACAAACAAAAGAATGGAATCAAAGTTAACTTCAAAATTAGACACAACATTGAAGATGGAAGCGTTCAACTAGCAGACCATTATCAACAAAATACTCCAATTGGCGATGGCCCTGTCCTTTTACCAGACAACCATTACCTGTCCACACAATCTGCCCTTTCGAAAGATCCCAACGAAAAGAGAGATCACATGGTCCTTCTTGAGTTTGTAACAGCTGCTGGGATTACACATGGCATGGATGAACTATACAAATAATAA</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/E1010m_rfp_sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/E1010m_rfp_sequence"/>
+    <sbol:displayId>E1010m_rfp_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>E1010m_rfp Sequence</dcterms:title>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/E1010m_rfp_sequence/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbol:elements>ATGGCTTCCTCCGAGGATGTTATCAAAGAGTTCATGCGTTTCAAAGTTCGTATGGAAGGTTCCGTTAACGGTCACGAGTTCGAAATCGAAGGTGAAGGTGAAGGTCGTCCGTACGAAGGTACCCAGACCGCTAAACTGAAAGTTACCAAAGGTGGTCCGCTGCCGTTCGCTTGGGACATCCTGTCCCCGCAGTTCCAGTACGGTTCCAAAGCTTACGTTAAACACCCGGCTGACATCCCGGACTACCTGAAACTGTCCTTCCCGGAAGGTTTCAAATGGGAACGTGTTATGAACTTCGAAGATGGTGGTGTTGTTACCGTTACCCAGGACTCCTCCCTGCAAGACGGTGAGTTCATCTACAAAGTTAAACTGCGTGGTACCAACTTCCCGTCCGACGGTCCGGTTATGCAGAAAAAAACCATGGGTTGGGAAGCTTCCACCGAACGTATGTACCCGGAGGATGGTGCTCTGAAAGGTGAAATCAAAATGCGTCTGAAACTGAAAGACGGTGGTCACTACGACGCTGAAGTTAAAACCACCTACATGGCTAAAAAACCGGTTCAGCTGCCGGGTGCTTACAAAACCGACATCAAACTGGACATCACCTCCCACAACGAGGACTACACCATCGTTGAACAGTACGAACGTGCTGAAGGTCGTCACTCCACCGGTGCTTAATAA</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0033_sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0033_sequence"/>
+    <sbol:displayId>B0033_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>B0033 Sequence</dcterms:title>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0033_sequence/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbol:elements>AGAGTCACACAGGACTACTA</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <prov:Activity rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Two_genes_SBOLDesignerActivity/1">
+    <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes_SBOLDesignerActivity"/>
+    <sbol:displayId>Two_genes_SBOLDesignerActivity</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dc:creator>Gonzalo Vidal</dc:creator>
+    <prov:endedAtTime>2026-03-24T16:18:54.110-06:00</prov:endedAtTime>
+    <prov:qualifiedAssociation>
+      <prov:Association rdf:about="https://www.sboldesigner.github.io/gonzalovidal/Two_genes_SBOLDesignerActivity/Association/1">
+        <sbol:persistentIdentity rdf:resource="https://www.sboldesigner.github.io/gonzalovidal/Two_genes_SBOLDesignerActivity/Association"/>
+        <sbol:displayId>Association</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <prov:hadRole rdf:resource="http://sbols.org/v2#sequenceEditor"/>
+        <prov:agent rdf:resource="https://synbiohub.org/public/SBOL_Software/SBOLDesigner/3.0"/>
+      </prov:Association>
+    </prov:qualifiedAssociation>
+  </prov:Activity>
+</rdf:RDF>

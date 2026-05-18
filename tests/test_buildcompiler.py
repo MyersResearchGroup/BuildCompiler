@@ -2,7 +2,9 @@ import sbol2
 import unittest
 import sys
 import os
+import copy
 from collections import Counter
+
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
@@ -486,6 +488,194 @@ class Test_Buildcompiler_Functions(unittest.TestCase):
             len(set(lvl1_ids)),
             "Duplicate lvl1 intermediates detected",
         )
+
+    def test_transformation(self):
+        transformation_doc = sbol2.Document()
+
+        chassis_md = sbol2.ModuleDefinition("E_coli_DH5alpha")
+        chassis_impl = sbol2.Implementation("E_coli_DH5alpha_impl")
+        chassis_impl.built = chassis_md.identity
+
+        transformation_doc.add(chassis_md)
+        transformation_doc.add(chassis_impl)
+
+        result = self.buildcompiler.transformation(
+            assembly_products=self.buildcompiler.indexed_plasmids[:2],
+            chassis_name="E_coli_DH5alpha",
+            transformation_doc=transformation_doc,
+        )
+
+        # Top-level output structure
+        self.assertEqual(result["stage"], "transformation")
+
+        plasmid_displayIds = [
+            plasmid.plasmid_definition.displayId
+            for plasmid in self.buildcompiler.indexed_plasmids[:2]
+        ]
+
+        self.assertEqual(
+            result["inputs"],
+            plasmid_displayIds,
+        )
+
+        self.assertEqual(
+            result["chassis"],
+            "E_coli_DH5alpha",
+        )
+
+        self.assertIn("sbol_artifacts", result)
+        self.assertIn("json_intermediate", result)
+        self.assertIn("protocol_artifacts", result)
+
+        # Robot JSON intermediate
+        json_intermediate = result["json_intermediate"]
+
+        self.assertEqual(
+            json_intermediate["protocol"],
+            "chemical_transformation",
+        )
+
+        self.assertEqual(
+            json_intermediate["version"],
+            "0.1",
+        )
+
+        self.assertEqual(len(json_intermediate["steps"]), 2)
+
+        first_step = json_intermediate["steps"][0]
+
+        self.assertEqual(first_step["step"], 1)
+
+        self.assertEqual(first_step["plasmid"], plasmid_displayIds[0])
+
+        self.assertEqual(
+            first_step["heat_shock"],
+            {
+                "temperature_c": 42,
+                "duration_seconds": 45,
+            },
+        )
+
+        # SBOL artifact outputs
+        sbol_artifacts = result["sbol_artifacts"]
+
+        self.assertEqual(len(sbol_artifacts), 2)
+
+        first_artifact = sbol_artifacts[0]
+
+        self.assertIn("transformation_activity", first_artifact)
+
+        self.assertIn(
+            "transformed_strain_module",
+            first_artifact,
+        )
+
+        self.assertIn(
+            "transformed_strain_implementation",
+            first_artifact,
+        )
+
+        # Verify generated SBOL objects exist in document
+        transform_activity = transformation_doc.get(
+            f"http://buildcompiler.org/transform_{plasmid_displayIds[0]}_1/1"
+        )
+
+        self.assertIsInstance(
+            transform_activity,
+            sbol2.Activity,
+        )
+
+        self.assertEqual(
+            len(transform_activity.usages),
+            2,
+        )
+
+        self.assertEqual(
+            len(transform_activity.associations),
+            1,
+        )
+
+        association = transform_activity.associations[0]
+
+        self.assertIsNotNone(association.plan)
+
+        self.assertIsNotNone(association.agent)
+
+        # Verify transformed strain
+        transformed_strain = transformation_doc.get(
+            f"http://buildcompiler.org/E_coli_DH5alpha_with_{plasmid_displayIds[0]}/1"
+        )
+
+        self.assertIsInstance(
+            transformed_strain,
+            sbol2.ModuleDefinition,
+        )
+
+        self.assertEqual(
+            len(transformed_strain.modules),
+            1,
+        )
+
+        self.assertEqual(
+            len(transformed_strain.functionalComponents),
+            1,
+        )
+
+        # Verify transformed implementation
+        transformed_impl = transformation_doc.get(
+            f"http://buildcompiler.org/E_coli_DH5alpha_with_{plasmid_displayIds[0]}_impl/1"
+        )
+
+        self.assertIsInstance(
+            transformed_impl,
+            sbol2.Implementation,
+        )
+
+        self.assertEqual(
+            transformed_impl.built,
+            transformed_strain.identity,
+        )
+
+        self.assertEqual(
+            transformed_impl.wasGeneratedBy,
+            [transform_activity.identity],
+        )
+
+        # Verify protocol artifacts/logging
+        protocol_artifacts = result["protocol_artifacts"]
+
+        self.assertIn(
+            "ot2_script",
+            protocol_artifacts,
+        )
+
+        self.assertIn(
+            "human_instructions",
+            protocol_artifacts,
+        )
+
+        self.assertIn(
+            "logs",
+            protocol_artifacts,
+        )
+
+        self.assertEqual(
+            len(protocol_artifacts["logs"]),
+            2,
+        )
+
+        # Error handling
+        invalid_plasmid = copy.deepcopy(self.buildcompiler.indexed_plasmids[4])
+
+        invalid_plasmid.plasmid_implementations = []
+
+        with self.assertRaises(
+            ValueError, msg="Plasmid object with no implementations should throw error"
+        ):
+            self.buildcompiler.transformation(
+                assembly_products=[invalid_plasmid],
+                transformation_doc=transformation_doc,
+            )
 
 
 if __name__ == "__main__":
