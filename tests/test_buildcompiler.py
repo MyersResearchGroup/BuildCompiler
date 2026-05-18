@@ -6,7 +6,7 @@ from collections import Counter
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
-from buildcompiler.buildcompiler import BuildCompiler
+from buildcompiler.buildcompiler import BuildCompiler, _extract_lvl2_TUs
 
 from buildcompiler.abstract_translator import extract_toplevel_definition, get_or_pull
 
@@ -269,6 +269,8 @@ class Test_Buildcompiler_Functions(unittest.TestCase):
         abstract_design_doc = sbol2.Document()
         abstract_design_doc.read("tests/test_files/ExampleLvl2_design.xml")
 
+        design_TUs = _extract_lvl2_TUs(abstract_design_doc)
+
         # ------------------------------------------------------------
         # Run lvl2 assembly
         # ------------------------------------------------------------
@@ -309,13 +311,76 @@ class Test_Buildcompiler_Functions(unittest.TestCase):
 
         # test level 1 assembly activities
         lvl1_activities = [
-            "http://buildcompiler.org/Gen1_Gen1_plas_assembly/1",
             "http://buildcompiler.org/Gen_Gen1_plas_assembly/1",
+            "http://buildcompiler.org/Gen1_Gen1_plas_assembly/1",
         ]
 
-        lvl1_activities
+        for index, activity_id in enumerate(lvl1_activities):
+            lvl1_activity = final_doc.get(activity_id)
 
-        # TODO add same tests for lvl1 as with the level 2 activities
+            self.assertIsNotNone(
+                lvl1_activity,
+                f"Lvl1 assembly activity {activity_id} should exist",
+            )
+
+            # ------------------------------------------------------------
+            # Validate lvl1 activity usages
+            # ------------------------------------------------------------
+            lvl1_usage_entities = [
+                get_or_pull(final_doc, self.buildcompiler.sbh, u.entity, True)
+                for u in lvl1_activity.usages
+            ]
+
+            lvl1_usage_display_ids = {
+                entity.displayId for entity in lvl1_usage_entities if entity is not None
+            }
+
+            lvl1_usage_built_CDs = {
+                final_doc.get(entity.built)
+                for entity in lvl1_usage_entities
+                if entity is not None
+            }
+
+            for comp in design_TUs[index].components:
+                self.assertIn(
+                    comp.definition,
+                    [
+                        subcomp.definition
+                        for plas in lvl1_usage_built_CDs
+                        for subcomp in plas.components
+                    ],
+                    f"Level 1 assembly activity {activity_id} missing {comp.definition} from design TU {design_TUs[index]}",
+                )
+
+            self.assertIn(
+                "BsaI_impl",
+                lvl1_usage_display_ids,
+                "Lvl1 assembly should use BsaI",
+            )
+
+            self.assertIn(
+                "T4_Ligase_impl",
+                lvl1_usage_display_ids,
+                "Lvl1 assembly should use T4 ligase",
+            )
+
+            for entity in lvl1_usage_entities:
+                self.assertIsNotNone(
+                    entity,
+                    "All lvl1 assembly usage entities should resolve correctly",
+                )
+
+                self.assertIsInstance(
+                    entity,
+                    sbol2.Implementation,
+                    "Lvl1 assembly usages should reference SBOL implementations",
+                )
+
+            self.assertGreaterEqual(
+                len(lvl1_usage_entities),
+                3,
+                "Lvl1 assembly should contain enzyme and plasmid usages",
+            )
 
         # test level2 assembly activity
         lvl2_assembly_activity = final_doc.get(
