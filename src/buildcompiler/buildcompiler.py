@@ -13,7 +13,6 @@ from buildcompiler.plasmid import Plasmid
 from buildcompiler.sbol2build import (
     Assembly,
     Transformation as SBOL2Transformation,
-    assembly_lvl2,
     dna_componentdefinition_with_sequence,
     rebase_restriction_enzyme,
 )
@@ -372,8 +371,9 @@ class BuildCompiler:
 
     def assembly_lvl1(
         self,
-        abstract_designs: List[sbol2.ComponentDefinition]
-        | sbol2.CombinatorialDerivation,
+        abstract_designs: (
+            List[sbol2.ComponentDefinition] | sbol2.CombinatorialDerivation
+        ),
         final_doc: sbol2.Document = sbol2.Document(),
         product_name: str = "composite",
         backbone: Plasmid | Dict[str, Plasmid] | None = None,
@@ -538,14 +538,14 @@ class BuildCompiler:
 
             # l1 backbone zselection
             backbone_fusion_sites = LVL2_FUSION_SITE_ORDER[i]
-            backbone = next(
+            lvl1_backbone = next(
                 plasmid
                 for plasmid in self.indexed_backbones
                 if plasmid.fusion_sites == backbone_fusion_sites
                 and plasmid.antibiotic_resistance == KAN
             )
 
-            backbone_dict[TU.displayId] = backbone
+            backbone_dict[TU.displayId] = lvl1_backbone
 
             # TODO insert check here to see if the TU exists already (#43). should not be too expensive, as long as we search only indexed_plasmids where AR=KAN
 
@@ -565,7 +565,8 @@ class BuildCompiler:
             key = p.plasmid_definition.displayId
             plasmid_dict.setdefault(key, []).append(p)
 
-        backbone, _ = self._get_backbone(plasmid_dict, antibiotic_resistance=AMP)
+        if backbone is None:
+            backbone, _ = self._get_backbone(plasmid_dict, antibiotic_resistance=AMP)
 
         print(backbone)
 
@@ -795,7 +796,9 @@ class BuildCompiler:
         )
         normalized_plasmids = []
         for product in normalized_products:
-            indexed = self._get_indexed_plasmid(self.indexed_plasmids, product["plasmid"])
+            indexed = self._get_indexed_plasmid(
+                self.indexed_plasmids, product["plasmid"]
+            )
             if indexed is None:
                 indexed = type(
                     "TransformationPlasmid",
@@ -874,9 +877,7 @@ class BuildCompiler:
         advanced_params = advanced_params or {}
         doc_ref = plating_doc or self.sbol_doc
 
-        normalized = normalize_plating_input(
-            transformation_results, doc=doc_ref
-        )
+        normalized = normalize_plating_input(transformation_results, doc=doc_ref)
         if len(normalized) > 96:
             raise ValueError("plating supports up to 96 transformed strains.")
 
@@ -918,7 +919,10 @@ class BuildCompiler:
 
         plate_layout_csv = results_path / "plate_layout_dataframe.csv"
         with plate_layout_csv.open("w", newline="", encoding="utf-8") as handle:
-            writer = csv.DictWriter(handle, fieldnames=list(plate_rows[0].keys()) if plate_rows else ["well"])
+            writer = csv.DictWriter(
+                handle,
+                fieldnames=list(plate_rows[0].keys()) if plate_rows else ["well"],
+            )
             writer.writeheader()
             for row in plate_rows:
                 writer.writerow(row)
@@ -931,7 +935,9 @@ class BuildCompiler:
                 "well_map": plate_rows,
             },
         )
-        plate_map_csv_path = write_plate_map_csv(results_path / "plate_map.csv", plate_rows)
+        plate_map_csv_path = write_plate_map_csv(
+            results_path / "plate_map.csv", plate_rows
+        )
         plating_input_json_path = write_plate_map_json(
             results_path / "plating_input.json",
             {"bacterium_locations": bacterium_locations},
@@ -984,7 +990,9 @@ class BuildCompiler:
             },
             "metadata": {
                 "plate_rows": plate_rows,
-                "layout_dataframe_columns": list(plate_rows[0].keys()) if plate_rows else [],
+                "layout_dataframe_columns": (
+                    list(plate_rows[0].keys()) if plate_rows else []
+                ),
             },
             "json_intermediate": {
                 "plating_data": {"bacterium_locations": bacterium_locations},
@@ -1073,8 +1081,9 @@ class BuildCompiler:
         self, definition: sbol2.ComponentDefinition, doc: sbol2.Document
     ):
         if len(definition.components) > 1:
-            if ENGINEERED_PLASMID in definition.roles and not self._get_indexed_plasmid(
-                self.indexed_plasmids, definition
+            if (
+                ENGINEERED_PLASMID in definition.roles
+                and not self._get_indexed_plasmid(self.indexed_plasmids, definition)
             ):
                 self.indexed_plasmids.append(Plasmid(definition, None, [], [], doc))
             elif (

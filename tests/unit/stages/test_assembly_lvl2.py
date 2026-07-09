@@ -205,4 +205,66 @@ def test_assembly_lvl2_incomplete_region_order_falls_back_with_warning():
 
     assert result.status == StageStatus.SUCCESS
     assert result.protocol_artifacts["selected_route"] is not None
-    assert any("Unable to satisfy region_order constraint" in log for log in result.logs)
+    assert any(
+        "Unable to satisfy region_order constraint" in log for log in result.logs
+    )
+
+
+def test_buildcompiler_assembly_lvl2_respects_supplied_backbone(monkeypatch):
+    from types import SimpleNamespace
+
+    from buildcompiler.buildcompiler import BuildCompiler
+    import buildcompiler.buildcompiler as buildcompiler_module
+
+    compiler = BuildCompiler.from_local_documents([])
+    compiler.BbsI_impl = object()
+    compiler.T4_ligase_impl = object()
+
+    lvl1_backbone = SimpleNamespace(
+        fusion_sites=buildcompiler_module.LVL2_FUSION_SITE_ORDER[0],
+        antibiotic_resistance=buildcompiler_module.KAN,
+    )
+    supplied_lvl2_backbone = SimpleNamespace(name="caller-supplied-lvl2-backbone")
+    compiler.indexed_backbones = [lvl1_backbone]
+
+    tu = SimpleNamespace(displayId="TU1")
+    lvl1_plasmid = SimpleNamespace(
+        plasmid_definition=SimpleNamespace(displayId="TU1_plasmid")
+    )
+    captured = {}
+
+    class FakeAssembly:
+        def __init__(self, plasmids, backbone, *args):
+            captured["plasmids"] = plasmids
+            captured["backbone"] = backbone
+
+        def run(self):
+            return [
+                SimpleNamespace(
+                    plasmid_definition=SimpleNamespace(displayId="lvl2_product")
+                )
+            ], sbol2.Document()
+
+    def fail_get_backbone(*args, **kwargs):
+        raise AssertionError(
+            "assembly_lvl2 should not auto-select a backbone when one is supplied"
+        )
+
+    monkeypatch.setattr(buildcompiler_module, "_extract_lvl2_TUs", lambda doc: [tu])
+    monkeypatch.setattr(buildcompiler_module, "Assembly", FakeAssembly)
+    monkeypatch.setattr(
+        compiler,
+        "assembly_lvl1",
+        lambda *args, **kwargs: ({"TU1": [object()]}, sbol2.Document()),
+    )
+    monkeypatch.setattr(
+        compiler, "_encapsulate_TU", lambda composite: (lvl1_plasmid, [])
+    )
+    monkeypatch.setattr(compiler, "_get_backbone", fail_get_backbone)
+
+    products, _ = compiler.assembly_lvl2(
+        sbol2.Document(), backbone=supplied_lvl2_backbone, product_name="lvl2"
+    )
+
+    assert products
+    assert captured["backbone"] is supplied_lvl2_backbone
