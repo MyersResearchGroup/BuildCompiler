@@ -11,13 +11,11 @@ from pathlib import Path
 
 from buildcompiler.plasmid import Plasmid
 from buildcompiler.sbol2build import (
-    Assembly, assembly_lvl2,
+    Assembly,
+    Transformation as SBOL2Transformation,
+    assembly_lvl2,
     dna_componentdefinition_with_sequence,
     rebase_restriction_enzyme,
-)
-from sbol2build.abstract_translator import enumerate_design_variants,
-    Transformation as SBOL2Transformation,
-    dna_componentdefinition_with_sequence,
 )
 from .abstract_translator import (
     enumerate_design_variants,
@@ -362,7 +360,7 @@ class BuildCompiler:
             assembly = Assembly(
                 [Plasmid(insert_definition, None, [insert_impl], [], self.sbol_doc)],
                 backbone,
-                self.bsaI_impl,
+                self.BsaI_impl,
                 self.T4_ligase_impl,
                 self.sbol_doc,
             )
