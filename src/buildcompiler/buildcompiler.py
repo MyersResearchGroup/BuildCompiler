@@ -4,20 +4,22 @@ import random
 import re
 import shutil
 import warnings
+from typing import Any, List, Dict, Tuple
 import urllib.parse
 import csv
 from pathlib import Path
-from typing import Any, Dict, List
 
 from buildcompiler.plasmid import Plasmid
 from buildcompiler.sbol2build import (
     Assembly,
     Transformation as SBOL2Transformation,
     dna_componentdefinition_with_sequence,
+    rebase_restriction_enzyme,
 )
 from .abstract_translator import (
     enumerate_design_variants,
     extract_combinatorial_design_parts,
+    extract_toplevel_definition,
     get_or_pull,
     get_compatible_plasmids,
 )
@@ -33,10 +35,13 @@ from .robotutils import (
 )
 from .constants import (
     AMP,
+    ENGINEERED_REGION,
     KAN,
     FUSION_SITES,
     LIGASE,
+    LVL2_FUSION_SITE_ORDER,
     PART_ROLES,
+    PLASMID_VECTOR,
     RESTRICTION_ENZYME,
     RESTRICTION_ENZYME_ASSEMBLY_SCAR,
     ENGINEERED_PLASMID,
@@ -64,15 +69,18 @@ class BuildCompiler:
         collections: List[str],
         sbh_registry: str,
         auth_token: str,
-        sbol_doc: sbol2.Document,
+        sbol_doc: sbol2.Document = None,
+        server_mode: bool = False,
     ):
         self.sbh = sbol2.PartShop(sbh_registry)
         self.sbh.key = auth_token
         self.sbol_doc = sbol_doc or sbol2.Document()
         self.indexed_plasmids = []
         self.indexed_backbones = []
-        self.restriction_enzyme_implementations = []
-        self.ligase_implementations = []
+        self.BsaI_impl = None
+        self.BbsI_impl = None
+        self.T4_ligase_impl = None
+        self.server_mode = server_mode
 
         self._index_collections(collections)
 
@@ -116,6 +124,9 @@ class BuildCompiler:
         :rtype: None
         """
         for uri in collections:
+            if self.server_mode:
+                canonical_resource = self.sbh.resource.replace("://api.", "://")
+                uri = uri.replace(canonical_resource, self.sbh.resource)
             print(f"Indexing collection: {uri}")
             self.sbh.pull(uri, self.sbol_doc)
         self._index_current_document()
@@ -146,13 +157,10 @@ class BuildCompiler:
     def _index_current_document(self):
         self._index_document_objects(self.sbol_doc)
 
-    def _append_implementation_once(self, implementations: list, implementation):
-        if not any(existing.identity == implementation.identity for existing in implementations):
-            implementations.append(implementation)
-
-    def _index_document_objects(self, source_doc: sbol2.Document):
-        for implementation in source_doc.implementations:
-            built_object = self._resolve_object(implementation.built)
+        for implementation in self.sbol_doc.implementations:
+            built_object = get_or_pull(
+                self.sbol_doc, self.sbh, implementation.built, self.server_mode
+            )
             if (
                 type(built_object) is sbol2.ModuleDefinition
                 and ORGANISM_STRAIN in built_object.roles
@@ -194,13 +202,18 @@ class BuildCompiler:
                         )
             elif sbol2.BIOPAX_PROTEIN in built_object.types:
                 if RESTRICTION_ENZYME in built_object.roles:
-                    self._append_implementation_once(
-                        self.restriction_enzyme_implementations, implementation
-                    )
+                    if (
+                        "http://rebase.neb.com/rebase/enz/BsaI.html"
+                        in built_object.wasDerivedFrom
+                    ):
+                        self.BsaI_impl = implementation
+                    elif (
+                        "http://rebase.neb.com/rebase/enz/BbsI.html"
+                        in built_object.wasDerivedFrom
+                    ):
+                        self.BbsI_impl = implementation
                 elif LIGASE in built_object.roles:
-                    self._append_implementation_once(
-                        self.ligase_implementations, implementation
-                    )
+                    self.T4_ligase_impl = implementation
 
         for strain in source_doc.moduleDefinitions:
             if ORGANISM_STRAIN in strain.roles:
@@ -247,28 +260,18 @@ class BuildCompiler:
                     removals += 1
             return domesticated_sequence, removals
 
-        bsaI_impl = next(
-            (
-                impl
-                for impl in self.restriction_enzyme_implementations
-                if self.sbol_doc.find(impl.built).displayId == "BsaI"
-            ),
-            None,
-        )
-        if bsaI_impl is None:
+        if self.BsaI_impl is None:
             self._create_RE_implementation("BsaI")
             warnings.warn(
                 "BsaI Restriction enzyme not found in provided collection(s). Domestication via purchase will be added to protocol.",
                 RuntimeWarning,
             )
 
-        ligase_impl = (
-            self.ligase_implementations[0] if self.ligase_implementations else None
-        )
-        if ligase_impl is None:
+        if self.T4_ligase_impl is None:
             self._create_ligase_implementation()
             warnings.warn(
-                "No appropriate ligase found in provided collection(s). Domestication of T4 Ligase via purchase will be added to protocol."
+                "No appropriate ligase found in provided collection(s). Domestication of T4 Ligase via purchase will be added to protocol.",
+                RuntimeWarning,
             )
 
         dsDNAs = []
@@ -357,8 +360,8 @@ class BuildCompiler:
             assembly = Assembly(
                 [Plasmid(insert_definition, None, [insert_impl], [], self.sbol_doc)],
                 backbone,
-                bsaI_impl,
-                ligase_impl,
+                self.BsaI_impl,
+                self.T4_ligase_impl,
                 self.sbol_doc,
             )
             assembly_products, assembly_doc = assembly.run()
@@ -369,11 +372,13 @@ class BuildCompiler:
 
     def assembly_lvl1(
         self,
-        abstract_design: sbol2.ComponentDefinition,
+        abstract_designs: (
+            List[sbol2.ComponentDefinition] | sbol2.CombinatorialDerivation
+        ),
         final_doc: sbol2.Document = sbol2.Document(),
-        product_name: str = None,
-        backbone: Plasmid = None,
-    ) -> list[sbol2.ComponentDefinition]:
+        product_name: str = "composite",
+        backbone: Plasmid | Dict[str, Plasmid] | None = None,
+    ) -> Tuple[Dict, sbol2.Document]:
         """Assemble level-1 plasmids for each gene/transcriptional unit.
 
         Uses indexed plasmids/backbones and the current design to assemble
@@ -384,55 +389,134 @@ class BuildCompiler:
         :raises LookupError: If compatible plasmids or backbones cannot be found.
         """
 
-        # TODO: Identify parts from the abstract design needed for lvl1 assembly and find compatible indexed plasmids/backbones.
-        # if backbone provided then use it.Then look for parts constraind by the backbone fusion sites.
-        # else, run an algorithm to try a backbone from 4 the choices. If it fails on the 4 raise an error.
-
-        plasmid_dict = self._get_input_plasmids(
-            design=abstract_design, antibiotic_resistance=AMP
-        )
-
-        if not backbone:
-            backbone, compatible_plasmids = self._get_backbone(
-                plasmid_dict, antibiotic_resistance=KAN
-            )
-        else:
-            compatible_plasmids = get_compatible_plasmids(plasmid_dict, backbone)
-
-        bsaI_impl = next(
-            impl
-            for impl in self.restriction_enzyme_implementations
-            if self.sbol_doc.find(impl.built).displayId == "BsaI"
-        )
-        if bsaI_impl is None:
-            raise ValueError(
-                "BsaI Restriction enzyme not found in provided collections. Terminating assembly."
+        assembly_dict = {}
+        if type(abstract_designs) is sbol2.CombinatorialDerivation:
+            abstract_design_def = self.sbol_doc.getComponentDefinition(
+                abstract_designs.masterTemplate
             )
 
-        ligase_impl = self.ligase_implementations[0]
-        if bsaI_impl is None:
-            raise ValueError(
-                "No appropriate ligase found in provided collections. Terminating assembly."
+            combinatorial_part_dict = self.extract_combinatorial_design_parts(
+                abstract_design_def, abstract_designs
             )
 
-        assembly = Assembly(
-            compatible_plasmids,
-            backbone,
-            bsaI_impl,
-            ligase_impl,
-            self.sbol_doc,
-            final_doc,
-            product_name,
-        )
-        composite_plasmids, product_doc = assembly.run()  # TODO upload product_doc?
+            enumerated_part_lists = enumerate_design_variants(combinatorial_part_dict)
 
-        self.indexed_plasmids.extend(composite_plasmids)
-        assembly_plan_RDF_to_JSON(product_doc)
-        
-        return composite_plasmids
+            for i, list in enumerate(enumerated_part_lists):
+                plasmid_dict = self._construct_plasmid_dict(list, AMP)
+
+                if isinstance(backbone, dict):
+                    raise ValueError(
+                        "A backbone dictionary cannot be used with a CombinatorialDerivation. "
+                        "All variants share the same template, so supply a single Plasmid or None to auto-select."
+                    )
+                elif not backbone:
+                    backbone, compatible_plasmids = self._get_backbone(
+                        plasmid_dict, antibiotic_resistance=KAN
+                    )
+                elif type(backbone) is Plasmid:
+                    compatible_plasmids = get_compatible_plasmids(
+                        plasmid_dict, backbone
+                    )
+
+                if self.BsaI_impl is None:
+                    self._create_RE_implementation("BsaI")
+                    warnings.warn(
+                        "BsaI Restriction enzyme not found in provided collection(s). Domestication via purchase will be added to protocol.",
+                        RuntimeWarning,
+                    )
+
+                if self.T4_ligase_impl is None:
+                    self._create_ligase_implementation()
+                    warnings.warn(
+                        "No appropriate ligase found in provided collection(s). Domestication of T4 Ligase via purchase will be added to protocol.",
+                        RuntimeWarning,
+                    )
+
+                assembly = Assembly(
+                    compatible_plasmids,
+                    backbone,
+                    self.BsaI_impl,
+                    self.T4_ligase_impl,
+                    self.sbol_doc,
+                    final_doc,
+                    f"{abstract_design_def.displayId}_{product_name}_comb{i}",
+                )
+                composite_plasmids, final_doc = (
+                    assembly.run()
+                )  # TODO upload product_doc?
+
+                self.indexed_plasmids.extend(
+                    composite_plasmids
+                )  # see about using a wrapper function to do this, where it checks if the design already exists (like in index_collections). this way we avoid duplicate issues that might come with loading the abstract design definitions into the self.sbol_doc ahead of time
+
+                assembly_dict.setdefault(abstract_design_def.identity, []).extend(
+                    composite_plasmids
+                )
+        else:  # list of designs
+            for abstract_design in abstract_designs:
+                plasmid_dict = self._get_input_plasmids(
+                    design=abstract_design, antibiotic_resistance=AMP
+                )
+
+                if not backbone:
+                    resolved_backbone, compatible_plasmids = self._get_backbone(
+                        plasmid_dict, antibiotic_resistance=KAN
+                    )
+                elif isinstance(backbone, dict):
+                    resolved_backbone = backbone.get(abstract_design.displayId)
+                    if resolved_backbone is None:
+                        raise ValueError(
+                            f"Backbone dict provided but no entry found for design '{abstract_design.displayId}'. "
+                            f"Available keys: {list(backbone.keys())}"
+                        )
+                    compatible_plasmids = get_compatible_plasmids(
+                        plasmid_dict, resolved_backbone
+                    )
+                else:
+                    resolved_backbone, compatible_plasmids = (
+                        backbone,
+                        get_compatible_plasmids(plasmid_dict, backbone),
+                    )
+
+                if self.BsaI_impl is None:
+                    self._create_RE_implementation("BsaI")
+                    warnings.warn(
+                        "BsaI Restriction enzyme not found in provided collection(s). Domestication via purchase will be added to protocol.",
+                        RuntimeWarning,
+                    )
+
+                if self.T4_ligase_impl is None:
+                    self._create_ligase_implementation()
+                    warnings.warn(
+                        "No appropriate ligase found in provided collection(s). Domestication of T4 Ligase via purchase will be added to protocol.",
+                        RuntimeWarning,
+                    )
+
+                assembly = Assembly(
+                    compatible_plasmids,
+                    resolved_backbone,
+                    self.BsaI_impl,
+                    self.T4_ligase_impl,
+                    self.sbol_doc,
+                    final_doc,
+                    f"{abstract_design.displayId}_{product_name}",
+                )
+                composite_plasmids, final_doc = (
+                    assembly.run()
+                )  # TODO upload product_doc?
+
+                self.indexed_plasmids.extend(
+                    composite_plasmids
+                )  # see about using a wrapper function to do this, where it checks if the design already exists (like in index_collections). this way we avoid duplicate issues that might come with loading the abstract design definitions into the self.sbol_doc ahead of time
+                assembly_dict[abstract_design.identity] = composite_plasmids
+
+        return assembly_dict, final_doc
 
     def assembly_lvl2(
         self,
+        abstract_design_doc: sbol2.Document,
+        backbone: Plasmid = None,
+        product_name: str = None,
     ) -> list[sbol2.ComponentDefinition]:
         """Assemble level-2 plasmids for the full design.
 
@@ -443,14 +527,239 @@ class BuildCompiler:
         :rtype: list[Plasmid]
         :raises LookupError: If compatible plasmids or backbones cannot be found.
         """
+        # get high level genes, send to assembly_lvl1
+        # send original abstract_design to get a new dictionary
+        # send new dictionary to _get_backbone or get_compatible plasmids with AMP
+        TUs = _extract_lvl2_TUs(abstract_design_doc)
+        backbone_dict = {}
+        lvl1_plasmids = []
 
-        # TODO: Identify parts from the abstract design needed for lvl2 assembly and find compatible indexed plasmids/backbones.
-        # TODO: Create a SBOL representation of the assembly process, updating the SBOL Document.
-        # TODO: Generate a protocol for the assembly process.
-        protocol = "To be implemented by PUDU"
-        # TODO: Updates indexed plasmids with assembled versions.
+        for i, TU in enumerate(TUs):
+            print(TU.displayId)
 
-        return protocol
+            # l1 backbone zselection
+            backbone_fusion_sites = LVL2_FUSION_SITE_ORDER[i]
+            lvl1_backbone = next(
+                plasmid
+                for plasmid in self.indexed_backbones
+                if plasmid.fusion_sites == backbone_fusion_sites
+                and plasmid.antibiotic_resistance == KAN
+            )
+
+            backbone_dict[TU.displayId] = lvl1_backbone
+
+            # TODO insert check here to see if the TU exists already (#43). should not be too expensive, as long as we search only indexed_plasmids where AR=KAN
+
+        composite_plasmid_dict, final_doc = self.assembly_lvl1(
+            TUs, backbone=backbone_dict, product_name=f"{TU.displayId}_plas"
+        )
+
+        for key, composites in composite_plasmid_dict.items():
+            simplified_representation, new_defs = self._encapsulate_TU(composites[0])
+            final_doc.add_list(new_defs)
+            lvl1_plasmids.append(simplified_representation)
+            print(simplified_representation)
+
+        # get l2 backbone
+        plasmid_dict = {}
+        for p in lvl1_plasmids:
+            key = p.plasmid_definition.displayId
+            plasmid_dict.setdefault(key, []).append(p)
+
+        if backbone is None:
+            backbone, _ = self._get_backbone(plasmid_dict, antibiotic_resistance=AMP)
+
+        print(backbone)
+
+        # BbsI for l2
+        if self.BbsI_impl is None:
+            self._create_RE_implementation("BbsI")
+            warnings.warn(
+                "BbsI Restriction enzyme not found in provided collection(s). Domestication via purchase will be added to protocol.",
+                RuntimeWarning,
+            )
+
+        # TODO see about making these common enzymes (BsaI, BbSI, T4) global or class variables, so they only need to be searched for once
+        if self.T4_ligase_impl is None:
+            self._create_ligase_implementation()
+            warnings.warn(
+                "No appropriate ligase found in provided collection(s). Domestication of T4 Ligase via purchase will be added to protocol.",
+                RuntimeWarning,
+            )
+
+        assembly = Assembly(
+            lvl1_plasmids,
+            backbone,
+            self.BbsI_impl,
+            self.T4_ligase_impl,
+            self.sbol_doc,
+            final_doc,
+            product_name,
+        )
+
+        lvl2_plasmids, final_doc = assembly.run()  # TODO upload product_doc?
+        self.indexed_plasmids.extend(lvl2_plasmids)
+
+        return lvl2_plasmids, final_doc
+
+    def transformation(
+        self,
+        assembly_products: List[Plasmid],
+        chassis_name: str = "E_coli_DH5alpha",
+        transformation_doc: sbol2.Document = None,
+    ) -> Dict[str, Any]:
+        """Generate deterministic transformation artifacts from assembly outputs.
+
+        :param assembly_products: Structured inputs produced by an assembly stage
+        :type assembly_products: List[Plasmid]
+        :param chassis_name: Display id used for the chassis module and implementation.
+        :type chassis_name: str
+        :param transformation_doc: Optional SBOL document to write outputs into.
+        :type transformation_doc: sbol2.Document | None
+        :returns: Structured transformation outputs including SBOL references,
+            robot JSON intermediate, protocol placeholders, and logs.
+        :rtype: dict
+        :raises ValueError: If no valid plasmid inputs can be extracted.
+        """
+        if transformation_doc is None:
+            transformation_doc = self.sbol_doc
+
+        chassis_module, chassis_impl = self._get_or_create_chassis(
+            transformation_doc, chassis_name
+        )
+
+        sbol_outputs = []
+        robot_steps = []
+        logs = []
+
+        for index, plasmid_obj in enumerate(assembly_products, start=1):
+            plasmid = plasmid_obj.plasmid_definition
+
+            if not plasmid_obj.plasmid_implementations:
+                raise ValueError(
+                    f"No plasmid implementations found for {plasmid.displayId}"
+                )
+
+            plasmid_impl = plasmid_obj.plasmid_implementations[0]
+
+            transform_id = f"transform_{plasmid.displayId}_{index}"
+
+            transformation_activity = sbol2.Activity(transform_id)
+            transformation_activity.name = (
+                f"Transform {chassis_name} with {plasmid.displayId}"
+            )
+            transformation_activity.types = "http://sbols.org/v2#build"
+
+            chassis_usage = sbol2.Usage(
+                uri=f"{transform_id}_chassis",
+                entity=chassis_impl.identity,
+                role="http://sbols.org/v2#build",
+            )
+            plasmid_usage = sbol2.Usage(
+                uri=f"{transform_id}_plasmid",
+                entity=plasmid_impl.identity,
+                role="http://sbols.org/v2#build",
+            )
+            transformation_activity.usages = [chassis_usage, plasmid_usage]
+
+            transformed_strain = sbol2.ModuleDefinition(
+                f"{chassis_name}_with_{plasmid.displayId}"
+            )
+            transformed_strain.roles = [ORGANISM_STRAIN]
+            transformed_strain.name = (
+                f"{chassis_name} transformed with {plasmid.displayId}"
+            )
+
+            chassis_module_ref = sbol2.Module(
+                uri=f"{transformed_strain.displayId}_chassis"
+            )
+            chassis_module_ref.definition = chassis_module.identity
+            plasmid_fc = sbol2.FunctionalComponent(
+                uri=f"{transformed_strain.displayId}_plasmid"
+            )
+            plasmid_fc.definition = plasmid.identity
+
+            transformed_strain.modules = [chassis_module_ref]
+            transformed_strain.functionalComponents = [plasmid_fc]
+
+            transformation_activity_association = sbol2.Association(
+                f"transform_{chassis_module_ref.name}"
+            )
+
+            transformation_activity_plan = sbol2.Plan(
+                f"{transformed_strain.displayId}_transformation_plan"
+            )
+            transformation_activity_plan.description = (
+                "TODO: generate accurate description of transformation"
+            )
+            transformation_activity_association.plan = transformation_activity_plan
+
+            transformation_activity_agent = sbol2.Agent("BuildCompiler")
+            transformation_activity_association.agent = transformation_activity_agent
+
+            transformation_activity.associations = [transformation_activity_association]
+
+            transformed_impl = sbol2.Implementation(
+                f"{transformed_strain.displayId}_impl"
+            )
+
+            transformed_impl.built = transformed_strain.identity
+            transformed_impl.wasGeneratedBy = transformation_activity.identity
+
+            for obj in (
+                transformation_activity,
+                chassis_usage,
+                plasmid_usage,
+                transformed_strain,
+                chassis_module_ref,
+                plasmid_fc,
+                transformed_impl,
+            ):
+                self._add_if_absent(transformation_doc, obj)
+
+            sbol_outputs.append(
+                {
+                    "transformation_activity": transformation_activity.identity,
+                    "transformed_strain_module": transformed_strain.identity,
+                    "transformed_strain_implementation": transformed_impl.identity,
+                }
+            )
+            robot_steps.append(
+                {
+                    "step": index,
+                    "plasmid": plasmid.displayId,
+                    "chassis": chassis_name,
+                    "mix_ul": {"competent_cells": 50, "assembly_product": 5},
+                    "heat_shock": {"temperature_c": 42, "duration_seconds": 45},
+                    "recovery": {"medium": "SOC", "volume_ul": 950, "duration_min": 60},
+                }
+            )
+            logs.append(
+                f"Prepared transformation input for plasmid {plasmid.displayId} into chassis {chassis_name}."
+            )
+
+        return {
+            "stage": "transformation",
+            "inputs": [
+                plasmid.plasmid_definition.displayId for plasmid in assembly_products
+            ],
+            "chassis": chassis_name,
+            "sbol_artifacts": sbol_outputs,
+            "json_intermediate": {
+                "protocol": "chemical_transformation",
+                "version": "0.1",
+                "steps": robot_steps,
+            },
+            "protocol_artifacts": {
+                "ot2_script": "TODO: adapter to protocol generator",
+                "human_instructions": [
+                    "Thaw competent cells on ice.",
+                    "Combine assembly product with competent cells as specified.",
+                    "Run heat shock and recovery according to generated parameters.",
+                ],
+                "logs": logs,
+            },
+        }
 
     def transformation(
         self,
@@ -488,7 +797,9 @@ class BuildCompiler:
         )
         normalized_plasmids = []
         for product in normalized_products:
-            indexed = self._get_indexed_plasmid(self.indexed_plasmids, product["plasmid"])
+            indexed = self._get_indexed_plasmid(
+                self.indexed_plasmids, product["plasmid"]
+            )
             if indexed is None:
                 indexed = type(
                     "TransformationPlasmid",
@@ -567,9 +878,7 @@ class BuildCompiler:
         advanced_params = advanced_params or {}
         doc_ref = plating_doc or self.sbol_doc
 
-        normalized = normalize_plating_input(
-            transformation_results, doc=doc_ref
-        )
+        normalized = normalize_plating_input(transformation_results, doc=doc_ref)
         if len(normalized) > 96:
             raise ValueError("plating supports up to 96 transformed strains.")
 
@@ -611,7 +920,10 @@ class BuildCompiler:
 
         plate_layout_csv = results_path / "plate_layout_dataframe.csv"
         with plate_layout_csv.open("w", newline="", encoding="utf-8") as handle:
-            writer = csv.DictWriter(handle, fieldnames=list(plate_rows[0].keys()) if plate_rows else ["well"])
+            writer = csv.DictWriter(
+                handle,
+                fieldnames=list(plate_rows[0].keys()) if plate_rows else ["well"],
+            )
             writer.writeheader()
             for row in plate_rows:
                 writer.writerow(row)
@@ -624,7 +936,9 @@ class BuildCompiler:
                 "well_map": plate_rows,
             },
         )
-        plate_map_csv_path = write_plate_map_csv(results_path / "plate_map.csv", plate_rows)
+        plate_map_csv_path = write_plate_map_csv(
+            results_path / "plate_map.csv", plate_rows
+        )
         plating_input_json_path = write_plate_map_json(
             results_path / "plating_input.json",
             {"bacterium_locations": bacterium_locations},
@@ -677,7 +991,9 @@ class BuildCompiler:
             },
             "metadata": {
                 "plate_rows": plate_rows,
-                "layout_dataframe_columns": list(plate_rows[0].keys()) if plate_rows else [],
+                "layout_dataframe_columns": (
+                    list(plate_rows[0].keys()) if plate_rows else []
+                ),
             },
             "json_intermediate": {
                 "plating_data": {"bacterium_locations": bacterium_locations},
@@ -694,7 +1010,9 @@ class BuildCompiler:
     ):
         # strain_implementation = optional param
         for plasmid in strain.functionalComponents:
-            plasmid_definition = self._resolve_object(plasmid.definition)
+            plasmid_definition = get_or_pull(
+                doc, self.sbh, plasmid.definition, self.server_mode
+            )
 
             if ENGINEERED_PLASMID in plasmid_definition.roles:
                 existing = self._get_indexed_plasmid(
@@ -764,8 +1082,9 @@ class BuildCompiler:
         self, definition: sbol2.ComponentDefinition, doc: sbol2.Document
     ):
         if len(definition.components) > 1:
-            if ENGINEERED_PLASMID in definition.roles and not self._get_indexed_plasmid(
-                self.indexed_plasmids, definition
+            if (
+                ENGINEERED_PLASMID in definition.roles
+                and not self._get_indexed_plasmid(self.indexed_plasmids, definition)
             ):
                 self.indexed_plasmids.append(Plasmid(definition, None, [], [], doc))
             elif (
@@ -798,7 +1117,6 @@ class BuildCompiler:
         for backbone in sorted_backbones:
             if backbone.antibiotic_resistance == antibiotic_resistance:
                 # check for compatibility
-                # also, if we find a hit here we may not need to run get_compatible plasmids later, work is already done
                 try:
                     compatible_plasmids = get_compatible_plasmids(
                         plasmid_dict, backbone
@@ -828,9 +1146,53 @@ class BuildCompiler:
         """
         component_list = [c for c in design.getInSequentialOrder()]
         return [
-            self._resolve_object(component.definition)
+            get_or_pull(self.sbol_doc, self.sbh, component.definition, self.server_mode)
             for component in component_list
         ]
+
+    def extract_combinatorial_design_parts(
+        self,
+        design: sbol2.ComponentDefinition,
+        derivation: sbol2.CombinatorialDerivation,
+    ) -> Dict[str, List[sbol2.ComponentDefinition]]:
+        """
+        Extracts and returns a mapping of component definitions from a combinatorial design, in order.
+        Variants of combinatinatorial components are entered in a list corresponding to the URI of the component in the abstract design.
+
+        Args:
+            design:
+                The top-level :class:`sbol2.ComponentDefinition` representing the
+                abstract design template whose components should be extracted in
+                sequential order.
+
+            derivation:
+                The :class:`sbol2.CombinatorialDerivation` associated with ``design``
+                that defines variable components and their allowed variants.
+
+        Returns:
+            Dict[str, List[sbol2.ComponentDefinition]]:
+                A dictionary mapping component identities to lists
+                of variable component definitions.
+
+                - Sequential design components map to lists containing a single definition.
+                - Combinatorial variable components map to lists of variant definitions.
+        """
+        component_list = [c for c in design.getInSequentialOrder()]
+        component_dict = {
+            component.identity: [
+                get_or_pull(
+                    self.sbol_doc, self.sbh, component.definition, self.server_mode
+                )
+            ]
+            for component in component_list
+        }
+
+        for component in derivation.variableComponents:
+            component_dict[component.variable] = [
+                self.sbol_doc.getComponentDefinition(var) for var in component.variants
+            ]
+
+        return component_dict
 
     def _get_abstract_design(self) -> sbol2.ComponentDefinition:
         for definition in source_doc.componentDefinitions:
@@ -842,7 +1204,9 @@ class BuildCompiler:
                 continue
 
             component_definitions = [
-                self._resolve_object(component.definition)
+                get_or_pull(
+                    self.sbol_doc, self.sbh, component.definition, self.server_mode
+                )
                 for component in definition.getInSequentialOrder()
             ]
             if any(
@@ -904,7 +1268,7 @@ class BuildCompiler:
             return False
         else:
             component_definitions = [
-                self._resolve_object(comp.definition)
+                get_or_pull(self.sbol_doc, self.sbh, comp.definition, self.server_mode)
                 for comp in plasmid.getInSequentialOrder()
             ]
 
@@ -923,426 +1287,301 @@ class BuildCompiler:
 
         return False
 
-    def _create_RE_implementation(name: str):
-        pass
+    def _encapsulate_TU(
+        self, plasmid: Plasmid
+    ) -> Tuple[Plasmid, List[sbol2.Identified]]:
+        """
+        Collapse a detailed plasmid with a transcriptional unit (pro, rbs, cds, terminator)
+        into a simplified representation:
 
-    def _create_ligase_implementation():
-        pass
+            fusion_site_left -> TU -> fusion_site_right -> backbone
 
-    def _normalize_transformation_inputs(
-        self, assembly_products: List[Any]
-    ) -> List[Dict[str, Any]]:
-        normalized = []
-        for item in assembly_products or []:
-            if isinstance(item, Plasmid):
-                normalized.append(
-                    {"plasmid": item.plasmid_definition, "source": item.name}
-                )
-                continue
+        Builds new sequences for both the TU and simplified plasmid.
 
-            if isinstance(item, sbol2.ComponentDefinition):
-                normalized.append({"plasmid": item, "source": item.displayId})
-                continue
+        Returns
+        -------
+        Tuple[Plasmid, List[Identified]]
+            simplified plasmid and all new SBOL objects created
+        """
 
-            if isinstance(item, dict) and "plasmid" in item:
-                plasmid_candidate = item["plasmid"]
-                if isinstance(plasmid_candidate, Plasmid):
-                    normalized.append(
-                        {
-                            "plasmid": plasmid_candidate.plasmid_definition,
-                            "source": item.get("name", plasmid_candidate.name),
-                        }
-                    )
-                elif isinstance(plasmid_candidate, sbol2.ComponentDefinition):
-                    normalized.append(
-                        {
-                            "plasmid": plasmid_candidate,
-                            "source": item.get("name", plasmid_candidate.displayId),
-                        }
-                    )
-        return normalized
+        new_objs = []
+        plasmid_def = plasmid.plasmid_definition
 
-    def _safe_display_id(self, value: str) -> str:
-        safe_value = re.sub(r"[^A-Za-z0-9_]+", "_", value or "")
-        return safe_value.strip("_") or "unnamed_design"
+        fusion_left, fusion_right = plasmid.fusion_sites
+        left_seq = FUSION_SITES[fusion_left]
+        right_seq = FUSION_SITES[fusion_right]
 
-    def _serialize_sbol_identity(self, obj_or_uri) -> str:
-        return getattr(obj_or_uri, "identity", str(obj_or_uri))
+        left_def = None
+        right_def = None
+        backbone_def = None
+        promoter = None
+        terminator = None
 
-    def _write_json(self, path: Path, payload: dict) -> Path:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("w", encoding="utf-8") as handle:
-            json.dump(payload, handle, indent=2, sort_keys=True)
-        return path
+        # scan subcomponents for pro and term to establish range + get backbone
+        for comp in plasmid_def.components:
+            comp_def = self.sbol_doc.get(comp.definition)
 
-    def _status_from_manifest(self, manifest: dict) -> str:
-        if manifest.get("errors"):
-            return "completed_with_errors"
-        if manifest["assembly_lvl1"].get("successful"):
-            return "completed"
-        if (
-            manifest["assembly_lvl1"].get("failed")
-            or manifest["domestication"].get("errors")
-        ):
-            return "completed_with_errors"
-        return "failed"
+            if RESTRICTION_ENZYME_ASSEMBLY_SCAR in comp_def.roles:
+                seq_obj = self.sbol_doc.get(comp_def.sequences[0])
+                if seq_obj.elements == left_seq:
+                    left_def = comp_def
+                    continue
+                if seq_obj.elements == right_seq:
+                    right_def = comp_def
+                    continue
 
-    def _find_missing_parts_for_lvl1(
-        self,
-        design: sbol2.ComponentDefinition,
-        backbone: Plasmid = None,
-    ) -> list[dict]:
-        parts = self._extract_design_parts(design)
-        plasmid_dict = self._construct_plasmid_dict(parts, antibiotic_resistance=AMP)
+            elif PLASMID_VECTOR in comp_def.roles:
+                backbone_def = comp_def
 
-        missing_parts = []
-        for part in parts:
-            candidates = plasmid_dict.get(part.displayId, [])
-            if not candidates:
-                missing_parts.append(
-                    {
-                        "part": part,
-                        "reason": "no implemented plasmid",
-                    }
-                )
-                continue
+            elif sbol2.SO_PROMOTER in comp_def.roles:
+                promoter = comp
 
-            try:
-                if backbone is None:
-                    selected_backbone, _ = self._get_backbone(
-                        plasmid_dict, antibiotic_resistance=KAN
-                    )
-                    if selected_backbone is None:
-                        missing_parts.append(
-                            {
-                                "part": part,
-                                "reason": "no compatible backbone",
-                            }
-                        )
-                else:
-                    compatible = get_compatible_plasmids(plasmid_dict, backbone)
-                    if not compatible:
-                        missing_parts.append(
-                            {
-                                "part": part,
-                                "reason": "no compatible plasmid",
-                            }
-                        )
-            except Exception:
-                missing_parts.append(
-                    {
-                        "part": part,
-                        "reason": "no compatible plasmid",
-                    }
-                )
+            elif sbol2.SO_TERMINATOR in comp_def.roles:
+                terminator = comp
 
-        return missing_parts
+        if promoter is None or terminator is None:
+            raise ValueError("Could not locate promoter or terminator in plasmid TU")
 
-    def _index_domestication_products(
-        self,
-        products: list[sbol2.ComponentDefinition],
-    ) -> None:
-        for product_definition in products:
-            if self._get_indexed_plasmid(self.indexed_plasmids, product_definition):
-                continue
-            try:
-                indexed = Plasmid(product_definition, None, [], [], self.sbol_doc)
-            except Exception:
-                indexed = type(
-                    "IndexedDomesticationPlasmid",
-                    (),
-                    {
-                        "plasmid_definition": product_definition,
-                        "name": product_definition.displayId,
-                        "fusion_sites": [],
-                        "antibiotic_resistance": None,
-                    },
-                )()
-            self.indexed_plasmids.append(indexed)
+        comp_dict = {c.identity: c for c in plasmid_def.components}
 
-    def _zip_full_build_results(
-        self,
-        source_dir: Path,
-        zip_path: Path,
-        overwrite: bool = False,
-    ) -> Path:
-        if zip_path.exists():
-            if not overwrite:
-                raise FileExistsError(
-                    f"Zip path already exists and overwrite=False: {zip_path}"
-                )
-            zip_path.unlink()
-        zip_path.parent.mkdir(parents=True, exist_ok=True)
-        zip_base = zip_path.with_suffix("")
-        archive = shutil.make_archive(
-            str(zip_base), "zip", root_dir=str(source_dir), base_dir="."
-        )
-        return Path(archive)
+        follows = {}
+        for sc in plasmid_def.sequenceConstraints:
+            if sc.restriction == sbol2.SBOL_RESTRICTION_PRECEDES:
+                subject_comp = comp_dict[sc.subject]
+                object_comp = comp_dict[sc.object]
+                follows[subject_comp] = object_comp
 
-    def _expand_combinatorial_derivation(
-        self,
-        derivation: sbol2.CombinatorialDerivation,
-        product_name_prefix: str = None,
-    ) -> list[sbol2.ComponentDefinition]:
-        master_template = self._resolve_object(derivation.masterTemplate)
-        component_variants = extract_combinatorial_design_parts(
-            master_template, self.sbol_doc, self.sbol_doc
-        )
-        variant_definitions = enumerate_design_variants(component_variants)
+        old_tu_components = []
+        curr_comp = promoter
 
-        prefix = product_name_prefix or master_template.displayId
-        created_variants = []
+        while True:
+            old_tu_components.append(curr_comp)
 
-        ordered_components = list(master_template.getInSequentialOrder())
-        for index, variant_parts in enumerate(variant_definitions, start=1):
-            variant_display_id = f"{self._safe_display_id(prefix)}_variant_{index:03d}"
-            variant_design = self.sbol_doc.find(variant_display_id) or sbol2.ComponentDefinition(
-                variant_display_id
-            )
-            variant_design.types = list(master_template.types)
-            variant_design.roles = list(master_template.roles)
-            variant_design.wasDerivedFrom = derivation.identity
-            self._add_if_absent(self.sbol_doc, variant_design)
+            if curr_comp.identity == terminator.identity:
+                break
 
-            if len(variant_design.components) == 0:
-                for comp_index, component in enumerate(ordered_components):
-                    part_def = variant_parts[comp_index]
-                    variant_component = variant_design.components.create(
-                        f"{variant_display_id}_component_{comp_index+1:03d}"
-                    )
-                    variant_component.definition = part_def.identity
-                    try:
-                        variant_component.access = component.access
-                    except Exception:
-                        pass
-                    try:
-                        variant_component.direction = component.direction
-                    except Exception:
-                        pass
-            created_variants.append(variant_design)
+            if curr_comp not in follows:
+                raise ValueError("Broken sequence constraint chain in TU")
 
-        return created_variants
+            curr_comp = follows[curr_comp]
 
-    def _normalize_full_build_designs(self, designs) -> list[sbol2.ComponentDefinition]:
-        if isinstance(designs, sbol2.ComponentDefinition):
-            return [designs]
-        if isinstance(designs, sbol2.CombinatorialDerivation):
-            return self._expand_combinatorial_derivation(designs)
-        if isinstance(designs, list):
-            if all(isinstance(design, sbol2.ComponentDefinition) for design in designs):
-                return designs
-            raise TypeError("designs list must contain only ComponentDefinition objects.")
-        raise TypeError(
-            "designs must be a ComponentDefinition, list[ComponentDefinition], or CombinatorialDerivation."
+        def build_sequence_from_components(components):
+            seq = ""
+            ranges = {}
+            cursor = 1
+
+            for comp in components:
+                comp_def = self.sbol_doc.get(comp.definition)
+
+                if not comp_def.sequences:
+                    raise ValueError(f"{comp_def.displayId} has no sequence")
+
+                seq_obj = self.sbol_doc.get(comp_def.sequences[0])
+                part_seq = seq_obj.elements
+
+                start = cursor
+                end = cursor + len(part_seq) - 1
+
+                ranges[comp.identity] = (start, end)
+
+                seq += part_seq
+                cursor = end + 1
+
+            return seq, ranges
+
+        # Create TU definition
+        tu_def = sbol2.ComponentDefinition(plasmid_def.displayId + "_TU")
+        tu_def.roles = [ENGINEERED_REGION]
+
+        self.sbol_doc.add(tu_def)
+        new_objs.append(tu_def)
+
+        # map old components to new
+        comp_map = {}
+
+        for comp in old_tu_components:
+            new_comp = tu_def.components.create(comp.displayId)
+            new_comp.definition = comp.definition
+            comp_map[comp.identity] = new_comp.identity
+
+        # Build TU sequence
+        tu_seq_string, tu_ranges = build_sequence_from_components(old_tu_components)
+
+        tu_seq = sbol2.Sequence(
+            tu_def.displayId + "_seq",
+            elements=tu_seq_string,
+            encoding=sbol2.SBOL_ENCODING_IUPAC,
         )
 
-    def full_build(
-        self,
-        designs,
-        results_dir,
-        chassis_name: str = "E_coli_DH5alpha",
-        protocol_type: str = "manual",
-        transformation_params: dict | None = None,
-        plating_params: dict | None = None,
-        product_name_prefix: str | None = None,
-        overwrite: bool = False,
-    ) -> dict:
-        transformation_params = transformation_params or {}
-        plating_params = plating_params or {}
-        results_path = Path(results_dir)
-        results_path.mkdir(parents=True, exist_ok=True)
+        self.sbol_doc.addSequence(tu_seq)
+        tu_def.sequences = [tu_seq.identity]
 
-        input_type = type(designs).__name__
-        normalized_designs = self._normalize_full_build_designs(designs)
-        manifest = {
-            "stage": "full_build",
-            "inputs": {
-                "input_type": input_type,
-                "design_count": len(normalized_designs),
-                "chassis_name": chassis_name,
-                "protocol_type": protocol_type,
-                "product_name_prefix": product_name_prefix,
-            },
-            "domestication": {
-                "missing_parts": [],
-                "products": [],
-                "transformation": {},
-                "plating": {},
-                "errors": [],
-            },
-            "assembly_lvl1": {"successful": [], "failed": []},
-            "transformation": {"assembly_products": {}},
-            "plating": {"assembly_products": {}},
-            "skipped": [
-                {
-                    "stage": "assembly_lvl2",
-                    "status": "skipped",
-                    "reason": "assembly_lvl2 is not implemented yet",
-                }
-            ],
-            "errors": [],
-        }
+        new_objs.append(tu_seq)
 
-        per_design_missing = {}
-        unique_missing = {}
-        for design in normalized_designs:
-            missing_items = self._find_missing_parts_for_lvl1(design)
-            serialized_missing = []
-            for item in missing_items:
-                part = item["part"]
-                entry = {
-                    "part_identity": self._serialize_sbol_identity(part),
-                    "part_display_id": part.displayId,
-                    "reason": item["reason"],
-                }
-                serialized_missing.append(entry)
-                unique_missing.setdefault(part.identity, {"part": part, "reason": item["reason"]})
-            per_design_missing[design.identity] = serialized_missing
+        # Copy TU annotations
+        for sa in plasmid_def.sequenceAnnotations:
+            if sa.component not in comp_map:
+                continue
 
-        manifest["domestication"]["missing_parts"] = list(unique_missing.values())
-        if unique_missing:
-            manifest["domestication"]["missing_parts"] = [
-                {
-                    "part_identity": self._serialize_sbol_identity(item["part"]),
-                    "part_display_id": item["part"].displayId,
-                    "reason": item["reason"],
-                }
-                for item in unique_missing.values()
-            ]
-            unique_missing_parts = [item["part"] for item in unique_missing.values()]
-            try:
-                domesticated_products = self.domestication(unique_missing_parts)
-                self._index_domestication_products(domesticated_products)
-                manifest["domestication"]["products"] = [
-                    self._serialize_sbol_identity(product)
-                    for product in domesticated_products
-                ]
-                try:
-                    domestication_transformation = self.transformation(
-                        domesticated_products,
-                        chassis_name=chassis_name,
-                        transformation_doc=self.sbol_doc,
-                        **transformation_params,
-                    )
-                    manifest["domestication"]["transformation"] = domestication_transformation
-                except Exception as exc:
-                    manifest["domestication"]["errors"].append(
-                        f"Domestication transformation failed: {exc}"
-                    )
-                    domestication_transformation = None
+            new_sa = tu_def.sequenceAnnotations.create(sa.displayId)
+            new_sa.component = comp_map[sa.component]
 
-                if domestication_transformation:
-                    try:
-                        domestication_plating = self.plating(
-                            transformation_results=domestication_transformation,
-                            results_dir=results_path / "domestication" / "plating",
-                            protocol_type=protocol_type,
-                            advanced_params=plating_params,
-                            plating_doc=self.sbol_doc,
-                            overwrite=overwrite,
-                        )
-                        manifest["domestication"]["plating"] = domestication_plating
-                    except Exception as exc:
-                        manifest["domestication"]["errors"].append(
-                            f"Domestication plating failed: {exc}"
-                        )
-            except Exception as exc:
-                manifest["domestication"]["errors"].append(f"Domestication failed: {exc}")
-                manifest["errors"].append(f"Domestication failed: {exc}")
+            offset_start, _ = tu_ranges[sa.component]
 
-        for index, design in enumerate(normalized_designs, start=1):
-            design_slug = self._safe_display_id(design.displayId or f"design_{index:03d}")
-            stable_product_name = (
-                f"{self._safe_display_id(product_name_prefix)}_{design_slug}_{index:03d}"
-                if product_name_prefix
-                else f"{design_slug}_{index:03d}"
+            for loc in sa.locations:
+                if isinstance(loc, sbol2.Range):
+                    new_start = offset_start + loc.start - 1
+                    new_end = offset_start + loc.end - 1
+
+                    new_loc = new_sa.locations.createRange(loc.displayId)
+                    new_loc.start = new_start
+                    new_loc.end = new_end
+                    new_loc.orientation = loc.orientation
+
+        # --------------------------------------------------
+        # Copy TU sequence constraints
+        # --------------------------------------------------
+        for sc in plasmid_def.sequenceConstraints:
+            if sc.subject in comp_map and sc.object in comp_map:
+                new_sc = tu_def.sequenceConstraints.create(sc.displayId)
+                new_sc.subject = comp_map[sc.subject]
+                new_sc.object = comp_map[sc.object]
+                new_sc.restriction = sc.restriction
+
+        # --------------------------------------------------
+        # Build simplified plasmid definition
+        # --------------------------------------------------
+        simple_plasmid_def = sbol2.ComponentDefinition(
+            plasmid_def.displayId + "_simple"
+        )
+
+        self.sbol_doc.addComponentDefinition(simple_plasmid_def)
+        new_objs.append(simple_plasmid_def)
+
+        simple_plasmid_def.types = list(plasmid_def.types)
+        simple_plasmid_def.roles = list(plasmid_def.roles)
+
+        fusion_left_comp = simple_plasmid_def.components.create("fusion_left")
+        fusion_left_comp.definition = left_def.identity
+
+        tu_comp = simple_plasmid_def.components.create("TU")
+        tu_comp.definition = tu_def.identity
+
+        fusion_right_comp = simple_plasmid_def.components.create("fusion_right")
+        fusion_right_comp.definition = right_def.identity
+
+        backbone_comp = None
+        if backbone_def:
+            backbone_comp = simple_plasmid_def.components.create("backbone")
+            backbone_comp.definition = backbone_def.identity
+
+        # --------------------------------------------------
+        # Sequence ordering constraints
+        # --------------------------------------------------
+        constraint_counter = 0
+
+        def add_precedes(subj, obj):
+            nonlocal constraint_counter
+            sc = simple_plasmid_def.sequenceConstraints.create(
+                f"constraint_{constraint_counter}"
             )
-            try:
-                assembly_products = self.assembly_lvl1(
-                    abstract_design=design,
-                    product_name=stable_product_name,
-                )
-                product_ids = [
-                    self._serialize_sbol_identity(
-                        product.plasmid_definition if isinstance(product, Plasmid) else product
-                    )
-                    for product in assembly_products
-                ]
+            sc.subject = subj.identity
+            sc.object = obj.identity
+            sc.restriction = sbol2.SBOL_RESTRICTION_PRECEDES
+            constraint_counter += 1
 
-                assembly_transformation = self.transformation(
-                    assembly_products,
-                    chassis_name=chassis_name,
-                    transformation_doc=self.sbol_doc,
-                    **transformation_params,
-                )
-                assembly_plating = self.plating(
-                    transformation_results=assembly_transformation,
-                    results_dir=results_path / "assembly_lvl1" / design_slug / "plating",
-                    protocol_type=protocol_type,
-                    advanced_params=plating_params,
-                    plating_doc=self.sbol_doc,
-                    overwrite=overwrite,
-                )
+        add_precedes(fusion_left_comp, tu_comp)
+        add_precedes(tu_comp, fusion_right_comp)
 
-                manifest["assembly_lvl1"]["successful"].append(
-                    {
-                        "design_identity": design.identity,
-                        "design_display_id": design.displayId,
-                        "assembly_product_identities": product_ids,
-                    }
-                )
-                manifest["transformation"]["assembly_products"][design_slug] = assembly_transformation
-                manifest["plating"]["assembly_products"][design_slug] = assembly_plating
-            except Exception as exc:
-                failure_entry = {
-                    "design_identity": design.identity,
-                    "design_display_id": design.displayId,
-                    "error": str(exc),
-                    "missing_parts": per_design_missing.get(design.identity, []),
-                }
-                manifest["assembly_lvl1"]["failed"].append(failure_entry)
-                manifest["errors"].append(
-                    f"Assembly failed for {design.displayId}: {exc}"
-                )
+        if backbone_comp:
+            add_precedes(fusion_right_comp, backbone_comp)
 
-        sbol_path = results_path / "sbol" / "full_build.xml"
-        try:
-            sbol_path.parent.mkdir(parents=True, exist_ok=True)
-            self.sbol_doc.write(str(sbol_path))
-        except Exception as exc:
-            manifest["errors"].append(f"SBOL write failed: {exc}")
+        # --------------------------------------------------
+        # Build simplified plasmid sequence
+        # --------------------------------------------------
+        ordered_components = [fusion_left_comp, tu_comp, fusion_right_comp]
 
-        manifest_path = self._write_json(results_path / "full_build_manifest.json", manifest)
-        zip_path = results_path / "full_build_results.zip"
-        try:
-            zip_result = self._zip_full_build_results(
-                source_dir=results_path,
-                zip_path=zip_path,
-                overwrite=overwrite,
+        if backbone_comp:
+            ordered_components.append(backbone_comp)
+
+        plas_seq_string, plas_ranges = build_sequence_from_components(
+            ordered_components
+        )
+
+        plas_seq = sbol2.Sequence(
+            simple_plasmid_def.displayId + "_seq",
+            elements=plas_seq_string,
+            encoding=sbol2.SBOL_ENCODING_IUPAC,
+        )
+
+        self.sbol_doc.addSequence(plas_seq)
+        simple_plasmid_def.sequences = [plas_seq.identity]
+
+        new_objs.append(plas_seq)
+
+        for comp_uri, (start, end) in plas_ranges.items():
+            anno = simple_plasmid_def.sequenceAnnotations.create(
+                f"simple_plasmid_def_{start}_{end}_annotation"
             )
-        except Exception as exc:
-            manifest["errors"].append(f"Result packaging failed: {exc}")
-            self._write_json(manifest_path, manifest)
-            zip_result = zip_path
+            anno.component = comp_uri
 
-        status = self._status_from_manifest(manifest)
-        result = {
-            "stage": "full_build",
-            "status": status,
-            "results_dir": str(results_path),
-            "zip_path": str(zip_result),
-            "manifest_path": str(manifest_path),
-            "sbol_path": str(sbol_path),
-            "inputs": manifest["inputs"],
-            "domestication": manifest["domestication"],
-            "assembly_lvl1": manifest["assembly_lvl1"],
-            "transformation": manifest["transformation"],
-            "plating": manifest["plating"],
-            "skipped": manifest["skipped"],
-            "errors": manifest["errors"],
-        }
-        self._write_json(manifest_path, manifest)
-        return result
+            location = anno.locations.createRange(
+                f"{simple_plasmid_def.displayId}_{start}_{end}_location"
+            )
+            location.start = start
+            location.end = end
+
+        # --------------------------------------------------
+        # Construct new plasmid object
+        # --------------------------------------------------
+        new_plasmid = Plasmid(
+            simple_plasmid_def,
+            plasmid.strain_definitions[0],
+            plasmid.plasmid_implementations,
+            plasmid.strain_implementations,
+            self.sbol_doc,
+        )
+
+        return new_plasmid, new_objs
+
+    def _create_RE_implementation(self, name: str):
+        RE_def = rebase_restriction_enzyme(name)
+
+        RE_sourcing = sbol2.Activity(f"{name}_restriction_enzyme_purchase")
+        RE_sourcing.name = "Restriction Enzyme Purchase"
+
+        RE_impl = sbol2.Implementation(f"{RE_def.displayId}_impl")
+
+        RE_impl.built = RE_def.identity
+        RE_impl.wasGeneratedBy = RE_sourcing.identity
+
+        self.sbol_doc.add_list([RE_impl, RE_def])
+
+        if name == "BsaI":
+            self.BsaI_impl = RE_impl
+        elif name == "BbsI":
+            self.BbsI_impl = RE_impl
+
+    def _create_ligase_implementation(self):
+        ligase_def = sbol2.ComponentDefinition("T4_Ligase")
+        ligase_def.name = "T4_Ligase"
+        ligase_def.types = [sbol2.BIOPAX_PROTEIN]
+        ligase_def.roles = ["http://identifiers.org/ncit/NCIT:C16796"]
+
+        ligase_sourcing = sbol2.Activity("ligase_purchase")
+        ligase_sourcing.name = "Ligase Purchase"
+
+        T4_impl = sbol2.Implementation(f"{ligase_def.displayId}_impl")
+
+        T4_impl.built = ligase_def.identity
+        T4_impl.wasGeneratedBy = ligase_sourcing.identity
+
+        self.sbol_doc.add_list([T4_impl, ligase_def])
+        self.T4_ligase_impl = T4_impl
+
+    def _add_if_absent(self, doc: sbol2.Document, obj: Any):
+        if doc.find(obj.identity) is None:
+            doc.add(obj)
 
     def _get_or_create_chassis(
         self, doc: sbol2.Document, chassis_name: str
@@ -1353,20 +1592,29 @@ class BuildCompiler:
         self._add_if_absent(doc, chassis_module)
 
         chassis_impl_id = f"{chassis_name}_impl"
-        chassis_impl = doc.find(chassis_impl_id) or sbol2.Implementation(chassis_impl_id)
+        chassis_impl = doc.find(chassis_impl_id) or sbol2.Implementation(
+            chassis_impl_id
+        )
         chassis_impl.built = chassis_module.identity
         self._add_if_absent(doc, chassis_impl)
         return chassis_module, chassis_impl
 
-    def _get_or_create_plasmid_implementation(
-        self, doc: sbol2.Document, plasmid: sbol2.ComponentDefinition
-    ) -> sbol2.Implementation:
-        plasmid_impl_id = f"{plasmid.displayId}_impl"
-        plasmid_impl = doc.find(plasmid_impl_id) or sbol2.Implementation(plasmid_impl_id)
-        plasmid_impl.built = plasmid.identity
-        self._add_if_absent(doc, plasmid_impl)
-        return plasmid_impl
 
-    def _add_if_absent(self, doc: sbol2.Document, obj: Any):
-        if doc.find(obj.identity) is None:
-            doc.add(obj)
+def _extract_lvl2_TUs(  # TODO send to misc helper file instead of buildcompiler.py?
+    design_doc: sbol2.Document,
+) -> List[sbol2.ComponentDefinition]:
+    """
+    Returns the component definitions of each level-1 component (TU)
+    in the design.
+
+    Args:
+        design: :class:`sbol2.Document` containing the design.
+
+    Returns:
+        A list of TU component definitions in sequential order.
+    """
+    top_design = extract_toplevel_definition(design_doc)
+
+    return [
+        design_doc.get(comp.definition) for comp in top_design.getInSequentialOrder()
+    ]

@@ -254,5 +254,16 @@ Testing priorities:
 - `ARCHITECTURE.md` defines module boundaries and implementation contracts.
 - `AGENT.md` defines how Codex should take tasks, report progress, and escalate decisions.
 - `ADR-001.md` records the clean-architecture rewrite decision and its tradeoffs.
-
 Codex should treat these files as the source of truth for implementation unless the user or ChatGPT explicitly revises them.
+
+#### Running tests locally:
+Run these bash commands to establish your SynBioHub account for collection access. These are saved in GitHub secrets for the automated test suite.
+
+`export SBH_USERNAME=your_username`
+
+`export SBH_PASSWORD=your_password`
+
+Then run the tests with:
+
+`uv run python -m unittest discover -s tests`
+

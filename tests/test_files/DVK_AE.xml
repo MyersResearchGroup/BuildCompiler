@@ -1,0 +1,443 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:prov="http://www.w3.org/ns/prov#" xmlns:sbol="http://sbols.org/v2#" xmlns:xsd="http://www.w3.org/2001/XMLSchema#dateTime/" xmlns:om="http://www.ontology-of-units-of-measure.org/resource/om-2/" xmlns:synbiohub="http://synbiohub.org#" xmlns:sbh="http://wiki.synbiohub.org/wiki/Terms/synbiohub#" xmlns:sybio="http://www.sybio.ncl.ac.uk#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:ncbi="http://www.ncbi.nlm.nih.gov#" xmlns:igem="http://wiki.synbiohub.org/wiki/Terms/igem#" xmlns:genbank="http://www.ncbi.nlm.nih.gov/genbank#" xmlns:gbconv="http://sbols.org/genBankConversion#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:obo="http://purl.obolibrary.org/obo/" xmlns:ns0="https://wiki.synbiohub.org/wiki/Terms/synbiohub#">
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE"/>
+    <sbol:displayId>DVK_AE</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title> DVK_AE</dcterms:title>
+    <dcterms:modified>2026-02-05T23:49:40</dcterms:modified>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbol:type rdf:resource="http://identifiers.org/so/SO:0000988"/>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#Dna"/>
+    <sbol:role rdf:resource="https://identifiers.org/so/SO:0000804"/>
+    <sbol:role rdf:resource="https://identifiers.org/ncit/NCIT:C1919"/>
+    <sbol:component>
+      <sbol:Component rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/Fusion_Site_E_4/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/Fusion_Site_E_4"/>
+        <sbol:displayId>Fusion_Site_E_4</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_E/1"/>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/Fusion_Site_A_2/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/Fusion_Site_A_2"/>
+        <sbol:displayId>Fusion_Site_A_2</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_A/1"/>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/dvk_backbone_core_5/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/dvk_backbone_core_5"/>
+        <sbol:displayId>dvk_backbone_core_5</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/1"/>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/LacZ_cassette_3/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/LacZ_cassette_3"/>
+        <sbol:displayId>LacZ_cassette_3</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/LacZ_cassette/1"/>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEAnnotation0/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEAnnotation0"/>
+        <sbol:displayId>DVK_AEAnnotation0</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+        <sbol:location>
+          <sbol:Range rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEAnnotation0/location0/1">
+            <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEAnnotation0/location0"/>
+            <sbol:displayId>location0</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1"/>
+            <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+            <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+            <sbol:start>1</sbol:start>
+            <sbol:end>4</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/Fusion_Site_A_2/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEAnnotation1/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEAnnotation1"/>
+        <sbol:displayId>DVK_AEAnnotation1</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+        <sbol:location>
+          <sbol:Range rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEAnnotation1/location1/1">
+            <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEAnnotation1/location1"/>
+            <sbol:displayId>location1</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1"/>
+            <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+            <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+            <sbol:start>5</sbol:start>
+            <sbol:end>500</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/LacZ_cassette_3/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEAnnotation2/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEAnnotation2"/>
+        <sbol:displayId>DVK_AEAnnotation2</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+        <sbol:location>
+          <sbol:Range rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEAnnotation2/location2/1">
+            <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEAnnotation2/location2"/>
+            <sbol:displayId>location2</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1"/>
+            <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+            <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+            <sbol:start>501</sbol:start>
+            <sbol:end>504</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/Fusion_Site_E_4/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEAnnotation3/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEAnnotation3"/>
+        <sbol:displayId>DVK_AEAnnotation3</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+        <sbol:location>
+          <sbol:Range rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEAnnotation3/location3/1">
+            <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEAnnotation3/location3"/>
+            <sbol:displayId>location3</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1"/>
+            <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+            <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+            <sbol:start>505</sbol:start>
+            <sbol:end>2731</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/dvk_backbone_core_5/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEConstraint1/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEConstraint1"/>
+        <sbol:displayId>DVK_AEConstraint1</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/Fusion_Site_A_2/1"/>
+        <sbol:object rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/LacZ_cassette_3/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEConstraint2/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEConstraint2"/>
+        <sbol:displayId>DVK_AEConstraint2</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/LacZ_cassette_3/1"/>
+        <sbol:object rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/Fusion_Site_E_4/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEConstraint3/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/DVK_AEConstraint3"/>
+        <sbol:displayId>DVK_AEConstraint3</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/Fusion_Site_E_4/1"/>
+        <sbol:object rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/dvk_backbone_core_5/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE_sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_A/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_A"/>
+    <sbol:displayId>Fusion_Site_A</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>Fusion_Site_A</dcterms:title>
+    <dcterms:description>MoClo standard fusion site A</dcterms:description>
+    <ns0:sourceOrganism rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_562"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_A/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0001953"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_A_sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_E/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_E"/>
+    <sbol:displayId>Fusion_Site_E</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>Fusion_Site_E</dcterms:title>
+    <dcterms:description>MoClo standard fusion site E</dcterms:description>
+    <ns0:sourceOrganism rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_562"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_E/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0001953"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_E_sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/LacZ_cassette/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/LacZ_cassette"/>
+    <sbol:displayId>LacZ_cassette</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>LacZ_cassette</dcterms:title>
+    <dcterms:description>MoClo IPTG inducible LacZ alpha subunit</dcterms:description>
+    <dcterms:modified>2026-04-30T18:50:31</dcterms:modified>
+    <ns0:sourceOrganism rdf:resource="http://purl.obolibrary.org/obo/NCBITaxon_562"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/LacZ_cassette/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000804"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/LacZ_cassette_sequence/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core"/>
+    <sbol:displayId>dvk_backbone_core</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:description>This is the backbone core for Destination Vector Kanamycin (DVK) plasmids. Based on the pSB1K3 plasmid and contains kanamycin gene and a high copy number origin of replication.</dcterms:description>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000755"/>
+    <sbol:component>
+      <sbol:Component rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/Component_ori/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/Component_ori"/>
+        <sbol:displayId>Component_ori</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <obo:OBI_0001617>26479688</obo:OBI_0001617>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/origin_of_replication_pSB1A2/1"/>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/Component_kan/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/Component_kan"/>
+        <sbol:displayId>Component_kan</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <obo:OBI_0001617>26479688</obo:OBI_0001617>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/kan_region/1"/>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/origin_of_replication_pSB1A2_annotation/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/origin_of_replication_pSB1A2_annotation"/>
+        <sbol:displayId>origin_of_replication_pSB1A2_annotation</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <obo:OBI_0001617>26479688</obo:OBI_0001617>
+        <sbol:location>
+          <sbol:Range rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/origin_of_replication_pSB1A2_annotation/ori/1">
+            <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/origin_of_replication_pSB1A2_annotation/ori"/>
+            <sbol:displayId>ori</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/1"/>
+            <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+            <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+            <obo:OBI_0001617>26479688</obo:OBI_0001617>
+            <sbol:start>282</sbol:start>
+            <sbol:end>870</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#reverseComplement"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/Component_ori/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/kan_region_annotation/1">
+        <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/kan_region_annotation"/>
+        <sbol:displayId>kan_region_annotation</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/1"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+        <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+        <obo:OBI_0001617>26479688</obo:OBI_0001617>
+        <sbol:location>
+          <sbol:Range rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/kan_region_annotation/kan/1">
+            <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/kan_region_annotation/kan"/>
+            <sbol:displayId>kan</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/1"/>
+            <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+            <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+            <obo:OBI_0001617>26479688</obo:OBI_0001617>
+            <sbol:start>1103</sbol:start>
+            <sbol:end>1929</sbol:end>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#reverseComplement"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/Component_kan/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core_seq/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/kan_region/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/kan_region"/>
+    <sbol:displayId>kan_region</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:description>Kanamycin resistance gene from the pSB1K3 plasmid.</dcterms:description>
+    <dcterms:modified>2026-04-16T22:44:18</dcterms:modified>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/kan_region/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="https://identifiers.org/so/SO:0000804"/>
+    <sbol:role rdf:resource="https://identifiers.org/ncit/NCIT:C17449"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/kan_region_seq/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/origin_of_replication_pSB1A2/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/origin_of_replication_pSB1A2"/>
+    <sbol:displayId>origin_of_replication_pSB1A2</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:description>Origin of replication from the pSB1A2/pSB1K3 plasmid. pSB1A2 is a high copy number plasmid. The replication origin is a pUC19-derived pMB1 (copy number of 100-300 per cell</dcterms:description>
+    <dcterms:modified>2026-04-16T22:42:31</dcterms:modified>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/origin_of_replication_pSB1A2/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000296"/>
+    <sbol:sequence rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/origin_of_replication_seq/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE_sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE_sequence"/>
+    <sbol:displayId>DVK_AE_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE_sequence/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbol:elements>GGAGAGAGACCTGCACCATATGCGGTGTGAAATACCGCACAGATGCGTAAGGAGAAAATACCGCATCAGGCGCCATTCGCCATTCAGGCTGCGCAACTGTTGGGAAGGGCGATCGGTGCGGGCCTCTTCGCTATTACGCCAGCTGGCGAAAGGGGGATGTGCTGCAAGGCGATTAAGTTGGGTAACGCCAGGGTTTTCCCAGTCACGACGTTGTAAAACGACGGCCAGTGAATTCGAGCTCGGTACCCGGGGATCCTCTAGAGTCGACCTGCAGGCATGCAAGCTTGGCGTAATCATGGTCATAGCTGTTTCCTGTGTGAAATTGTTATCCGCTCACAATTCCACACAACATACGAGCCGGAAGCATAAAGTGTAAAGCCTGGGGTGCCTAATGAGTGAGCTAACTCACATTAATTGCGTTGCGCTCACTGCCCGCTTTCCAGTCGGGAAACCTGTCGTGCCAGCTGCATTAATGAATCGGCCAACGCGCGGGGGTCTCTGCTTatgtcttctactagtagcggccgctgcagtccggcaaaaaagggcaaggtgtcaccaccctgccctttttctttaaaaccgaaaagattacttcgcgttatgcaggcttcctcgctcactgactcgctgcgctcggtcgttcggctgcggcgagcggtatcagctcactcaaaggcggtaatacggttatccacagaatcaggggataacgcaggaaagaacatgtgagcaaaaggccagcaaaaggccaggaaccgtaaaaaggccgcgttgctggcgtttttccacaggctccgcccccctgacgagcatcacaaaaatcgacgctcaagtcagaggtggcgaaacccgacaggactataaagataccaggcgtttccccctggaagctccctcgtgcgctctcctgttccgaccctgccgcttaccggatacctgtccgcctttctcccttcgggaagcgtggcgctttctcatagctcacgctgtaggtatctcagttcggtgtaggtcgttcgctccaagctgggctgtgtgcacgaaccccccgttcagcccgaccgctgcgccttatccggtaactatcgtcttgagtccaacccggtaagacacgacttatcgccactggcagcagccactggtaacaggattagcagagcgaggtatgtaggcggtgctacagagttcttgaagtggtggcctaactacggctacactagaagaacagtatttggtatctgcgctctgctgaagccagttaccttcggaaaaagagttggtagctcttgatccggcaaacaaaccaccgctggtagcggtggtttttttgtttgcaagcagcagattacgcgcagaaaaaaaggatctcaagaagatcctttgatcttttctacggggtctgacgctcagtggaacgaaaactcacgttaagggattttggtcatgagattatcaaaaaggatcttcacctagatccttttaaattaaaaatgaagttttaaatcaatctaaagtatatatgagtaaacttggtctgacagctcgagtcccgtcaagtcagcgtaatgctctgccagtgttacaaccaattaaccaattctgattagaaaaactcatcgagcatcaaatgaaactgcaatttattcatatcaggattatcaataccatatttttgaaaaagccgtttctgtaatgaaggagaaaactcaccgaggcagttccataggatggcaagatcctggtatcggtctgcgattccgactcgtccaacatcaatacaacctattaatttcccctcgtcaaaaataaggttatcaagtgagaaatcaccatgagtgacgactgaatccggtgagaatggcaaaagcttatgcatttctttccagacttgttcaacaggccagccattacgctcgtcatcaaaatcactcgcatcaaccaaaccgttattcattcgtgattgcgcctgagcgagacgaaatacgcgatcgctgttaaaaggacaattacaaacaggaatcgaatgcaaccggcgcaggaacactgccagcgcatcaacaatattttcacctgaatcaggatattcttctaatacctggaatgctgttttcccggggatcgcagtggtgagtaaccatgcatcatcaggagtacggataaaatgcttgatggtcggaagaggcataaattccgtcagccagtttagtctgaccatctcatctgtaacatcattggcaacgctacctttgccatgtttcagaaacaactctggcgcatcgggcttcccatacaatcgatagattgtcgcacctgattgcccgacattatcgcgagcccatttatacccatataaatcagcatccatgttggaatttaatcgcggcctggagcaagacgtttcccgttgaatatggctcataacaccccttgtattactgtttatgtaagcagacagttttattgttcatgatgatatatttttatcttgtgcaatgtaacatcagagattttgagacacaacgtggctttgttgaataaatcgaacttttgctgagttgaaggatcagctcgagtgccacctgacgtctaagaaaccattattatcatgacattaacctataaaaataggcgtatcacgaggcagaatttcagataaaaaaaatccttagctttcgctaaggatgatttctggaattcgcggccgcttctagagactagtggaagacat</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/LacZ_cassette_sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/LacZ_cassette_sequence"/>
+    <sbol:displayId>LacZ_cassette_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>LacZ_cassette Sequence</dcterms:title>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/LacZ_cassette_sequence/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbol:elements>AGAGACCTGCACCATATGCGGTGTGAAATACCGCACAGATGCGTAAGGAGAAAATACCGCATCAGGCGCCATTCGCCATTCAGGCTGCGCAACTGTTGGGAAGGGCGATCGGTGCGGGCCTCTTCGCTATTACGCCAGCTGGCGAAAGGGGGATGTGCTGCAAGGCGATTAAGTTGGGTAACGCCAGGGTTTTCCCAGTCACGACGTTGTAAAACGACGGCCAGTGAATTCGAGCTCGGTACCCGGGGATCCTCTAGAGTCGACCTGCAGGCATGCAAGCTTGGCGTAATCATGGTCATAGCTGTTTCCTGTGTGAAATTGTTATCCGCTCACAATTCCACACAACATACGAGCCGGAAGCATAAAGTGTAAAGCCTGGGGTGCCTAATGAGTGAGCTAACTCACATTAATTGCGTTGCGCTCACTGCCCGCTTTCCAGTCGGGAAACCTGTCGTGCCAGCTGCATTAATGAATCGGCCAACGCGCGGGGGTCTCT</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_A_sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_A_sequence"/>
+    <sbol:displayId>Fusion_Site_A_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>Fusion_Site_A Sequence</dcterms:title>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_A_sequence/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbol:elements>GGAG</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_E_sequence/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_E_sequence"/>
+    <sbol:displayId>Fusion_Site_E_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>Fusion_Site_E Sequence</dcterms:title>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/Fusion_Site_E_sequence/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbol:elements>GCTT</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core_seq/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core_seq"/>
+    <sbol:displayId>dvk_backbone_core_seq</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core_seq/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:elements>atgtcttctactagtagcggccgctgcagtccggcaaaaaagggcaaggtgtcaccaccctgccctttttctttaaaaccgaaaagattacttcgcgttatgcaggcttcctcgctcactgactcgctgcgctcggtcgttcggctgcggcgagcggtatcagctcactcaaaggcggtaatacggttatccacagaatcaggggataacgcaggaaagaacatgtgagcaaaaggccagcaaaaggccaggaaccgtaaaaaggccgcgttgctggcgtttttccacaggctccgcccccctgacgagcatcacaaaaatcgacgctcaagtcagaggtggcgaaacccgacaggactataaagataccaggcgtttccccctggaagctccctcgtgcgctctcctgttccgaccctgccgcttaccggatacctgtccgcctttctcccttcgggaagcgtggcgctttctcatagctcacgctgtaggtatctcagttcggtgtaggtcgttcgctccaagctgggctgtgtgcacgaaccccccgttcagcccgaccgctgcgccttatccggtaactatcgtcttgagtccaacccggtaagacacgacttatcgccactggcagcagccactggtaacaggattagcagagcgaggtatgtaggcggtgctacagagttcttgaagtggtggcctaactacggctacactagaagaacagtatttggtatctgcgctctgctgaagccagttaccttcggaaaaagagttggtagctcttgatccggcaaacaaaccaccgctggtagcggtggtttttttgtttgcaagcagcagattacgcgcagaaaaaaaggatctcaagaagatcctttgatcttttctacggggtctgacgctcagtggaacgaaaactcacgttaagggattttggtcatgagattatcaaaaaggatcttcacctagatccttttaaattaaaaatgaagttttaaatcaatctaaagtatatatgagtaaacttggtctgacagctcgagtcccgtcaagtcagcgtaatgctctgccagtgttacaaccaattaaccaattctgattagaaaaactcatcgagcatcaaatgaaactgcaatttattcatatcaggattatcaataccatatttttgaaaaagccgtttctgtaatgaaggagaaaactcaccgaggcagttccataggatggcaagatcctggtatcggtctgcgattccgactcgtccaacatcaatacaacctattaatttcccctcgtcaaaaataaggttatcaagtgagaaatcaccatgagtgacgactgaatccggtgagaatggcaaaagcttatgcatttctttccagacttgttcaacaggccagccattacgctcgtcatcaaaatcactcgcatcaaccaaaccgttattcattcgtgattgcgcctgagcgagacgaaatacgcgatcgctgttaaaaggacaattacaaacaggaatcgaatgcaaccggcgcaggaacactgccagcgcatcaacaatattttcacctgaatcaggatattcttctaatacctggaatgctgttttcccggggatcgcagtggtgagtaaccatgcatcatcaggagtacggataaaatgcttgatggtcggaagaggcataaattccgtcagccagtttagtctgaccatctcatctgtaacatcattggcaacgctacctttgccatgtttcagaaacaactctggcgcatcgggcttcccatacaatcgatagattgtcgcacctgattgcccgacattatcgcgagcccatttatacccatataaatcagcatccatgttggaatttaatcgcggcctggagcaagacgtttcccgttgaatatggctcataacaccccttgtattactgtttatgtaagcagacagttttattgttcatgatgatatatttttatcttgtgcaatgtaacatcagagattttgagacacaacgtggctttgttgaataaatcgaacttttgctgagttgaaggatcagctcgagtgccacctgacgtctaagaaaccattattatcatgacattaacctataaaaataggcgtatcacgaggcagaatttcagataaaaaaaatccttagctttcgctaaggatgatttctggaattcgcggccgcttctagagactagtggaagacat</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/kan_region_seq/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/kan_region_seq"/>
+    <sbol:displayId>kan_region_seq</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/kan_region_seq/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:elements>caaggggtgttatgagccatattcaacgggaaacgtcttgctccaggccgcgattaaattccaacatggatgctgatttatatgggtataaatgggctcgcgataatgtcgggcaatcaggtgcgacaatctatcgattgtatgggaagcccgatgcgccagagttgtttctgaaacatggcaaaggtagcgttgccaatgatgttacagatgagatggtcagactaaactggctgacggaatttatgcctcttccgaccatcaagcattttatccgtactcctgatgatgcatggttactcaccactgcgatccccgggaaaacagcattccaggtattagaagaatatcctgattcaggtgaaaatattgttgatgcgctggcagtgttcctgcgccggttgcattcgattcctgtttgtaattgtccttttaacagcgatcgcgtatttcgtctcgctcaggcgcaatcacgaatgaataacggtttggttgatgcgagtgattttgatgacgagcgtaatggctggcctgttgaacaagtctggaaagaaatgcataagcttttgccattctcaccggattcagtcgtcactcatggtgatttctcacttgataaccttatttttgacgaggggaaattaataggttgtattgatgttggacgagtcggaatcgcagaccgataccaggatcttgccatcctatggaactgcctcggtgagttttctccttcattacagaaacggctttttcaaaaatatggtattgataatcctgatatgaataaattgcagtttcatttgatgctcgatgagtttttctaa</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="https://synbiohub.org/user/Gon/CIDARMoCloParts/origin_of_replication_seq/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/origin_of_replication_seq"/>
+    <sbol:displayId>origin_of_replication_seq</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/origin_of_replication_seq/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Kerem"/>
+    <obo:OBI_0001617>26479688</obo:OBI_0001617>
+    <sbol:elements>ttgagatcctttttttctgcgcgtaatctgctgcttgcaaacaaaaaaaccaccgctaccagcggtggtttgtttgccggatcaagagctaccaactctttttccgaaggtaactggcttcagcagagcgcagataccaaatactgttcttctagtgtagccgtagttaggccaccacttcaagaactctgtagcaccgcctacatacctcgctctgctaatcctgttaccagtggctgctgccagtggcgataagtcgtgtcttaccgggttggactcaagacgatagttaccggataaggcgcagcggtcgggctgaacggggggttcgtgcacacagcccagcttggagcgaacgacctacaccgaactgagatacctacagcgtgagctatgagaaagcgccacgcttcccgaagggagaaaggcggacaggtatccggtaagcggcagggtcggaacaggagagcgcacgagggagcttccagggggaaacgcctggtatctttatagtcctgtcgggtttcgccacctctgacttgagcgtcgatttttgtgatgctcgtcaggggggcggagcctgtggaaa</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+</rdf:RDF>
