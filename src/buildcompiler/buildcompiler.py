@@ -19,6 +19,7 @@ from buildcompiler.sbol2build import (
 from .abstract_translator import (
     enumerate_design_variants,
     extract_combinatorial_design_parts,
+    extract_toplevel_definition,
     get_or_pull,
     get_compatible_plasmids,
 )
@@ -1612,7 +1613,7 @@ def _extract_lvl2_TUs(  # TODO send to misc helper file instead of buildcompiler
     Returns:
         A list of TU component definitions in sequential order.
     """
-    top_design = design_doc.componentDefinitions[0]
+    top_design = extract_toplevel_definition(design_doc)
 
     return [
         design_doc.get(comp.definition) for comp in top_design.getInSequentialOrder()

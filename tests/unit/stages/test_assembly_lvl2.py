@@ -268,3 +268,30 @@ def test_buildcompiler_assembly_lvl2_respects_supplied_backbone(monkeypatch):
 
     assert products
     assert captured["backbone"] is supplied_lvl2_backbone
+
+
+def test_extract_lvl2_tus_uses_top_level_composite_not_document_order():
+    from buildcompiler.buildcompiler import _extract_lvl2_TUs
+
+    doc = sbol2.Document()
+    tu1 = sbol2.ComponentDefinition("tu1", sbol2.BIOPAX_DNA)
+    tu2 = sbol2.ComponentDefinition("tu2", sbol2.BIOPAX_DNA)
+    composite = sbol2.ComponentDefinition("lvl2_design", sbol2.BIOPAX_DNA)
+
+    # Add child TUs before the composite to ensure extraction does not depend on
+    # ComponentDefinition serialization/document order.
+    doc.addComponentDefinition(tu1)
+    doc.addComponentDefinition(tu2)
+    doc.addComponentDefinition(composite)
+
+    tu1_component = composite.components.create("tu1_component")
+    tu1_component.definition = tu1.identity
+    tu2_component = composite.components.create("tu2_component")
+    tu2_component.definition = tu2.identity
+
+    tu_order = composite.sequenceConstraints.create("tu1_before_tu2")
+    tu_order.subject = tu1_component.identity
+    tu_order.object = tu2_component.identity
+    tu_order.restriction = sbol2.SBOL_RESTRICTION_PRECEDES
+
+    assert _extract_lvl2_TUs(doc) == [tu1, tu2]
