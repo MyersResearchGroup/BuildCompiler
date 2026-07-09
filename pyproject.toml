@@ -3,11 +3,11 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sbol2build"
-version = "0.0.b3"
-description = "SBOL2Build: python package for construction of SBOL objects during build planning"
+name = "synbio-buildcompiler"
+version = "0.0.a1"
+description = "BuildCompiler is an open-source tool that bridges the Design and Build stages of the Synthetic Biology DBTL cycle"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 license = {file = "LICENSE.md"}
 keywords = ["SBOL", "genetic", "automation", "build", "synthetic biology"]
 authors = [
@@ -31,15 +31,26 @@ dependencies = [
 
 [project.optional-dependencies]
 test = [
-  "pytest < 5.0.0",
+  "pytest>=7,<9",
   "pytest-cov[all]"
+]
+automation = [
+  "pudupy",
+  "opentrons",
+  "SBOLInventory @ git+https://github.com/DRAGGON-Lab/SBOLInventory.git ; python_version >= '3.10'",
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/MyersResearchGroup/SBOL2Build"
-"Bug Tracker" = "https://github.com/MyersResearchGroup/SBOL2Build/issues"
+"Homepage" = "https://github.com/MyersResearchGroup/BuildCompiler"
+"Bug Tracker" = "https://github.com/MyersResearchGroup/BuildCompiler/issues"
 
 [dependency-groups]
 dev = [
     "ruff>=0.14.0",
+]
+
+
+[tool.pytest.ini_options]
+markers = [
+  "automation: optional/manual automation tests",
 ]
