@@ -1,0 +1,25 @@
+[
+    {
+        "Product": "https://SBOL2Build.org/offline_multi_1_1/1",
+        "Backbone": "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1",
+        "PartsList": [
+            "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pJ23100_AB/1",
+            "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pB0034_BC/1",
+            "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pE0030_CD/1",
+            "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pB0015_DE/1"
+        ],
+        "Restriction Enzyme": "https://synbiohub.org/user/Gon/Enzyme_Implementations/BsaI/1"
+    }
+    ,
+    {
+        "Product": "https://SBOL2Build.org/offline_multi_2_1/1",
+        "Backbone": "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1",
+        "PartsList": [
+            "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pJ23116_AB/1",
+            "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pB0034_BC/1",
+            "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pE0030_CD/1",
+            "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pB0015_DE/1"
+        ],
+        "Restriction Enzyme": "https://synbiohub.org/user/Gon/Enzyme_Implementations/BsaI/1"
+    }
+]

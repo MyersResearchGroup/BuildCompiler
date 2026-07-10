@@ -88,6 +88,14 @@ def _recommended_actions(result: FullBuildResult) -> list[RecommendedAction]:
             actions.append(RecommendedAction("build_lvl1_engineered_region", "Build the missing engineered region through assembly level 1.", {"missing_identity": missing.missing_identity}))
         elif kind in {"promoter", "rbs", "cds", "terminator"}:
             actions.append(RecommendedAction("run_domestication", "Run domestication for missing part inputs.", {"missing_kind": kind, "missing_identity": missing.missing_identity}))
+        elif kind == "chassis":
+            actions.append(
+                RecommendedAction(
+                    "provide_chassis",
+                    "Add a chassis identity for transformation.",
+                    {"missing_identity": missing.missing_identity},
+                )
+            )
         elif kind in {"backbone", "restriction_enzyme", "ligase", "reagent"}:
             actions.append(RecommendedAction("provide_inventory_or_purchase", "Add missing inventory material or enable explicit purchase support.", {"missing_kind": kind, "missing_identity": missing.missing_identity}))
     for approval in result.required_approvals:

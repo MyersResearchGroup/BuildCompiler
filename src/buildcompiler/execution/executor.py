@@ -13,6 +13,7 @@ from buildcompiler.domain import (
     BuildStatus,
     DesignKind,
     FullBuildResult,
+    IndexedPlasmid,
     MissingBuildInput,
     StageResult,
     StageStatus,
@@ -25,6 +26,7 @@ from buildcompiler.stages import (
     AssemblyLvl1Stage,
     AssemblyLvl2Stage,
     DomesticationStage,
+    TransformationStage,
 )
 
 
@@ -51,6 +53,8 @@ class FullBuildExecutor:
             inventory=context.inventory, options=options
         )
         self.transformation_stage = transformation_stage
+        if self.transformation_stage is None and options.transformation.enabled:
+            self.transformation_stage = TransformationStage(options=options)
         self.plating_stage = plating_stage
 
     @classmethod
@@ -138,7 +142,15 @@ class FullBuildExecutor:
                         )
                         progress = (
                             self._chain(
-                                result.products, stage_results, transformed, plated
+                                result.products,
+                                stage_results,
+                                transformed,
+                                plated,
+                                final_products,
+                                seen_products,
+                                missing_by_key,
+                                approvals,
+                                warnings,
                             )
                             or progress
                         )
@@ -239,7 +251,8 @@ class FullBuildExecutor:
         for product in result.products:
             if product.identity not in seen_products:
                 seen_products.add(product.identity)
-                self.context.inventory.add_generated_product(product)
+                if isinstance(product, IndexedPlasmid):
+                    self.context.inventory.add_generated_product(product)
                 final_products[product.identity] = product
                 progress = True
         return progress
@@ -288,16 +301,40 @@ class FullBuildExecutor:
         stage_results: list[StageResult],
         transformed: set[str],
         plated: set[str],
+        final_products: dict[str, Any],
+        seen_products: set[str],
+        missing_by_key: dict[tuple, MissingBuildInput],
+        approvals: dict[str, Any],
+        warnings: list[Any],
     ) -> bool:
         progress = False
         if self.transformation_stage is None:
             return False
         for product in products:
-            if product.identity in transformed:
+            if not isinstance(product, IndexedPlasmid):
                 continue
-            transformed.add(product.identity)
-            t_result = self.transformation_stage.run(product)
+            transform_key = (
+                product.identity,
+                self.context.options.transformation.chassis_identity,
+            )
+            if str(transform_key) in transformed:
+                continue
+            transformed.add(str(transform_key))
+            t_result = self.transformation_stage.run(
+                product,
+                source_document=self.context.build_document,
+                target_document=self.context.build_document,
+            )
             stage_results.append(t_result)
+            warnings.extend(t_result.warnings)
+            for approval in t_result.required_approvals:
+                approvals[str(approval)] = approval
+            for missing in t_result.missing_inputs:
+                missing_by_key[self._missing_key(missing)] = missing
+            for transformed_product in t_result.products:
+                if transformed_product.identity not in seen_products:
+                    seen_products.add(transformed_product.identity)
+                    final_products[transformed_product.identity] = transformed_product
             progress = True
             if self.plating_stage is None:
                 continue

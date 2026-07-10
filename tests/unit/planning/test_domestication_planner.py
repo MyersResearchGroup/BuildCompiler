@@ -2,7 +2,10 @@ import sbol2
 import pytest
 
 from buildcompiler.constants import PART_ROLES
-from buildcompiler.planning import DomesticationPlanner
+from buildcompiler.planning import (
+    DomesticationPlanner,
+    select_deterministic_flanking_sequence,
+)
 
 
 def _part(identity: str, role: str, sequence: str | None = None) -> sbol2.ComponentDefinition:
@@ -50,3 +53,11 @@ def test_bsai_sites_create_edit_proposals_without_mutating_sequence() -> None:
     assert plan.sequence_edit_proposals[0].site_sequence == "GGTCTC"
     seq = part.doc.find(part.sequences[0])
     assert seq.elements == original
+
+
+def test_deterministic_flanking_sequence_is_explicit_todo() -> None:
+    with pytest.raises(NotImplementedError, match="planned TODO"):
+        select_deterministic_flanking_sequence(
+            source_sequence="ATGC",
+            flank_length=35,
+        )

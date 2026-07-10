@@ -1,9 +1,10 @@
 import sbol2
 import unittest
-import sys
-import os
 import copy
+import os
+import sys
 from collections import Counter
+from pathlib import Path
 
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
@@ -11,6 +12,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../s
 from buildcompiler.buildcompiler import BuildCompiler, _extract_lvl2_TUs
 
 from buildcompiler.abstract_translator import extract_toplevel_definition, get_or_pull
+from buildcompiler.api import domestication
+from buildcompiler.domain import IndexedBackbone, IndexedReagent, StageStatus
+from buildcompiler.inventory import Inventory
 
 
 class Test_Buildcompiler_Functions(unittest.TestCase):
@@ -20,9 +24,8 @@ class Test_Buildcompiler_Functions(unittest.TestCase):
         password = os.environ.get("SBH_PASSWORD")
 
         if not username or not password:
-            raise RuntimeError(
-                "Missing SBH_USERNAME and/or SBH_PASSWORD environment variables"
-            )
+            cls.buildcompiler = None
+            return
         sbh = sbol2.PartShop("https://api.synbiohub.org")
         sbh.login(username, password)
 
@@ -43,7 +46,12 @@ class Test_Buildcompiler_Functions(unittest.TestCase):
             collections, "https://api.synbiohub.org", auth, source, server_mode=True
         )
 
+    def skip_without_synbiohub_credentials(self):
+        if self.buildcompiler is None:
+            self.skipTest("Missing SBH_USERNAME and/or SBH_PASSWORD")
+
     def test_simple_lvl1_assembly(self):
+        self.skip_without_synbiohub_credentials()
         abstract_design_doc = sbol2.Document()
         abstract_design_doc.read("tests/test_files/moclo_parts_circuit.xml")
 
@@ -132,6 +140,7 @@ class Test_Buildcompiler_Functions(unittest.TestCase):
         )
 
     def test_two_rbs_combinatorial_translation(self):
+        self.skip_without_synbiohub_credentials()
         comb_doc = sbol2.Document()
         comb_doc.read("tests/test_files/combinatorial_1.xml")
 
@@ -177,6 +186,7 @@ class Test_Buildcompiler_Functions(unittest.TestCase):
     def test_complex_combinatorial_translation(
         self,
     ):  # testing combinatorial design with 3 variable promoters and RBSs
+        self.skip_without_synbiohub_credentials()
         complex_comb_doc = sbol2.Document()
         complex_comb_doc.read("tests/test_files/complex_combinatorial_abstract.xml")
 
@@ -256,6 +266,7 @@ class Test_Buildcompiler_Functions(unittest.TestCase):
         )
 
     def test_simple_lvl2_assembly(self):
+        self.skip_without_synbiohub_credentials()
         """
         High-level integration test for lvl2 assembly.
 
@@ -490,6 +501,7 @@ class Test_Buildcompiler_Functions(unittest.TestCase):
         )
 
     def test_transformation(self):
+        self.skip_without_synbiohub_credentials()
         transformation_doc = sbol2.Document()
 
         chassis_md = sbol2.ModuleDefinition("E_coli_DH5alpha")
@@ -676,6 +688,237 @@ class Test_Buildcompiler_Functions(unittest.TestCase):
                 assembly_products=[invalid_plasmid],
                 transformation_doc=transformation_doc,
             )
+
+    def test_from_local_documents_merges_downloaded_collections_offline(self):
+        fixture_paths = [
+            "tests/test_files/CIDARMoCloParts_collection.xml",
+            "tests/test_files/CIDARMoCloPlasmidsKit_collection.xml",
+            "tests/test_files/Enzyme_Implementations_collection.xml",
+            "tests/test_files/impl_test_collection.xml",
+        ]
+        missing = [path for path in fixture_paths if not Path(path).exists()]
+        if missing:
+            self.skipTest(f"Missing downloaded SBOL fixture(s): {missing}")
+
+        docs = []
+        for path in fixture_paths:
+            doc = sbol2.Document()
+            doc.read(path)
+            docs.append(doc)
+
+        compiler = BuildCompiler.from_local_documents(docs)
+
+        self.assertIsNone(compiler.sbh)
+        self.assertGreaterEqual(len(compiler.sbol_doc.componentDefinitions), 90)
+        self.assertGreaterEqual(len(compiler.indexed_plasmids), 20)
+        self.assertGreaterEqual(len(compiler.indexed_backbones), 4)
+        self.assertGreaterEqual(len(compiler.restriction_enzyme_implementations), 2)
+        self.assertGreaterEqual(len(compiler.ligase_implementations), 1)
+
+    def test_local_collections_support_two_offline_lvl1_designs(self):
+        collection_paths = [
+            "tests/test_files/CIDARMoCloParts_collection.xml",
+            "tests/test_files/CIDARMoCloPlasmidsKit_collection.xml",
+            "tests/test_files/Enzyme_Implementations_collection.xml",
+            "tests/test_files/impl_test_collection.xml",
+        ]
+        design_paths = [
+            "tests/test_files/moclo_parts_circuit.xml",
+            "tests/test_files/mocloparts116.xml",
+        ]
+        missing = [
+            path
+            for path in [*collection_paths, *design_paths]
+            if not Path(path).exists()
+        ]
+        if missing:
+            self.skipTest(f"Missing downloaded SBOL fixture(s): {missing}")
+
+        collection_docs = []
+        for path in collection_paths:
+            doc = sbol2.Document()
+            doc.read(path)
+            collection_docs.append(doc)
+
+        design_docs = []
+        designs = []
+        for path in design_paths:
+            doc = sbol2.Document()
+            doc.read(path)
+            design_docs.append(doc)
+            designs.append(
+                next(cd for cd in doc.componentDefinitions if len(cd.components) > 1)
+            )
+
+        compiler = BuildCompiler.from_local_documents(
+            collection_docs, design_doc=design_docs[0]
+        )
+        compiler.index_document(design_docs[1])
+
+        product_names = []
+        combined_pudu_payload = []
+        for index, design in enumerate(designs, start=1):
+            product_doc = sbol2.Document()
+            assembly_dict, product_doc = compiler.assembly_lvl1(
+                [design],
+                final_doc=product_doc,
+                product_name=f"offline_multi_{index}",
+            )
+            products = assembly_dict[design.identity]
+            self.assertEqual(len(products), 1)
+            self.assertGreaterEqual(len(product_doc.componentDefinitions), 1)
+            product_names.append(products[0].plasmid_definition.displayId)
+            combined_pudu_payload.extend(compiler.last_assembly_pudu_json)
+
+        self.assertEqual(
+            product_names,
+            ["qlSBuNBL_offline_multi_1", "i0mwvNcgH_offline_multi_2"],
+        )
+        expected_payload = [
+            {
+                "Product": "http://buildcompiler.org/qlSBuNBL_offline_multi_1/1",
+                "Backbone": "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1",
+                "PartsList": [
+                    "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pJ23100_AB/1",
+                    "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pB0034_BC/1",
+                    "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pE0030_CD/1",
+                    "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pB0015_DE/1",
+                ],
+                "Restriction Enzyme": "https://synbiohub.org/user/Gon/Enzyme_Implementations/BsaI/1",
+            },
+            {
+                "Product": "http://buildcompiler.org/i0mwvNcgH_offline_multi_2/1",
+                "Backbone": "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1",
+                "PartsList": [
+                    "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pJ23116_AB/1",
+                    "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pB0034_BC/1",
+                    "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pE0030_CD/1",
+                    "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pB0015_DE/1",
+                ],
+                "Restriction Enzyme": "https://synbiohub.org/user/Gon/Enzyme_Implementations/BsaI/1",
+            },
+        ]
+        self.assertCountEqual(combined_pudu_payload, expected_payload)
+
+    def test_local_collections_support_four_part_domestication_from_index(self):
+        collection_paths = [
+            "tests/test_files/CIDARMoCloParts_collection.xml",
+            "tests/test_files/CIDARMoCloPlasmidsKit_collection.xml",
+            "tests/test_files/Enzyme_Implementations_collection.xml",
+            "tests/test_files/impl_test_collection.xml",
+        ]
+        missing = [path for path in collection_paths if not Path(path).exists()]
+        if missing:
+            self.skipTest(f"Missing downloaded SBOL fixture(s): {missing}")
+
+        collection_docs = []
+        for path in collection_paths:
+            doc = sbol2.Document()
+            doc.read(path)
+            collection_docs.append(doc)
+
+        compiler = BuildCompiler.from_local_documents(collection_docs)
+        backbones = []
+        seen = set()
+        for indexed in [*compiler.indexed_backbones, *compiler.indexed_plasmids]:
+            definition = getattr(indexed, "plasmid_definition", None)
+            fusion_sites = tuple(getattr(indexed, "fusion_sites", ()) or ())
+            antibiotic = getattr(indexed, "antibiotic_resistance", None)
+            if (
+                definition is None
+                or not fusion_sites
+                or antibiotic != "Ampicillin"
+                or definition.identity in seen
+            ):
+                continue
+            seen.add(definition.identity)
+            backbones.append(
+                IndexedBackbone(
+                    identity=definition.identity,
+                    display_id=definition.displayId,
+                    metadata={
+                        "fusion_sites": fusion_sites,
+                        "antibiotic": antibiotic,
+                        "insertion_index": 0,
+                    },
+                    sbol_component=definition,
+                )
+            )
+
+        reagents = []
+        for impl in compiler.restriction_enzyme_implementations:
+            definition = compiler.sbol_doc.find(impl.built)
+            reagents.append(
+                IndexedReagent(
+                    definition.identity,
+                    display_id=definition.displayId,
+                    name=definition.displayId,
+                    reagent_type="restriction_enzyme",
+                )
+            )
+        for impl in compiler.ligase_implementations:
+            definition = compiler.sbol_doc.find(impl.built)
+            reagents.append(
+                IndexedReagent(
+                    definition.identity,
+                    display_id=definition.displayId,
+                    name=definition.displayId,
+                    reagent_type="ligase",
+                )
+            )
+
+        inventory = Inventory(backbones=backbones, reagents=reagents)
+        part_ids = ["J23100", "B0034", "E0030_yfp", "B0015"]
+        expected_fusion_sites = {
+            "J23100": ["GGAG", "TACT"],
+            "B0034": ["TACT", "AATG"],
+            "E0030_yfp": ["AATG", "AGGT"],
+            "B0015": ["AGGT", "GCTT"],
+        }
+        target_doc = sbol2.Document()
+
+        parts = []
+        for display_id in part_ids:
+            parts.append(next(
+                cd
+                for cd in compiler.sbol_doc.componentDefinitions
+                if cd.displayId == display_id
+            ))
+
+        results = domestication(
+            parts,
+            inventory=inventory,
+            source_document=compiler.sbol_doc,
+            target_document=target_doc,
+        )
+
+        for display_id, result in zip(part_ids, results, strict=True):
+            self.assertEqual(result.status, StageStatus.SUCCESS)
+            artifact = result.protocol_artifacts["domestication"]
+            source_sequence = artifact["source_sequence"]
+            domesticated_sequence = artifact["domesticated_part_sequence"]
+            generated_insert = artifact["generated_insert_sequence"]
+            left, right = expected_fusion_sites[display_id]
+            self.assertEqual(artifact["fusion_site_sequences"], [left, right])
+            self.assertEqual(generated_insert[35:41], "GGTCTC")
+            self.assertEqual(generated_insert[41:45], left)
+            self.assertEqual(
+                generated_insert[45 : 45 + len(domesticated_sequence)],
+                domesticated_sequence,
+            )
+            right_start = 45 + len(domesticated_sequence)
+            self.assertEqual(generated_insert[right_start : right_start + 4], right)
+            self.assertEqual(
+                generated_insert[right_start + 4 : right_start + 10], "GAGACC"
+            )
+            self.assertEqual(
+                len(generated_insert),
+                35 + 6 + 4 + len(domesticated_sequence) + 4 + 6 + 35,
+            )
+            self.assertIn(artifact["backbone_sequence"], artifact["final_plasmid_sequence"])
+            self.assertNotIn("GGTCTC", domesticated_sequence)
+            self.assertNotIn("GAGACC", domesticated_sequence)
+            self.assertEqual(len(source_sequence), len(domesticated_sequence))
 
 
 if __name__ == "__main__":

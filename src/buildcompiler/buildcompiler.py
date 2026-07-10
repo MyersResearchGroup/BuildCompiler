@@ -24,7 +24,6 @@ from .abstract_translator import (
     get_compatible_plasmids,
 )
 from .robotutils import (
-    assembly_plan_RDF_to_JSON,
     generate_96_well_positions,
     normalize_plating_input,
     run_opentrons_script_to_zip,
@@ -33,6 +32,7 @@ from .robotutils import (
     write_plate_map_json,
     write_plating_protocol_script,
 )
+from .adapters.pudu import legacy_assembly_routes_to_pudu_json
 from .constants import (
     AMP,
     ENGINEERED_REGION,
@@ -77,6 +77,9 @@ class BuildCompiler:
         self.sbol_doc = sbol_doc or sbol2.Document()
         self.indexed_plasmids = []
         self.indexed_backbones = []
+        self.restriction_enzyme_implementations = []
+        self.ligase_implementations = []
+        self.last_assembly_pudu_json = []
         self.BsaI_impl = None
         self.BbsI_impl = None
         self.T4_ligase_impl = None
@@ -93,11 +96,16 @@ class BuildCompiler:
         """Create a BuildCompiler instance from already-loaded local SBOL documents."""
         compiler = cls.__new__(cls)
         compiler.sbh = None
+        compiler.server_mode = False
         compiler.sbol_doc = sbol2.Document()
         compiler.indexed_plasmids = []
         compiler.indexed_backbones = []
         compiler.restriction_enzyme_implementations = []
         compiler.ligase_implementations = []
+        compiler.last_assembly_pudu_json = []
+        compiler.BsaI_impl = None
+        compiler.BbsI_impl = None
+        compiler.T4_ligase_impl = None
 
         if design_doc is not None:
             compiler.index_document(design_doc)
@@ -134,14 +142,15 @@ class BuildCompiler:
     def _merge_document(self, source_doc: sbol2.Document):
         try:
             self.sbol_doc.appendString(source_doc.writeString())
-        except RuntimeError as exc:
-            if "SBOL_ERROR_URI_NOT_UNIQUE" in str(exc):
-                for top_level in source_doc.SBOLObjects.values():
-                    if top_level.identity in self.sbol_doc:
-                        continue
-                    self.sbol_doc.add(top_level.copy())
-            else:
+        except (RuntimeError, sbol2.SBOLError) as exc:
+            duplicate_markers = (
+                "SBOL_ERROR_URI_NOT_UNIQUE",
+                "DUPLICATE_URI_ERROR",
+                "would require overwriting",
+            )
+            if not any(marker in str(exc) for marker in duplicate_markers):
                 raise
+            self.sbol_doc.appendString(source_doc.writeString(), overwrite=True)
 
     def _resolve_object(self, uri: str):
         existing = self.sbol_doc.find(uri)
@@ -157,10 +166,13 @@ class BuildCompiler:
     def _index_current_document(self):
         self._index_document_objects(self.sbol_doc)
 
-        for implementation in self.sbol_doc.implementations:
-            built_object = get_or_pull(
-                self.sbol_doc, self.sbh, implementation.built, self.server_mode
-            )
+    def _append_implementation_once(self, implementations: list, implementation):
+        if not any(existing.identity == implementation.identity for existing in implementations):
+            implementations.append(implementation)
+
+    def _index_document_objects(self, source_doc: sbol2.Document):
+        for implementation in source_doc.implementations:
+            built_object = self._resolve_object(implementation.built)
             if (
                 type(built_object) is sbol2.ModuleDefinition
                 and ORGANISM_STRAIN in built_object.roles
@@ -202,6 +214,9 @@ class BuildCompiler:
                         )
             elif sbol2.BIOPAX_PROTEIN in built_object.types:
                 if RESTRICTION_ENZYME in built_object.roles:
+                    self._append_implementation_once(
+                        self.restriction_enzyme_implementations, implementation
+                    )
                     if (
                         "http://rebase.neb.com/rebase/enz/BsaI.html"
                         in built_object.wasDerivedFrom
@@ -213,6 +228,9 @@ class BuildCompiler:
                     ):
                         self.BbsI_impl = implementation
                 elif LIGASE in built_object.roles:
+                    self._append_implementation_once(
+                        self.ligase_implementations, implementation
+                    )
                     self.T4_ligase_impl = implementation
 
         for strain in source_doc.moduleDefinitions:
@@ -357,11 +375,20 @@ class BuildCompiler:
                 self.sbol_doc.add(insert_impl)
                 dsDNAs.append(insert_impl)
 
+            insert_plasmid = type(
+                "DomesticationInsertPlasmid",
+                (),
+                {
+                    "plasmid_definition": insert_definition,
+                    "plasmid_implementations": [insert_impl],
+                },
+            )()
             assembly = Assembly(
-                [Plasmid(insert_definition, None, [insert_impl], [], self.sbol_doc)],
+                [insert_plasmid],
                 backbone,
                 self.BsaI_impl,
                 self.T4_ligase_impl,
+                self.sbol_doc,
                 self.sbol_doc,
             )
             assembly_products, assembly_doc = assembly.run()
@@ -390,6 +417,7 @@ class BuildCompiler:
         """
 
         assembly_dict = {}
+        pudu_payloads = []
         if type(abstract_designs) is sbol2.CombinatorialDerivation:
             abstract_design_def = self.sbol_doc.getComponentDefinition(
                 abstract_designs.masterTemplate
@@ -444,6 +472,19 @@ class BuildCompiler:
                 composite_plasmids, final_doc = (
                     assembly.run()
                 )  # TODO upload product_doc?
+                pudu_payloads.extend(
+                    legacy_assembly_routes_to_pudu_json(
+                        product_plasmids=composite_plasmids,
+                        part_plasmid_routes=[
+                            compatible_plasmids
+                            for _ in range(len(composite_plasmids))
+                        ],
+                        backbones=[backbone for _ in range(len(composite_plasmids))],
+                        restriction_enzymes=[
+                            self.BsaI_impl for _ in range(len(composite_plasmids))
+                        ],
+                    )
+                )
 
                 self.indexed_plasmids.extend(
                     composite_plasmids
@@ -504,12 +545,28 @@ class BuildCompiler:
                 composite_plasmids, final_doc = (
                     assembly.run()
                 )  # TODO upload product_doc?
+                pudu_payloads.extend(
+                    legacy_assembly_routes_to_pudu_json(
+                        product_plasmids=composite_plasmids,
+                        part_plasmid_routes=[
+                            compatible_plasmids
+                            for _ in range(len(composite_plasmids))
+                        ],
+                        backbones=[
+                            resolved_backbone for _ in range(len(composite_plasmids))
+                        ],
+                        restriction_enzymes=[
+                            self.BsaI_impl for _ in range(len(composite_plasmids))
+                        ],
+                    )
+                )
 
                 self.indexed_plasmids.extend(
                     composite_plasmids
                 )  # see about using a wrapper function to do this, where it checks if the design already exists (like in index_collections). this way we avoid duplicate issues that might come with loading the abstract design definitions into the self.sbol_doc ahead of time
                 assembly_dict[abstract_design.identity] = composite_plasmids
 
+        self.last_assembly_pudu_json = pudu_payloads
         return assembly_dict, final_doc
 
     def assembly_lvl2(
@@ -1145,10 +1202,7 @@ class BuildCompiler:
             A list of component definitions in sequential order.
         """
         component_list = [c for c in design.getInSequentialOrder()]
-        return [
-            get_or_pull(self.sbol_doc, self.sbh, component.definition, self.server_mode)
-            for component in component_list
-        ]
+        return [self._resolve_object(component.definition) for component in component_list]
 
     def extract_combinatorial_design_parts(
         self,

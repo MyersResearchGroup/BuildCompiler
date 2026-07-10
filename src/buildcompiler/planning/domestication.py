@@ -43,7 +43,8 @@ class DomesticationPlanner:
         part_role = classify_part_role(part_component)
         if part_role is None:
             raise ValueError(
-                f"Unsupported domestication role for part {part_component.identity}; expected promoter/rbs/cds/terminator"
+                "Unsupported domestication role for part "
+                f"{part_component.identity}; expected promoter/rbs/cds/terminator"
             )
 
         sequence = self._resolve_sequence(part_component)
@@ -62,7 +63,10 @@ class DomesticationPlanner:
                         position=index,
                         original_sequence=site,
                         proposed_sequence=f"{site[:-1]}A",
-                        reason="Internal BsaI recognition site detected; human-reviewed edit required.",
+                        reason=(
+                            "Internal BsaI recognition site detected; "
+                            "human-reviewed edit required."
+                        ),
                     )
                 )
                 start = index + 1
@@ -81,3 +85,16 @@ class DomesticationPlanner:
             if isinstance(elements, str) and elements:
                 return elements.upper()
         raise ValueError(f"Part {part_component.identity} is missing a usable DNA sequence")
+
+
+def select_deterministic_flanking_sequence(
+    *,
+    source_sequence: str,
+    flank_length: int,
+    forbidden_sites: tuple[str, ...] = ("GGTCTC", "GAGACC"),
+) -> str:
+    """TODO: choose deterministic domestication flanks that avoid forbidden sites."""
+
+    raise NotImplementedError(
+        "Deterministic domestication flanking sequence selection is a planned TODO."
+    )

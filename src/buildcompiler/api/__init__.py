@@ -1,6 +1,13 @@
 """Public API contracts, options, and compiler facade for BuildCompiler."""
 
-from .compiler import BuildCompiler, full_build
+from .compiler import (
+    BuildCompiler,
+    assembly_lvl1,
+    assembly_lvl2,
+    domestication,
+    full_build,
+    transformation,
+)
 from .options import (
     ApprovalOptions,
     BuildOptions,
@@ -14,6 +21,7 @@ from .options import (
     ReagentOptions,
     ReportingOptions,
     SelectionOptions,
+    TransformationOptions,
 )
 
 __all__ = [
@@ -30,5 +38,10 @@ __all__ = [
     "ReagentOptions",
     "ReportingOptions",
     "SelectionOptions",
+    "TransformationOptions",
+    "assembly_lvl1",
+    "assembly_lvl2",
+    "domestication",
     "full_build",
+    "transformation",
 ]

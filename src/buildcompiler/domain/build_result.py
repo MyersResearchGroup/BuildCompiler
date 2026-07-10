@@ -6,7 +6,7 @@ from typing import Any
 from .approvals import RequiredApproval
 from .build_stage import BuildStage
 from .missing_input import MissingBuildInput
-from .plasmid import IndexedPlasmid
+from .plasmid import IndexedPlasmid, IndexedStrain
 from .status import BuildStatus, StageStatus
 from .warnings import BuildWarning
 
@@ -19,7 +19,7 @@ class StageResult:
     stage: BuildStage
     status: StageStatus
     request_ids: list[str] = field(default_factory=list)
-    products: list[IndexedPlasmid] = field(default_factory=list)
+    products: list[IndexedPlasmid | IndexedStrain] = field(default_factory=list)
     missing_inputs: list[MissingBuildInput] = field(default_factory=list)
     required_approvals: list[RequiredApproval] = field(default_factory=list)
     warnings: list[BuildWarning] = field(default_factory=list)
@@ -42,7 +42,7 @@ class FullBuildResult:
     build_document: Any
     stage_results: list[StageResult] = field(default_factory=list)
     graph: Any = None
-    final_products: list[IndexedPlasmid] = field(default_factory=list)
+    final_products: list[IndexedPlasmid | IndexedStrain] = field(default_factory=list)
     missing_inputs: list[MissingBuildInput] = field(default_factory=list)
     required_approvals: list[RequiredApproval] = field(default_factory=list)
     warnings: list[BuildWarning] = field(default_factory=list)

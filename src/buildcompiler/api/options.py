@@ -78,6 +78,13 @@ class DomesticationOptions:
 
 
 @dataclass
+class TransformationOptions:
+    enabled: bool = False
+    chassis_identity: str | None = None
+    chassis_display_id: str | None = None
+
+
+@dataclass
 class BuildOptions:
     planning: PlanningOptions = field(default_factory=PlanningOptions)
     execution: ExecutionOptions = field(default_factory=ExecutionOptions)
@@ -87,3 +94,4 @@ class BuildOptions:
     approvals: ApprovalOptions = field(default_factory=ApprovalOptions)
     reagents: ReagentOptions = field(default_factory=ReagentOptions)
     domestication: DomesticationOptions = field(default_factory=DomesticationOptions)
+    transformation: TransformationOptions = field(default_factory=TransformationOptions)

@@ -1,0 +1,34 @@
+{
+    "status": "success",
+    "stage_path": [
+        {
+            "stage": "assembly_lvl1",
+            "status": "blocked",
+            "logs": [
+                "Blocked lvl1 assembly for notebook:assembly_lvl1:missing_promoter; missing 1 required input(s)."
+            ]
+        },
+        {
+            "stage": "domestication",
+            "status": "success",
+            "logs": [
+                "Generated domesticated lvl0 product http://buildcompiler.org/1_lvl0/1."
+            ]
+        },
+        {
+            "stage": "assembly_lvl1",
+            "status": "success",
+            "logs": [
+                "Selected lvl1 route with 4 part plasmid(s).",
+                "Notebook assembly service produced lvl1 product."
+            ]
+        }
+    ],
+    "final_products": [
+        "http://buildcompiler.org/1_lvl0/1",
+        "http://buildcompiler.org/abstract_lvl1_missing_promoter_assembled/1"
+    ],
+    "domesticated_products": [
+        "http://buildcompiler.org/1_lvl0/1"
+    ]
+}

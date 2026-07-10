@@ -84,7 +84,7 @@ def _kind_for_identity(identity: str) -> str:
         return "engineered_region"
     if "plasmid" in value:
         return "plasmid"
-    if "strain" in value:
+    if "strain" in value or "transformed" in value:
         return "strain"
     if "plate" in value:
         return "plate"

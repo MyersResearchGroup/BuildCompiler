@@ -5,6 +5,7 @@ from __future__ import annotations
 import sbol2
 
 from buildcompiler.api.options import BuildOptions, ProtocolMode
+from buildcompiler.constants import AMP
 from buildcompiler.domain import (
     ApprovalStatus,
     BuildRequest,
@@ -17,7 +18,12 @@ from buildcompiler.domain import (
 )
 from buildcompiler.inventory import Inventory
 from buildcompiler.planning.domestication import DomesticationPlanner
-from buildcompiler.sbol.domestication import DomesticationJob, DomesticationService
+from buildcompiler.sbol.domestication import (
+    FUSION_SITE_SEQUENCE_TO_NAME,
+    ROLE_TO_FUSION_SITE_SEQUENCES,
+    DomesticationJob,
+    DomesticationService,
+)
 
 
 class DomesticationStage:
@@ -68,9 +74,25 @@ class DomesticationStage:
             )
 
         missing_inputs: list[MissingBuildInput] = []
-        backbone = self.inventory.find_backbone(stage=BuildStage.DOMESTICATION)
+        fusion_site_sequences = ROLE_TO_FUSION_SITE_SEQUENCES[plan.part_role]
+        fusion_site_names = tuple(
+            FUSION_SITE_SEQUENCE_TO_NAME[site] for site in fusion_site_sequences
+        )
+        backbone = self.inventory.find_backbone(
+            fusion_sites=fusion_site_names,
+            antibiotic=AMP,
+        )
         if backbone is None:
-            missing_inputs.append(MissingBuildInput(BuildStage.DOMESTICATION, request.source_identity, "backbone", None, "backbone", "fatal", "No domestication backbone found in inventory."))
+            missing_inputs.append(MissingBuildInput(
+                BuildStage.DOMESTICATION,
+                request.source_identity,
+                "backbone",
+                None,
+                "backbone",
+                "fatal",
+                "No compatible Ampicillin domestication backbone found in inventory "
+                f"for fusion sites {fusion_site_names}.",
+            ))
 
         restriction = self.inventory.find_restriction_enzyme(self.options.reagents.default_restriction_enzyme)
         if restriction is None:
@@ -133,6 +155,9 @@ class DomesticationStage:
                 ligase=ligase,
                 source_document=source_document,
                 target_document=target_document,
+                part_role=plan.part_role,
+                fusion_site_sequences=fusion_site_sequences,
+                fusion_site_names=fusion_site_names,
                 sequence_edit_proposals=plan.sequence_edit_proposals,
             )
         )

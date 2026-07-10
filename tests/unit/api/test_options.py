@@ -12,6 +12,9 @@ def test_build_options_defaults_match_contract():
     assert options.reagents.default_restriction_enzyme == "BsaI"
     assert options.reagents.default_ligase == "T4_DNA_ligase"
     assert options.domestication.allow_sequence_domestication_edits is False
+    assert options.transformation.enabled is False
+    assert options.transformation.chassis_identity is None
+    assert options.transformation.chassis_display_id is None
     assert options.planning.combinatorial.max_variants == 256
     assert options.planning.combinatorial.allow_large_expansion is False
     assert options.planning.lvl2_search.max_exhaustive_region_count == 4
@@ -30,8 +33,10 @@ def test_mutable_defaults_are_isolated_across_instances():
     left.approvals.approved_approval_ids.add("approval-1")
     left.planning.combinatorial.max_variants = 1024
     left.reporting.max_rejected_routes = 10
+    left.transformation.chassis_identity = "dh5alpha"
 
     assert right.approvals.approved_processes == set()
     assert right.approvals.approved_approval_ids == set()
     assert right.planning.combinatorial.max_variants == 256
     assert right.reporting.max_rejected_routes == 3
+    assert right.transformation.chassis_identity is None

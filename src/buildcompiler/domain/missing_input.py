@@ -15,6 +15,7 @@ MissingKind = Literal[
     "restriction_enzyme",
     "ligase",
     "reagent",
+    "chassis",
 ]
 
 

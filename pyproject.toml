@@ -1,14 +1,14 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=40.8.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "synbio-buildcompiler"
-version = "0.0.a1"
+version = "0.0.1a1"
 description = "BuildCompiler is an open-source tool that bridges the Design and Build stages of the Synthetic Biology DBTL cycle"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {file = "LICENSE.md"}
+license = {file = "LICENSE"}
 keywords = ["SBOL", "genetic", "automation", "build", "synthetic biology"]
 authors = [
   { name="Gonzalo Vidal", email="gonzalo.vidalpena@colorado.edu" },
@@ -19,8 +19,13 @@ maintainers = [
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
 
 dependencies = [
@@ -34,6 +39,13 @@ test = [
   "pytest>=7,<9",
   "pytest-cov[all]"
 ]
+dev = [
+  "pytest>=7,<9",
+  "pytest-cov[all]",
+  "ruff>=0.14.0",
+  "build>=1.2",
+  "twine>=5.0",
+]
 automation = [
   "pudupy",
   "opentrons",
@@ -43,6 +55,14 @@ automation = [
 [project.urls]
 "Homepage" = "https://github.com/MyersResearchGroup/BuildCompiler"
 "Bug Tracker" = "https://github.com/MyersResearchGroup/BuildCompiler/issues"
+"Source" = "https://github.com/MyersResearchGroup/BuildCompiler"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [dependency-groups]
 dev = [

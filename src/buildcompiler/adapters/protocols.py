@@ -6,7 +6,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from buildcompiler.api import ProtocolMode, ProtocolOptions
+from buildcompiler.api.options import ProtocolMode, ProtocolOptions
 
 
 @dataclass

@@ -145,3 +145,60 @@ def test_max_iteration_stops():
     )
     result = ex.execute(plan)
     assert result.status == BuildStatus.FAILED
+
+
+def test_executor_chains_transformation_when_enabled():
+    options = BuildOptions()
+    options.transformation.enabled = True
+    options.transformation.chassis_identity = "dh5alpha"
+    options.transformation.chassis_display_id = "dh5alpha"
+    assembly = FakeStage(
+        lambda r: StageResult(
+            id="asm",
+            stage=BuildStage.ASSEMBLY_LVL1,
+            status=StageStatus.SUCCESS,
+            request_ids=[r.id],
+            products=[plasmid("https://x/plasmid/a")],
+        )
+    )
+    blocked = FakeStage(
+        lambda r: StageResult(
+            id="blocked",
+            stage=r.stage,
+            status=StageStatus.BLOCKED,
+            request_ids=[r.id],
+        )
+    )
+    doc = __import__("sbol2").Document()
+    ctx = BuildContext(
+        sbol=SbolResolver(doc),
+        inventory=Inventory(),
+        build_document=doc,
+        options=options,
+    )
+    ex = FullBuildExecutor(
+        context=ctx,
+        lvl2_stage=blocked,
+        lvl1_stage=assembly,
+        domestication_stage=blocked,
+    )
+    plan = BuildPlan(
+        lvl1_requests=[
+            BuildRequest(
+                id="req-l1",
+                stage=BuildStage.ASSEMBLY_LVL1,
+                source_identity="https://x/design",
+                source_display_id="design",
+                source_kind=DesignKind.COMPONENT_DEFINITION,
+            )
+        ]
+    )
+
+    result = ex.execute(plan)
+
+    assert result.status == BuildStatus.SUCCESS
+    assert any(sr.stage == BuildStage.TRANSFORMATION for sr in result.stage_results)
+    assert any(
+        product.metadata.get("source_stage") == "transformation"
+        for product in result.final_products
+    )

@@ -291,7 +291,10 @@ def assembly_plan_RDF_to_JSON(file, output_path: str | Path | None = None):
             }
 
             for comp in cd.components:
-                sub_cd = doc.componentDefinitions.get(comp.definition)
+                try:
+                    sub_cd = doc.find(comp.definition)
+                except Exception:
+                    sub_cd = None
                 if sub_cd is None:
                     print(f"⚠️ Component definition for {comp.displayId} not found.")
                     continue
@@ -317,9 +320,10 @@ def assembly_plan_RDF_to_JSON(file, output_path: str | Path | None = None):
     for entry in product_dicts:
         entry['Restriction Enzyme'] = globalEnzyme
 
-    json_output_path = Path(output_path) if output_path is not None else Path("output.json")
-    with json_output_path.open('w', encoding='utf-8') as json_file:
-        json.dump(product_dicts, json_file, indent=4)
+    if output_path is not None:
+        json_output_path = Path(output_path)
+        with json_output_path.open('w', encoding='utf-8') as json_file:
+            json.dump(product_dicts, json_file, indent=4)
 
     return product_dicts
 

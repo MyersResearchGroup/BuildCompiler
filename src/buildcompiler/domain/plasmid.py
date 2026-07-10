@@ -28,3 +28,16 @@ class IndexedBackbone:
     name: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
     sbol_component: Any | None = None
+
+
+@dataclass
+class IndexedStrain:
+    """Inventory/index record for a transformed strain-like material."""
+
+    identity: str
+    display_id: str | None = None
+    name: str | None = None
+    state: MaterialState = MaterialState.TRANSFORMED
+    roles: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    sbol_module: Any | None = None

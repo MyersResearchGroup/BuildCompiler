@@ -24,7 +24,16 @@ def _source_doc(identity: str = "part", seq: str = "ATGGGTCTCAA") -> sbol2.Docum
 
 
 def _inventory(with_backbone=True, with_enzyme=True, with_ligase=True) -> Inventory:
-    backbones = [IndexedBackbone("bb", metadata={"stage": BuildStage.DOMESTICATION.value})] if with_backbone else []
+    backbones = [
+        IndexedBackbone(
+            "bb",
+            metadata={
+                "fusion_sites": ("A", "B"),
+                "antibiotic": "Ampicillin",
+                "insertion_index": 0,
+            },
+        )
+    ] if with_backbone else []
     reagents = []
     if with_enzyme:
         reagents.append(IndexedReagent("e1", name="BsaI", reagent_type="restriction_enzyme"))

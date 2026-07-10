@@ -9,12 +9,26 @@ def test_core_imports_do_not_load_optional_automation_dependencies():
         transformation_to_pudu_json,
     )
     from buildcompiler.api import BuildCompiler, BuildOptions
+    from buildcompiler import (
+        BuildCompiler as RootBuildCompiler,
+        assembly_lvl1,
+        assembly_lvl2,
+        domestication,
+        full_build,
+        transformation,
+    )
     from buildcompiler.execution import FullBuildExecutor
     from buildcompiler.reporting import BuildGraph, BuildReport, BuildSummary
 
     assert buildcompiler
     assert BuildCompiler
+    assert RootBuildCompiler is BuildCompiler
     assert BuildOptions
+    assert full_build
+    assert domestication
+    assert assembly_lvl1
+    assert assembly_lvl2
+    assert transformation
     assert FullBuildExecutor
     assert BuildSummary
     assert BuildReport

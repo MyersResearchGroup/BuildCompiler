@@ -7,7 +7,7 @@ from .build_stage import BuildStage
 from .design import DesignKind
 from .material_state import MaterialState
 from .missing_input import MissingBuildInput
-from .plasmid import IndexedBackbone, IndexedPlasmid
+from .plasmid import IndexedBackbone, IndexedPlasmid, IndexedStrain
 from .reagent import IndexedReagent
 from .status import BuildStatus, StageStatus
 from .warnings import BuildWarning
@@ -24,6 +24,7 @@ __all__ = [
     "IndexedBackbone",
     "IndexedPlasmid",
     "IndexedReagent",
+    "IndexedStrain",
     "MaterialState",
     "MissingBuildInput",
     "RequiredApproval",
