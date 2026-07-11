@@ -655,6 +655,12 @@ class BuildCompiler:
         )
 
         lvl2_plasmids, final_doc = assembly.run()  # TODO upload product_doc?
+        self.last_assembly_pudu_json = legacy_assembly_routes_to_pudu_json(
+            product_plasmids=lvl2_plasmids,
+            part_plasmid_routes=[lvl1_plasmids for _ in range(len(lvl2_plasmids))],
+            backbones=[backbone for _ in range(len(lvl2_plasmids))],
+            restriction_enzymes=[self.BbsI_impl for _ in range(len(lvl2_plasmids))],
+        )
         self.indexed_plasmids.extend(lvl2_plasmids)
 
         return lvl2_plasmids, final_doc

@@ -1,0 +1,16 @@
+{
+    "input_design": "tests/test_files/ExampleLvl2_design.xml",
+    "transcription_units": [
+        "https://www.sboldesigner.github.io/gonzalovidal/Gen/1",
+        "https://www.sboldesigner.github.io/gonzalovidal/Gen1/1"
+    ],
+    "backbone": "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVA_AF2/1",
+    "products": [
+        "http://buildcompiler.org/offline_lvl2/1"
+    ],
+    "activities": [
+        "http://buildcompiler.org/Gen_Gen1_plas_assembly/1",
+        "http://buildcompiler.org/Gen1_Gen1_plas_assembly/1",
+        "http://buildcompiler.org/offline_lvl2_assembly/1"
+    ]
+}

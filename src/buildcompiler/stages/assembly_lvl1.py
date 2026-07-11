@@ -77,12 +77,20 @@ class AssemblyLvl1Stage:
 
         missing_inputs: list[MissingBuildInput] = []
         for missing_identity in route.missing_part_identities:
+            missing_component = source_document.find(missing_identity)
+            missing_display_id = getattr(missing_component, "displayId", None)
+            if missing_display_id is None:
+                stripped_identity = missing_identity.rstrip("/")
+                if stripped_identity.endswith("/1"):
+                    missing_display_id = stripped_identity.rsplit("/", 2)[-2]
+                else:
+                    missing_display_id = stripped_identity.rsplit("/", 1)[-1]
             missing_inputs.append(
                 MissingBuildInput(
                     source_stage=BuildStage.ASSEMBLY_LVL1,
                     source_design_identity=request.source_identity,
                     missing_identity=missing_identity,
-                    missing_display_id=missing_identity.rsplit("/", 1)[-1],
+                    missing_display_id=missing_display_id,
                     missing_kind=self._infer_missing_kind(missing_identity),
                     required_stage=BuildStage.DOMESTICATION,
                     reason="No compatible lvl1 part plasmid found in inventory.",

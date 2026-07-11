@@ -1,0 +1,38 @@
+{
+    "status": "success",
+    "stage_path": [
+        {
+            "stage": "assembly_lvl2",
+            "status": "blocked",
+            "logs": [
+                "Blocked lvl2 assembly for notebook:assembly_lvl2:missing_region; missing 1 required input(s)."
+            ]
+        },
+        {
+            "stage": "assembly_lvl1",
+            "status": "success",
+            "logs": [
+                "Selected lvl1 route with 4 part plasmid(s).",
+                "Notebook assembly service produced assembly_lvl1 product."
+            ]
+        },
+        {
+            "stage": "assembly_lvl2",
+            "status": "success",
+            "logs": [
+                "Selected lvl2 route with 2 lvl1 plasmid(s).",
+                "Notebook assembly service produced assembly_lvl2 product."
+            ]
+        }
+    ],
+    "final_products": [
+        "http://buildcompiler.org/missing_lvl1_region_assembled/1",
+        "http://buildcompiler.org/full_build_lvl2_missing_region_assembled/1"
+    ],
+    "generated_lvl1_products": [
+        "http://buildcompiler.org/missing_lvl1_region_assembled/1"
+    ],
+    "lvl2_products": [
+        "http://buildcompiler.org/full_build_lvl2_missing_region_assembled/1"
+    ]
+}

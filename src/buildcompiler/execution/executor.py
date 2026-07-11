@@ -271,6 +271,28 @@ class FullBuildExecutor:
             else "domestication"
         )
         digest = hashlib.sha1(missing.missing_identity.encode()).hexdigest()[:12]
+        constraints = {
+            "promoted_from_stage": missing.source_stage.value,
+            "promoted_from_design_identity": missing.source_design_identity,
+            "candidates_tried": list(missing.candidates_tried),
+        }
+        if (
+            request is not None
+            and missing.required_stage == BuildStage.ASSEMBLY_LVL1
+            and request.constraints
+        ):
+            part_map = request.constraints.get(
+                "lvl1_region_part_identities",
+                request.constraints.get("region_part_identities", {}),
+            )
+            part_identities = part_map.get(missing.missing_identity)
+            if part_identities:
+                constraints["ordered_part_identities"] = list(part_identities)
+                constraints["product_identity"] = missing.missing_identity
+                constraints["product_display_id"] = (
+                    missing.missing_display_id
+                    or missing.missing_identity.rstrip("/").rsplit("/", 1)[-1]
+                )
         return BuildRequest(
             id=f"promoted:{prefix}:{digest}",
             stage=missing.required_stage,
@@ -278,11 +300,7 @@ class FullBuildExecutor:
             source_display_id=missing.missing_display_id,
             source_kind=DesignKind.COMPONENT_DEFINITION,
             parent_group=request.id if request else missing.source_design_identity,
-            constraints={
-                "promoted_from_stage": missing.source_stage.value,
-                "promoted_from_design_identity": missing.source_design_identity,
-                "candidates_tried": list(missing.candidates_tried),
-            },
+            constraints=constraints,
         )
 
     def _missing_key(self, missing: MissingBuildInput) -> tuple:

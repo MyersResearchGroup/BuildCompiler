@@ -214,19 +214,26 @@ def test_buildcompiler_assembly_lvl2_respects_supplied_backbone(monkeypatch):
     import buildcompiler.buildcompiler as buildcompiler_module
 
     compiler = BuildCompiler.from_local_documents([])
-    compiler.BbsI_impl = object()
+    compiler.BbsI_impl = SimpleNamespace(built="https://example.org/reagents/BbsI")
     compiler.T4_ligase_impl = object()
 
     lvl1_backbone = SimpleNamespace(
         fusion_sites=buildcompiler_module.LVL2_FUSION_SITE_ORDER[0],
         antibiotic_resistance=buildcompiler_module.KAN,
     )
-    supplied_lvl2_backbone = SimpleNamespace(name="caller-supplied-lvl2-backbone")
+    supplied_lvl2_backbone = SimpleNamespace(
+        name="caller-supplied-lvl2-backbone",
+        plasmid_definition=SimpleNamespace(
+            identity="https://example.org/backbones/lvl2", displayId="lvl2_backbone"
+        ),
+    )
     compiler.indexed_backbones = [lvl1_backbone]
 
     tu = SimpleNamespace(displayId="TU1")
     lvl1_plasmid = SimpleNamespace(
-        plasmid_definition=SimpleNamespace(displayId="TU1_plasmid")
+        plasmid_definition=SimpleNamespace(
+            identity="https://example.org/plasmids/TU1", displayId="TU1_plasmid"
+        )
     )
     captured = {}
 
@@ -238,7 +245,10 @@ def test_buildcompiler_assembly_lvl2_respects_supplied_backbone(monkeypatch):
         def run(self):
             return [
                 SimpleNamespace(
-                    plasmid_definition=SimpleNamespace(displayId="lvl2_product")
+                    plasmid_definition=SimpleNamespace(
+                        identity="https://example.org/plasmids/lvl2_product",
+                        displayId="lvl2_product",
+                    )
                 )
             ], sbol2.Document()
 
@@ -265,6 +275,14 @@ def test_buildcompiler_assembly_lvl2_respects_supplied_backbone(monkeypatch):
 
     assert products
     assert captured["backbone"] is supplied_lvl2_backbone
+    assert compiler.last_assembly_pudu_json == [
+        {
+            "Product": "https://example.org/plasmids/lvl2_product",
+            "Backbone": "https://example.org/backbones/lvl2",
+            "PartsList": ["https://example.org/plasmids/TU1"],
+            "Restriction Enzyme": "https://example.org/reagents/BbsI",
+        }
+    ]
 
 
 def test_extract_lvl2_tus_uses_top_level_composite_not_document_order():

@@ -169,6 +169,22 @@ def test_assembly_lvl1_missing_inputs_return_blocked_with_structured_kinds():
     }.issubset(kinds)
 
 
+def test_assembly_lvl1_missing_part_display_id_uses_sbol_component():
+    doc = sbol2.Document()
+    promoter = sbol2.ComponentDefinition("display_promoter")
+    doc.addComponentDefinition(promoter)
+    inv = _inventory(include_parts=False)
+    stage = AssemblyLvl1Stage(inventory=inv, assembly_service=_FakeAssemblyService([]))
+    request = _request()
+    request.constraints["ordered_part_identities"] = [promoter.identity]
+
+    result = stage.run(request, source_document=doc, target_document=sbol2.Document())
+
+    assert result.status == StageStatus.BLOCKED
+    assert result.missing_inputs[0].missing_identity == promoter.identity
+    assert result.missing_inputs[0].missing_display_id == "display_promoter"
+
+
 def test_assembly_lvl1_accepts_planner_part_order_constraint():
     inv = _inventory()
     stage = AssemblyLvl1Stage(inventory=inv, assembly_service=_FakeAssemblyService([]))
