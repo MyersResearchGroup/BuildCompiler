@@ -1,0 +1,63 @@
+{
+    "status": "success",
+    "stage_path": [
+        {
+            "stage": "assembly_lvl2",
+            "status": "blocked",
+            "logs": [
+                "Blocked lvl2 assembly for notebook:assembly_lvl2:missing_region_and_part; missing 1 required input(s)."
+            ]
+        },
+        {
+            "stage": "assembly_lvl1",
+            "status": "blocked",
+            "logs": [
+                "Blocked lvl1 assembly for promoted:lvl1:e719f8f05ea2; missing 1 required input(s)."
+            ]
+        },
+        {
+            "stage": "domestication",
+            "status": "success",
+            "logs": [
+                "Generated domesticated lvl0 product http://buildcompiler.org/stack_missing_promoter_lvl0/1."
+            ]
+        },
+        {
+            "stage": "assembly_lvl2",
+            "status": "blocked",
+            "logs": [
+                "Blocked lvl2 assembly for notebook:assembly_lvl2:missing_region_and_part; missing 1 required input(s)."
+            ]
+        },
+        {
+            "stage": "assembly_lvl1",
+            "status": "success",
+            "logs": [
+                "Selected lvl1 route with 4 part plasmid(s).",
+                "Notebook assembly service produced assembly_lvl1 product."
+            ]
+        },
+        {
+            "stage": "assembly_lvl2",
+            "status": "success",
+            "logs": [
+                "Selected lvl2 route with 2 lvl1 plasmid(s).",
+                "Notebook assembly service produced assembly_lvl2 product."
+            ]
+        }
+    ],
+    "final_products": [
+        "http://buildcompiler.org/stack_missing_promoter_lvl0/1",
+        "http://buildcompiler.org/stack_missing_lvl1_region_assembled/1",
+        "http://buildcompiler.org/full_build_lvl2_stack_assembled/1"
+    ],
+    "domesticated_products": [
+        "http://buildcompiler.org/stack_missing_promoter_lvl0/1"
+    ],
+    "generated_lvl1_products": [
+        "http://buildcompiler.org/stack_missing_lvl1_region_assembled/1"
+    ],
+    "lvl2_products": [
+        "http://buildcompiler.org/full_build_lvl2_stack_assembled/1"
+    ]
+}

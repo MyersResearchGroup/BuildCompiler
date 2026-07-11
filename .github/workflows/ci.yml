@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - full_build
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install package
+        run: |
+          python -m pip install -U pip
+          python -m pip install -e ".[test]"
+          python -m pip install ruff
+      - name: Ruff check
+        run: >-
+          ruff check
+          src/buildcompiler/api
+          src/buildcompiler/planning
+          src/buildcompiler/execution
+          src/buildcompiler/stages
+          src/buildcompiler/sbol
+          src/buildcompiler/inventory
+          src/buildcompiler/adapters
+          src/buildcompiler/reporting
+          src/buildcompiler/domain
+          tests/conftest.py
+          tests/unit
+          tests/stages
+          tests/integration
+      - name: Ruff format check
+        run: >-
+          ruff format --check
+          src/buildcompiler/api
+          src/buildcompiler/planning
+          src/buildcompiler/execution
+          src/buildcompiler/stages
+          src/buildcompiler/sbol
+          src/buildcompiler/inventory
+          src/buildcompiler/adapters
+          src/buildcompiler/reporting
+          src/buildcompiler/domain
+          tests/conftest.py
+          tests/unit
+          tests/stages
+          tests/integration
+      - name: Core tests
+        run: pytest tests/unit tests/stages tests/integration -q

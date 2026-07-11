@@ -1,0 +1,369 @@
+<?xml version="1.0" ?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:sbh="http://wiki.synbiohub.org/wiki/Terms/synbiohub#" xmlns:sbol="http://sbols.org/v2#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:prov="http://www.w3.org/ns/prov#" xmlns:om="http://www.ontology-of-units-of-measure.org/resource/om-2/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <sbol:Collection rdf:about="https://synbiohub.org/user/Gon/impl_test/impl_test_collection/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/impl_test_collection"/>
+    <sbol:displayId>impl_test_collection</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>implementations_collection</dcterms:title>
+    <dcterms:description>test implementations of moclo plasmids</dcterms:description>
+    <dc:creator>Gonzalo Vidal</dc:creator>
+    <dcterms:created>2026-02-04T21:47:15.481Z</dcterms:created>
+    <dcterms:created>2026-02-04T21:47:33.716Z</dcterms:created>
+    <dcterms:created>2026-02-04T21:47:42.298Z</dcterms:created>
+    <dcterms:created>2026-04-14T22:29:25.681Z</dcterms:created>
+    <dcterms:created>2026-05-14T00:08:59.904Z</dcterms:created>
+    <dcterms:modified>2026-05-07T17:11:50</dcterms:modified>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/impl_test_collection/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0015_DE_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_AB_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0015_DH_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23106_AB_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0032_BC_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23100_AB_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pE0040_CD_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pE1010_CD_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23100_FB_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_DH_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0034_BC_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23106_FB_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_DF_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23106_GB_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23116_AB_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pE0030_CD_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23116_FB_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0015_DF_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_GB_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23100_GB_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23116_GB_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23106_EB_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_AF2_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVK_AE_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_DG_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0033_BC_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVK_EF_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVK_FG_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVK_GH_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23116_EB_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23100_EB_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_CD_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_BC_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_FB_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0015_DG_impl/1"/>
+  </sbol:Collection>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/DVK_EF_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVK_EF_impl"/>
+    <sbol:displayId>DVK_EF_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVK_EF_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_EF/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/DVK_AE_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVK_AE_impl"/>
+    <sbol:displayId>DVK_AE_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVK_AE_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_AE/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pE0040_CD_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pE0040_CD_impl"/>
+    <sbol:displayId>pE0040_CD_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pE0040_CD_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pE0040_CD/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pB0034_BC_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0034_BC_impl"/>
+    <sbol:displayId>pB0034_BC_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0034_BC_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pB0034_BC/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/DVA_FB_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_FB_impl"/>
+    <sbol:displayId>DVA_FB_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="http://buildcompiler.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_FB_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVA_FB/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pJ23100_EB_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23100_EB_impl"/>
+    <sbol:displayId>pJ23100_EB_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23100_EB_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pJ23100_EB/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pJ23100_AB_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23100_AB_impl"/>
+    <sbol:displayId>pJ23100_AB_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23100_AB_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pJ23100_AB/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/DVA_AF2_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_AF2_impl"/>
+    <sbol:displayId>DVA_AF2_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="http://buildcompiler.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_AF2_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVA_AF2/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pB0033_BC_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0033_BC_impl"/>
+    <sbol:displayId>pB0033_BC_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0033_BC_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pB0033_BC/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pJ23106_FB_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23106_FB_impl"/>
+    <sbol:displayId>pJ23106_FB_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23106_FB_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pJ23106_FB/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/DVA_BC_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_BC_impl"/>
+    <sbol:displayId>DVA_BC_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="http://buildcompiler.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_BC_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVA_BC/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pJ23116_EB_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23116_EB_impl"/>
+    <sbol:displayId>pJ23116_EB_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23116_EB_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pJ23116_EB/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/DVK_FG_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVK_FG_impl"/>
+    <sbol:displayId>DVK_FG_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVK_FG_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_FG/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/DVA_DG_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_DG_impl"/>
+    <sbol:displayId>DVA_DG_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="http://buildcompiler.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_DG_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVA_DG/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/DVA_DH_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_DH_impl"/>
+    <sbol:displayId>DVA_DH_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="http://buildcompiler.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_DH_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVA_DH/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pJ23116_GB_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23116_GB_impl"/>
+    <sbol:displayId>pJ23116_GB_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23116_GB_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pJ23116_GB/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/DVA_DF_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_DF_impl"/>
+    <sbol:displayId>DVA_DF_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="http://buildcompiler.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_DF_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVA_DF/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pE0030_CD_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pE0030_CD_impl"/>
+    <sbol:displayId>pE0030_CD_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pE0030_CD_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pE0030_CD/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pJ23100_FB_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23100_FB_impl"/>
+    <sbol:displayId>pJ23100_FB_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23100_FB_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pJ23100_FB/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/DVA_GB_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_GB_impl"/>
+    <sbol:displayId>DVA_GB_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="http://buildcompiler.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_GB_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVA_GB/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pJ23116_AB_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23116_AB_impl"/>
+    <sbol:displayId>pJ23116_AB_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23116_AB_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pJ23116_AB/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pB0032_BC_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0032_BC_impl"/>
+    <sbol:displayId>pB0032_BC_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0032_BC_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pB0032_BC/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pB0015_DF_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0015_DF_impl"/>
+    <sbol:displayId>pB0015_DF_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0015_DF_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pB0015_DF/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pB0015_DG_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0015_DG_impl"/>
+    <sbol:displayId>pB0015_DG_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0015_DG_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pB0015_DG/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pB0015_DH_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0015_DH_impl"/>
+    <sbol:displayId>pB0015_DH_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0015_DH_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pB0015_DH/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pJ23106_AB_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23106_AB_impl"/>
+    <sbol:displayId>pJ23106_AB_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23106_AB_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pJ23106_AB/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pJ23106_GB_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23106_GB_impl"/>
+    <sbol:displayId>pJ23106_GB_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23106_GB_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pJ23106_GB/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/DVA_CD_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_CD_impl"/>
+    <sbol:displayId>DVA_CD_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="http://buildcompiler.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_CD_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVA_CD/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pJ23100_GB_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23100_GB_impl"/>
+    <sbol:displayId>pJ23100_GB_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23100_GB_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pJ23100_GB/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/DVA_AB_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_AB_impl"/>
+    <sbol:displayId>DVA_AB_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="http://buildcompiler.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVA_AB_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVA_AB/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pE1010_CD_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pE1010_CD_impl"/>
+    <sbol:displayId>pE1010_CD_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pE1010_CD_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pE1010_CD/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pB0015_DE_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0015_DE_impl"/>
+    <sbol:displayId>pB0015_DE_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0015_DE_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pB0015_DE/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pJ23116_FB_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23116_FB_impl"/>
+    <sbol:displayId>pJ23116_FB_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23116_FB_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pJ23116_FB/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/pJ23106_EB_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23106_EB_impl"/>
+    <sbol:displayId>pJ23106_EB_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23106_EB_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/pJ23106_EB/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/impl_test/DVK_GH_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVK_GH_impl"/>
+    <sbol:displayId>DVK_GH_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/plasmid_dna_extraction/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVK_GH_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVK_GH/1"/>
+  </sbol:Implementation>
+</rdf:RDF>

@@ -1,0 +1,513 @@
+<rdf:RDF xmlns:owl="http://www.w3.org/2002/07/owl#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:xsd="http://www.w3.org/2001/XMLSchema#" xmlns:sbol="http://sbols.org/v2#" xmlns:ns0="http://www.w3.org/ns/prov#" xmlns:ns1="http://purl.org/dc/terms/">
+  <sbol:ComponentDefinition rdf:about="http://buildcompiler.org/Ligation_Scar_A/1">
+    <sbol:displayId>Ligation_Scar_A</sbol:displayId>
+    <ns0:wasDerivedFrom rdf:resource="http://buildcompiler.org/pJ23116_AB_five_prime_oh/1"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0001953"/>
+    <ns0:wasDerivedFrom rdf:resource="http://buildcompiler.org/DVK_AE_three_prime_oh/1"/>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/Ligation_Scar_A"/>
+    <sbol:sequence rdf:resource="http://buildcompiler.org/Ligation_Scar_A_sequence/1"/>
+    <sbol:version>1</sbol:version>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="http://buildcompiler.org/Ligation_Scar_B/1">
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0001953"/>
+    <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/Ligation_Scar_B"/>
+    <ns0:wasDerivedFrom rdf:resource="http://buildcompiler.org/pB0034_BC_five_prime_oh/1"/>
+    <sbol:version>1</sbol:version>
+    <sbol:displayId>Ligation_Scar_B</sbol:displayId>
+    <sbol:sequence rdf:resource="http://buildcompiler.org/Ligation_Scar_B_sequence/1"/>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <ns0:wasDerivedFrom rdf:resource="http://buildcompiler.org/pJ23116_AB_three_prime_oh/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="http://buildcompiler.org/Ligation_Scar_C/1">
+    <ns0:wasDerivedFrom rdf:resource="http://buildcompiler.org/pE0030_CD_five_prime_oh/1"/>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:sequence rdf:resource="http://buildcompiler.org/Ligation_Scar_C_sequence/1"/>
+    <sbol:version>1</sbol:version>
+    <sbol:displayId>Ligation_Scar_C</sbol:displayId>
+    <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/Ligation_Scar_C"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0001953"/>
+    <ns0:wasDerivedFrom rdf:resource="http://buildcompiler.org/pB0034_BC_three_prime_oh/1"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="http://buildcompiler.org/Ligation_Scar_D/1">
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <ns0:wasDerivedFrom rdf:resource="http://buildcompiler.org/pE0030_CD_three_prime_oh/1"/>
+    <sbol:sequence rdf:resource="http://buildcompiler.org/Ligation_Scar_D_sequence/1"/>
+    <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/Ligation_Scar_D"/>
+    <sbol:version>1</sbol:version>
+    <sbol:displayId>Ligation_Scar_D</sbol:displayId>
+    <ns0:wasDerivedFrom rdf:resource="http://buildcompiler.org/pB0015_DE_five_prime_oh/1"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0001953"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="http://buildcompiler.org/Ligation_Scar_E/1">
+    <sbol:displayId>Ligation_Scar_E</sbol:displayId>
+    <ns0:wasDerivedFrom rdf:resource="http://buildcompiler.org/DVK_AE_five_prime_oh/1"/>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0001953"/>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#DnaRegion"/>
+    <sbol:sequence rdf:resource="http://buildcompiler.org/Ligation_Scar_E_sequence/1"/>
+    <ns0:wasDerivedFrom rdf:resource="http://buildcompiler.org/pB0015_DE_three_prime_oh/1"/>
+    <sbol:version>1</sbol:version>
+    <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/Ligation_Scar_E"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/1">
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_C_B0034/1">
+        <sbol:subject rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0034/1"/>
+        <sbol:version>1</sbol:version>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_C_B0034"/>
+        <sbol:object rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_C/1"/>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:displayId>Ligation_Scar_C_B0034</sbol:displayId>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_E_B0015/1">
+        <sbol:displayId>Ligation_Scar_E_B0015</sbol:displayId>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_E_B0015"/>
+        <sbol:subject rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0015/1"/>
+        <sbol:object rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_E/1"/>
+        <sbol:version>1</sbol:version>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0015_3_annotation/1">
+        <sbol:location>
+          <sbol:Range rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0015_3_annotation/B0015_3_location/1">
+            <sbol:end>924</sbol:end>
+            <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0015_3_annotation/B0015_3_location"/>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+            <sbol:start>796</sbol:start>
+            <sbol:version>1</sbol:version>
+            <sbol:displayId>B0015_3_location</sbol:displayId>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:displayId>B0015_3_annotation</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0015_3_annotation"/>
+        <sbol:component rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0015/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:version>1</sbol:version>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_E_annotation/1">
+        <sbol:displayId>Ligation_Scar_E_annotation</sbol:displayId>
+        <sbol:component rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_E/1"/>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_E_annotation"/>
+        <sbol:version>1</sbol:version>
+        <sbol:location>
+          <sbol:Range rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_E_annotation/Ligation_Scar_E_location/1">
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+            <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_E_annotation/Ligation_Scar_E_location"/>
+            <sbol:displayId>Ligation_Scar_E_location</sbol:displayId>
+            <sbol:end>928</sbol:end>
+            <sbol:start>925</sbol:start>
+            <sbol:version>1</sbol:version>
+          </sbol:Range>
+        </sbol:location>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:component>
+      <sbol:Component rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_D/1">
+        <sbol:displayId>Ligation_Scar_D</sbol:displayId>
+        <sbol:definition rdf:resource="http://buildcompiler.org/Ligation_Scar_D/1"/>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_D"/>
+        <sbol:version>1</sbol:version>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_B/1">
+        <sbol:displayId>Ligation_Scar_B</sbol:displayId>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_B"/>
+        <sbol:version>1</sbol:version>
+        <sbol:definition rdf:resource="http://buildcompiler.org/Ligation_Scar_B/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_B_annotation/1">
+        <sbol:version>1</sbol:version>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_B_annotation"/>
+        <sbol:location>
+          <sbol:Range rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_B_annotation/Ligation_Scar_B_location/1">
+            <sbol:start>40</sbol:start>
+            <sbol:displayId>Ligation_Scar_B_location</sbol:displayId>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+            <sbol:end>43</sbol:end>
+            <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_B_annotation/Ligation_Scar_B_location"/>
+            <sbol:version>1</sbol:version>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:displayId>Ligation_Scar_B_annotation</sbol:displayId>
+        <sbol:component rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_B/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:component>
+      <sbol:Component rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0034/1">
+        <sbol:displayId>B0034</sbol:displayId>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0034"/>
+        <sbol:version>1</sbol:version>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0034/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_A_annotation/1">
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_A_annotation"/>
+        <sbol:location>
+          <sbol:Range rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_A_annotation/Ligation_Scar_A_location/1">
+            <sbol:end>4</sbol:end>
+            <sbol:start>1</sbol:start>
+            <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_A_annotation/Ligation_Scar_A_location"/>
+            <sbol:version>1</sbol:version>
+            <sbol:displayId>Ligation_Scar_A_location</sbol:displayId>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:version>1</sbol:version>
+        <sbol:displayId>Ligation_Scar_A_annotation</sbol:displayId>
+        <sbol:component rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_A/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:component>
+      <sbol:Component rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_E/1">
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_E"/>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:version>1</sbol:version>
+        <sbol:displayId>Ligation_Scar_E</sbol:displayId>
+        <sbol:definition rdf:resource="http://buildcompiler.org/Ligation_Scar_E/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:type rdf:resource="http://identifiers.org/so/SO:0000988"/>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/dvk_backbone_core_5_annotation/1">
+        <sbol:displayId>dvk_backbone_core_5_annotation</sbol:displayId>
+        <sbol:component rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/dvk_backbone_core/1"/>
+        <sbol:version>1</sbol:version>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/dvk_backbone_core_5_annotation"/>
+        <sbol:location>
+          <sbol:Range rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/dvk_backbone_core_5_annotation/dvk_backbone_core_5_location/1">
+            <sbol:displayId>dvk_backbone_core_5_location</sbol:displayId>
+            <sbol:version>1</sbol:version>
+            <sbol:start>929</sbol:start>
+            <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/dvk_backbone_core_5_annotation/dvk_backbone_core_5_location"/>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+            <sbol:end>3155</sbol:end>
+          </sbol:Range>
+        </sbol:location>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_D_annotation/1">
+        <sbol:location>
+          <sbol:Range rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_D_annotation/Ligation_Scar_D_location/1">
+            <sbol:version>1</sbol:version>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+            <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_D_annotation/Ligation_Scar_D_location"/>
+            <sbol:displayId>Ligation_Scar_D_location</sbol:displayId>
+            <sbol:start>792</sbol:start>
+            <sbol:end>795</sbol:end>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:displayId>Ligation_Scar_D_annotation</sbol:displayId>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_D_annotation"/>
+        <sbol:version>1</sbol:version>
+        <sbol:component rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_D/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#Dna"/>
+    <sbol:component>
+      <sbol:Component rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/dvk_backbone_core/1">
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:displayId>dvk_backbone_core</sbol:displayId>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/dvk_backbone_core"/>
+        <sbol:version>1</sbol:version>
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/dvk_backbone_core/1"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/E0030_yfp_Ligation_Scar_C/1">
+        <sbol:object rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/E0030_yfp/1"/>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/E0030_yfp_Ligation_Scar_C"/>
+        <sbol:subject rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_C/1"/>
+        <sbol:displayId>E0030_yfp_Ligation_Scar_C</sbol:displayId>
+        <sbol:version>1</sbol:version>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0034_Ligation_Scar_B/1">
+        <sbol:displayId>B0034_Ligation_Scar_B</sbol:displayId>
+        <sbol:object rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0034/1"/>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0034_Ligation_Scar_B"/>
+        <sbol:version>1</sbol:version>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_B/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:component>
+      <sbol:Component rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_A/1">
+        <sbol:displayId>Ligation_Scar_A</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_A"/>
+        <sbol:definition rdf:resource="http://buildcompiler.org/Ligation_Scar_A/1"/>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:component>
+      <sbol:Component rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0015/1">
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/B0015/1"/>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0015"/>
+        <sbol:displayId>B0015</sbol:displayId>
+        <sbol:version>1</sbol:version>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:sequence rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_seq/1"/>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0015_Ligation_Scar_D/1">
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0015_Ligation_Scar_D"/>
+        <sbol:version>1</sbol:version>
+        <sbol:object rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0015/1"/>
+        <sbol:displayId>B0015_Ligation_Scar_D</sbol:displayId>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_D/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_C_annotation/1">
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_C_annotation"/>
+        <sbol:version>1</sbol:version>
+        <sbol:displayId>Ligation_Scar_C_annotation</sbol:displayId>
+        <sbol:location>
+          <sbol:Range rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_C_annotation/Ligation_Scar_C_location/1">
+            <sbol:version>1</sbol:version>
+            <sbol:displayId>Ligation_Scar_C_location</sbol:displayId>
+            <sbol:end>68</sbol:end>
+            <sbol:start>65</sbol:start>
+            <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_C_annotation/Ligation_Scar_C_location"/>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:component rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_C/1"/>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:component>
+      <sbol:Component rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_C/1">
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_C"/>
+        <sbol:definition rdf:resource="http://buildcompiler.org/Ligation_Scar_C/1"/>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:version>1</sbol:version>
+        <sbol:displayId>Ligation_Scar_C</sbol:displayId>
+      </sbol:Component>
+    </sbol:component>
+    <ns1:title>i0mwvNcgH_offline_multi_2</ns1:title>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_B_Ligation_Scar_A/1">
+        <sbol:subject rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_A/1"/>
+        <sbol:object rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_B/1"/>
+        <sbol:version>1</sbol:version>
+        <sbol:displayId>Ligation_Scar_B_Ligation_Scar_A</sbol:displayId>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_B_Ligation_Scar_A"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:role rdf:resource="http://identifiers.org/so/SO:0000637"/>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0034_3_annotation/1">
+        <sbol:location>
+          <sbol:Range rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0034_3_annotation/B0034_3_location/1">
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+            <sbol:start>44</sbol:start>
+            <sbol:end>64</sbol:end>
+            <sbol:version>1</sbol:version>
+            <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0034_3_annotation/B0034_3_location"/>
+            <sbol:displayId>B0034_3_location</sbol:displayId>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0034_3_annotation"/>
+        <sbol:displayId>B0034_3_annotation</sbol:displayId>
+        <sbol:component rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/B0034/1"/>
+        <sbol:version>1</sbol:version>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/dvk_backbone_core_Ligation_Scar_E/1">
+        <sbol:version>1</sbol:version>
+        <sbol:object rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/dvk_backbone_core/1"/>
+        <sbol:displayId>dvk_backbone_core_Ligation_Scar_E</sbol:displayId>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/dvk_backbone_core_Ligation_Scar_E"/>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+        <sbol:subject rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_E/1"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2"/>
+    <sbol:component>
+      <sbol:Component rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/E0030_yfp/1">
+        <sbol:definition rdf:resource="https://synbiohub.org/user/Gon/CIDARMoCloParts/E0030_yfp/1"/>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/E0030_yfp"/>
+        <sbol:access rdf:resource="http://sbols.org/v2#public"/>
+        <sbol:displayId>E0030_yfp</sbol:displayId>
+        <sbol:version>1</sbol:version>
+      </sbol:Component>
+    </sbol:component>
+    <sbol:sequenceAnnotation>
+      <sbol:SequenceAnnotation rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/E0030_yfp_3_annotation/1">
+        <sbol:location>
+          <sbol:Range rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/E0030_yfp_3_annotation/E0030_yfp_3_location/1">
+            <sbol:start>69</sbol:start>
+            <sbol:end>791</sbol:end>
+            <sbol:version>1</sbol:version>
+            <sbol:displayId>E0030_yfp_3_location</sbol:displayId>
+            <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/E0030_yfp_3_annotation/E0030_yfp_3_location"/>
+            <sbol:orientation rdf:resource="http://sbols.org/v2#inline"/>
+          </sbol:Range>
+        </sbol:location>
+        <sbol:displayId>E0030_yfp_3_annotation</sbol:displayId>
+        <sbol:component rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/E0030_yfp/1"/>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/E0030_yfp_3_annotation"/>
+        <sbol:version>1</sbol:version>
+      </sbol:SequenceAnnotation>
+    </sbol:sequenceAnnotation>
+    <sbol:sequenceConstraint>
+      <sbol:SequenceConstraint rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_D_E0030_yfp/1">
+        <sbol:object rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_D/1"/>
+        <sbol:displayId>Ligation_Scar_D_E0030_yfp</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <sbol:subject rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/E0030_yfp/1"/>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/Ligation_Scar_D_E0030_yfp"/>
+        <sbol:restriction rdf:resource="http://sbols.org/v2#precedes"/>
+      </sbol:SequenceConstraint>
+    </sbol:sequenceConstraint>
+    <sbol:displayId>i0mwvNcgH_offline_multi_2</sbol:displayId>
+  </sbol:ComponentDefinition>
+  <sbol:Sequence rdf:about="http://buildcompiler.org/Ligation_Scar_A_sequence/1">
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+    <sbol:elements>GGAG</sbol:elements>
+    <sbol:version>1</sbol:version>
+    <sbol:displayId>Ligation_Scar_A_sequence</sbol:displayId>
+    <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/Ligation_Scar_A_sequence"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="http://buildcompiler.org/Ligation_Scar_B_sequence/1">
+    <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/Ligation_Scar_B_sequence"/>
+    <sbol:displayId>Ligation_Scar_B_sequence</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <sbol:elements>TACT</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="http://buildcompiler.org/Ligation_Scar_C_sequence/1">
+    <sbol:displayId>Ligation_Scar_C_sequence</sbol:displayId>
+    <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/Ligation_Scar_C_sequence"/>
+    <sbol:version>1</sbol:version>
+    <sbol:elements>AATG</sbol:elements>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="http://buildcompiler.org/Ligation_Scar_D_sequence/1">
+    <sbol:version>1</sbol:version>
+    <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/Ligation_Scar_D_sequence"/>
+    <sbol:elements>AGGT</sbol:elements>
+    <sbol:displayId>Ligation_Scar_D_sequence</sbol:displayId>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="http://buildcompiler.org/Ligation_Scar_E_sequence/1">
+    <sbol:version>1</sbol:version>
+    <sbol:displayId>Ligation_Scar_E_sequence</sbol:displayId>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+    <sbol:elements>GCTT</sbol:elements>
+    <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/Ligation_Scar_E_sequence"/>
+  </sbol:Sequence>
+  <sbol:Sequence rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_seq/1">
+    <sbol:displayId>i0mwvNcgH_offline_multi_2_seq</sbol:displayId>
+    <sbol:encoding rdf:resource="http://www.chem.qmul.ac.uk/iubmb/misc/naseq.html"/>
+    <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_seq"/>
+    <sbol:elements>GGAGTTGACAGCTAGCTCAGTCCTAGGGACTATGCTAGCTACTAGAGAAAGAGGAGAAATACTAAATGATGGTGAGCAAGGGCGAGGAGCTGTTCACCGGGGTGGTGCCCATCCTGGTCGAGCTGGACGGCGACGTAAACGGCCACAAGTTCAGCGTGTCCGGCGAGGGCGAGGGCGATGCCACCTACGGCAAGCTGACCCTGAAGTTCATCTGCACCACCGGCAAGCTGCCCGTGCCCTGGCCCACCCTCGTGACCACCTTCGGCTACGGCCTGCAATGCTTCGCCCGCTACCCCGACCACATGAAGCTGCACGACTTCTTCAAGTCCGCCATGCCCGAAGGCTACGTCCAGGAGCGCACCATCTTCTTCAAGGACGACGGCAACTACAAGACCCGCGCCGAGGTGAAGTTCGAGGGCGACACCCTGGTGAACCGCATCGAGCTGAAGGGCATCGACTTCAAGGAGGACGGCAACATCCTGGGGCACAAGCTGGAGTACAACTACAACAGCCACAACGTCTATATCATGGCCGACAAGCAGAAGAACGGCATCAAGGTGAACTTCAAGATCCGCCACAACATCGAGGACGGCAGCGTGCAGCTCGCCGACCACTACCAGCAGAACACCCCCATCGGCGACGGCCCCGTGCTGCTGCCCGACAACCACTACCTGAGCTACCAGTCCGCCCTGAGCAAAGACCCCAACGAGAAGCGCGATCACATGGTCCTGCTGGAGTTCGTGACCGCCGCCGGGATCACTCTCGGCATGGACGAGCTGTACAAGTAATAAAGGTCCAGGCATCAAATAAAACGAAAGGCTCAGTCGAAAGACTGGGCCTTTCGTTTTATCTGTTGTTTGTCGGTGAACGCTCTCTACTAGAGTCACACTGGCTCACCTTCGGGTGGGCCTTTCTGCGTTTATAGCTTatgtcttctactagtagcggccgctgcagtccggcaaaaaagggcaaggtgtcaccaccctgccctttttctttaaaaccgaaaagattacttcgcgttatgcaggcttcctcgctcactgactcgctgcgctcggtcgttcggctgcggcgagcggtatcagctcactcaaaggcggtaatacggttatccacagaatcaggggataacgcaggaaagaacatgtgagcaaaaggccagcaaaaggccaggaaccgtaaaaaggccgcgttgctggcgtttttccacaggctccgcccccctgacgagcatcacaaaaatcgacgctcaagtcagaggtggcgaaacccgacaggactataaagataccaggcgtttccccctggaagctccctcgtgcgctctcctgttccgaccctgccgcttaccggatacctgtccgcctttctcccttcgggaagcgtggcgctttctcatagctcacgctgtaggtatctcagttcggtgtaggtcgttcgctccaagctgggctgtgtgcacgaaccccccgttcagcccgaccgctgcgccttatccggtaactatcgtcttgagtccaacccggtaagacacgacttatcgccactggcagcagccactggtaacaggattagcagagcgaggtatgtaggcggtgctacagagttcttgaagtggtggcctaactacggctacactagaagaacagtatttggtatctgcgctctgctgaagccagttaccttcggaaaaagagttggtagctcttgatccggcaaacaaaccaccgctggtagcggtggtttttttgtttgcaagcagcagattacgcgcagaaaaaaaggatctcaagaagatcctttgatcttttctacggggtctgacgctcagtggaacgaaaactcacgttaagggattttggtcatgagattatcaaaaaggatcttcacctagatccttttaaattaaaaatgaagttttaaatcaatctaaagtatatatgagtaaacttggtctgacagctcgagtcccgtcaagtcagcgtaatgctctgccagtgttacaaccaattaaccaattctgattagaaaaactcatcgagcatcaaatgaaactgcaatttattcatatcaggattatcaataccatatttttgaaaaagccgtttctgtaatgaaggagaaaactcaccgaggcagttccataggatggcaagatcctggtatcggtctgcgattccgactcgtccaacatcaatacaacctattaatttcccctcgtcaaaaataaggttatcaagtgagaaatcaccatgagtgacgactgaatccggtgagaatggcaaaagcttatgcatttctttccagacttgttcaacaggccagccattacgctcgtcatcaaaatcactcgcatcaaccaaaccgttattcattcgtgattgcgcctgagcgagacgaaatacgcgatcgctgttaaaaggacaattacaaacaggaatcgaatgcaaccggcgcaggaacactgccagcgcatcaacaatattttcacctgaatcaggatattcttctaatacctggaatgctgttttcccggggatcgcagtggtgagtaaccatgcatcatcaggagtacggataaaatgcttgatggtcggaagaggcataaattccgtcagccagtttagtctgaccatctcatctgtaacatcattggcaacgctacctttgccatgtttcagaaacaactctggcgcatcgggcttcccatacaatcgatagattgtcgcacctgattgcccgacattatcgcgagcccatttatacccatataaatcagcatccatgttggaatttaatcgcggcctggagcaagacgtttcccgttgaatatggctcataacaccccttgtattactgtttatgtaagcagacagttttattgttcatgatgatatatttttatcttgtgcaatgtaacatcagagattttgagacacaacgtggctttgttgaataaatcgaacttttgctgagttgaaggatcagctcgagtgccacctgacgtctaagaaaccattattatcatgacattaacctataaaaataggcgtatcacgaggcagaatttcagataaaaaaaatccttagctttcgctaaggatgatttctggaattcgcggccgcttctagagactagtggaagacat</sbol:elements>
+    <sbol:version>1</sbol:version>
+  </sbol:Sequence>
+  <sbol:Implementation rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_impl/1">
+    <ns0:wasGeneratedBy rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly/1"/>
+    <sbol:version>1</sbol:version>
+    <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_impl"/>
+    <sbol:built rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2/1"/>
+    <sbol:displayId>i0mwvNcgH_offline_multi_2_impl</sbol:displayId>
+  </sbol:Implementation>
+  <ns0:Activity rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly/1">
+    <ns0:qualifiedUsage>
+      <ns0:Usage rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly/pJ23116_AB_impl/1">
+        <sbol:version>1</sbol:version>
+        <ns0:hadRole rdf:resource="http://sbols.org/v2#build"/>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly/pJ23116_AB_impl"/>
+        <sbol:displayId>pJ23116_AB_impl</sbol:displayId>
+        <ns0:entity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pJ23116_AB_impl/1"/>
+      </ns0:Usage>
+    </ns0:qualifiedUsage>
+    <sbol:version>1</sbol:version>
+    <sbol:displayId>i0mwvNcgH_offline_multi_2_assembly</sbol:displayId>
+    <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly"/>
+    <ns1:title>DNA Assembly</ns1:title>
+    <ns0:qualifiedUsage>
+      <ns0:Usage rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly/BsaI_enzyme/1">
+        <ns0:entity rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/BsaI_impl/1"/>
+        <ns0:hadRole rdf:resource="http://sbols.org/v2#build"/>
+        <sbol:displayId>BsaI_enzyme</sbol:displayId>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly/BsaI_enzyme"/>
+        <sbol:version>1</sbol:version>
+      </ns0:Usage>
+    </ns0:qualifiedUsage>
+    <ns0:qualifiedUsage>
+      <ns0:Usage rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly/T4_Ligase/1">
+        <sbol:displayId>T4_Ligase</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <ns0:hadRole rdf:resource="http://sbols.org/v2#build"/>
+        <ns0:entity rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/T4_Ligase_impl/1"/>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly/T4_Ligase"/>
+      </ns0:Usage>
+    </ns0:qualifiedUsage>
+    <ns0:qualifiedAssociation>
+      <ns0:Association rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly/assemble_/1">
+        <ns0:hadPlan rdf:resource="http://buildcompiler.org/assembly_plan/1"/>
+        <sbol:version>1</sbol:version>
+        <sbol:displayId>assemble_</sbol:displayId>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly/assemble_"/>
+        <ns0:agent rdf:resource="http://buildcompiler.org/BuildCompiler/1"/>
+      </ns0:Association>
+    </ns0:qualifiedAssociation>
+    <ns0:qualifiedUsage>
+      <ns0:Usage rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly/pE0030_CD_impl/1">
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly/pE0030_CD_impl"/>
+        <sbol:version>1</sbol:version>
+        <ns0:hadRole rdf:resource="http://sbols.org/v2#build"/>
+        <ns0:entity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pE0030_CD_impl/1"/>
+        <sbol:displayId>pE0030_CD_impl</sbol:displayId>
+      </ns0:Usage>
+    </ns0:qualifiedUsage>
+    <sbol:type rdf:resource="http://sbols.org/v2#build"/>
+    <ns0:qualifiedUsage>
+      <ns0:Usage rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly/pB0015_DE_impl/1">
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly/pB0015_DE_impl"/>
+        <sbol:displayId>pB0015_DE_impl</sbol:displayId>
+        <sbol:version>1</sbol:version>
+        <ns0:hadRole rdf:resource="http://sbols.org/v2#build"/>
+        <ns0:entity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0015_DE_impl/1"/>
+      </ns0:Usage>
+    </ns0:qualifiedUsage>
+    <ns0:qualifiedUsage>
+      <ns0:Usage rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly/DVK_AE_impl/1">
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly/DVK_AE_impl"/>
+        <sbol:version>1</sbol:version>
+        <ns0:hadRole rdf:resource="http://sbols.org/v2#build"/>
+        <ns0:entity rdf:resource="https://synbiohub.org/user/Gon/impl_test/DVK_AE_impl/1"/>
+        <sbol:displayId>DVK_AE_impl</sbol:displayId>
+      </ns0:Usage>
+    </ns0:qualifiedUsage>
+    <ns0:qualifiedUsage>
+      <ns0:Usage rdf:about="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly/pB0034_BC_impl/1">
+        <ns0:entity rdf:resource="https://synbiohub.org/user/Gon/impl_test/pB0034_BC_impl/1"/>
+        <sbol:displayId>pB0034_BC_impl</sbol:displayId>
+        <sbol:persistentIdentity rdf:resource="http://buildcompiler.org/i0mwvNcgH_offline_multi_2_assembly/pB0034_BC_impl"/>
+        <sbol:version>1</sbol:version>
+        <ns0:hadRole rdf:resource="http://sbols.org/v2#build"/>
+      </ns0:Usage>
+    </ns0:qualifiedUsage>
+  </ns0:Activity>
+</rdf:RDF>

@@ -10,7 +10,6 @@ from .constants import (
     DNA_TYPES,
     ENGINEERED_INSERT,
     ENGINEERED_PLASMID,
-    ENGINEERED_REGION,
     FIVE_PRIME_OVERHANG,
     FUSION_SITES,
     LINEAR,
@@ -21,7 +20,7 @@ from .constants import (
     THREE_PRIME_OVERHANG,
 )
 
-sbol2.Config.setHomespace("https://SBOL2Build.org")
+sbol2.Config.setHomespace("http://buildcompiler.org")
 sbol2.Config.setOption(sbol2.ConfigOptions.SBOL_COMPLIANT_URIS, True)
 sbol2.Config.setOption(sbol2.ConfigOptions.SBOL_TYPED_URIS, False)
 
@@ -29,48 +28,68 @@ sbol2.Config.setOption(sbol2.ConfigOptions.SBOL_TYPED_URIS, False)
 class Assembly:
     """Creates an Assembly Plan.
 
-    :param name: Name of the assembly plan ModuleDefinition.
-    :param part_plasmids: Parts in backbone to be assembled.
-    :param plasmid_acceptor_backbone:  Backbone in which parts are inserted on the assembly.
-    :param restriction_enzyme: Restriction enzyme name used by PyDNA. Case sensitive, follow standard restriction enzyme nomenclature, i.e. 'BsaI'
-    :param document: SBOL Document where the assembly plan will be created.
+    :param part_plasmids: List of part-in-backbone plasmids to be assembled.
+    :param backbone_plasmid: Acceptor backbone into which parts are inserted.
+    :param restriction_enzyme: SBOL Implementation representing the restriction enzyme
+        (e.g. BsaI) used to digest parts during assembly.
+    :param ligase: SBOL Implementation representing the ligase (e.g. T4) used to
+        ligate digested parts.
+    :param source_document: SBOL Document containing the source part/plasmid definitions.
+    :param final_document: SBOL Document where assembled composite plasmid definitions
+        will be written.
+    :param composite_prefix: Prefix used when naming composite plasmid definitions.
+        Defaults to 'composite'.
+
     """
 
     def __init__(  # TODO add fields for activity/agent/plan
         self,
         part_plasmids: List[Plasmid],
         backbone_plasmid: Plasmid,
-        restriction_enzyme: sbol2.Implementation,  # TODO search for implementation in document, or domesticate the RE
+        restriction_enzyme: sbol2.Implementation,
         ligase: sbol2.Implementation,
-        document: sbol2.Document,
+        source_document: sbol2.Document,
+        final_document: sbol2.Document,
+        composite_prefix: str = "composite",
     ):
         self.part_plasmids = part_plasmids
         self.backbone = backbone_plasmid
         self.restriction_enzyme = restriction_enzyme
         self.ligase = ligase
         self.extracted_parts = []  # list of tuples [ComponentDefinition, Sequence]
-        self.source_document = document
-        self.final_document = sbol2.Document()
-        self.assembly_activity = initialize_assembly_activity()
+        self.source_document = source_document
+        self.final_document = final_document
+        self.composite_prefix = composite_prefix
+        self.assembly_activity = self.initialize_assembly_activity()
         self.composites = []
 
     def run(
-        self, include_extracted_parts=False
-    ) -> List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]:
-        """Runs full assembly simulation.
+        self, include_extracted_parts: bool = False
+    ) -> Tuple[List[Plasmid], sbol2.Document]:
+        """Run the full Golden Gate assembly simulation.
 
-        `document` parameter of golden_gate_assembly_plan object is updated by reference to include assembly plan ModuleDefinition and all related information.
+        Executes the following steps in order:
 
-        Runs :func:`part_digestion` for all `part_plasmids` and :func:`backbone_digestion` for `plasmid_acceptor_backbone` with `restriction_enzyme`. Then runs :func:`ligation` with these parts to form composites.
+        1. Calls :func:`part_digestion` on each plasmid in ``part_plasmids`` using
+           ``restriction_enzyme``, appending extracted parts to ``source_document``.
+        2. Calls :func:`backbone_digestion` on the first implementation of ``backbone``,
+           appending the linearised backbone to ``source_document``.
+        3. Calls :func:`ligation` on all extracted parts and the backbone to produce
+           composite plasmid implementations, written to ``final_document``.
+        4. Wraps each composite implementation in a :class:`Plasmid` object and returns
+           the full list alongside the populated ``final_document``.
 
-        :return: List of all composites generated, in the form of tuples of ComponentDefinition and Sequence.
+        :param include_extracted_parts: If ``True``, extracted part and backbone
+            definitions are also written to ``final_document`` in addition to
+            ``source_document``. Defaults to ``False``.
+        :return: A tuple of (composite plasmids, final document), where composite
+            plasmids is a list of :class:`Plasmid` objects built from the ligated
+            implementations, and final document is the populated ``sbol2.Document``
+            containing all assembly outputs.
         """
         for plasmid in self.part_plasmids:
-            plasmid_impl = plasmid.plasmid_implementations[
-                0
-            ]  # TODO update with more sophisticated selection process?
             extracts_tuple_list, _ = part_digestion(
-                plasmid_impl,
+                plasmid,
                 [self.restriction_enzyme],
                 self.assembly_activity,
                 self.source_document,
@@ -80,9 +99,8 @@ class Assembly:
                 append_extracts_to_doc(extracts_tuple_list, self.final_document)
             self.extracted_parts.append(extracts_tuple_list[0][0])
 
-        backbone_impl = self.backbone.plasmid_implementations[0]
         extracts_tuple_list, _ = backbone_digestion(
-            backbone_impl,
+            self.backbone,
             [self.restriction_enzyme],
             self.assembly_activity,
             self.source_document,
@@ -96,6 +114,7 @@ class Assembly:
         self.composites = ligation(
             self.extracted_parts,
             self.assembly_activity,
+            self.composite_prefix,
             self.source_document,
             self.final_document,
             self.ligase,
@@ -115,6 +134,146 @@ class Assembly:
         ]
 
         return composite_plasmid_objs, self.final_document
+
+    def initialize_assembly_activity(self):
+        activity = sbol2.Activity(f"{self.composite_prefix}_assembly")
+
+        activity.name = "DNA Assembly"
+        activity.types = "http://sbols.org/v2#build"
+
+        activity_association = sbol2.Association("assemble_")
+
+        assembly_plan = sbol2.Plan("assembly_plan")
+
+        assembly_plan.description = "MoClo DNA Assembly With Opentrons OT2"
+
+        activity_association.plan = assembly_plan
+
+        activity_agent = sbol2.Agent("BuildCompiler")
+        activity_association.agent = activity_agent
+
+        activity.associations = [activity_association]
+
+        return activity
+
+
+class Transformation:
+    """Create SBOL transformation records from plasmid/chassis inputs.
+
+    Mirrors the orchestration pattern used by :class:`Assembly`, but for
+    chemical transformation into a chassis strain.
+    """
+
+    def __init__(
+        self,
+        plasmids: List[Plasmid],
+        chassis_name: str,
+        source_document: sbol2.Document,
+    ):
+        self.plasmids = plasmids
+        self.chassis_name = chassis_name
+        self.source_document = source_document
+
+    def _add_if_absent(self, obj):
+        if self.source_document.find(obj.identity) is None:
+            self.source_document.add(obj)
+
+    def _get_or_create_chassis(self) -> tuple[sbol2.ModuleDefinition, sbol2.Implementation]:
+        chassis_module = self.source_document.find(self.chassis_name) or sbol2.ModuleDefinition(
+            self.chassis_name
+        )
+        chassis_module.name = self.chassis_name
+        self._add_if_absent(chassis_module)
+
+        chassis_impl_id = f"{self.chassis_name}_impl"
+        chassis_impl = self.source_document.find(chassis_impl_id) or sbol2.Implementation(
+            chassis_impl_id
+        )
+        chassis_impl.built = chassis_module.identity
+        self._add_if_absent(chassis_impl)
+        return chassis_module, chassis_impl
+
+    def chemical_transformation(self) -> list[dict]:
+        chassis_module, chassis_impl = self._get_or_create_chassis()
+        outputs = []
+
+        for index, plasmid in enumerate(self.plasmids, start=1):
+            plasmid_def = plasmid.plasmid_definition
+            plasmid_impl = (
+                plasmid.plasmid_implementations[0]
+                if plasmid.plasmid_implementations
+                else None
+            )
+            if plasmid_impl is None:
+                plasmid_impl_id = f"{plasmid_def.displayId}_impl"
+                plasmid_impl = self.source_document.find(plasmid_impl_id) or sbol2.Implementation(
+                    plasmid_impl_id
+                )
+                plasmid_impl.built = plasmid_def.identity
+                self._add_if_absent(plasmid_impl)
+
+            transform_id = f"transform_{plasmid_def.displayId}_{index}"
+            transformation_activity = sbol2.Activity(transform_id)
+            transformation_activity.name = (
+                f"Transform {self.chassis_name} with {plasmid_def.displayId}"
+            )
+            transformation_activity.types = "http://sbols.org/v2#build"
+
+            chassis_usage = sbol2.Usage(
+                uri=f"{transform_id}_chassis_usage",
+                entity=chassis_impl.identity,
+                role="http://sbols.org/v2#build",
+            )
+            plasmid_usage = sbol2.Usage(
+                uri=f"{transform_id}_plasmid_usage",
+                entity=plasmid_impl.identity,
+                role="http://sbols.org/v2#build",
+            )
+            transformation_activity.usages = [chassis_usage, plasmid_usage]
+
+            transformed_strain = sbol2.ModuleDefinition(
+                f"{self.chassis_name}_with_{plasmid_def.displayId}"
+            )
+            transformed_strain.name = (
+                f"{self.chassis_name} transformed with {plasmid_def.displayId}"
+            )
+            chassis_module_ref = sbol2.Module(
+                uri=f"{transformed_strain.displayId}_chassis_module"
+            )
+            chassis_module_ref.definition = chassis_module.identity
+            plasmid_fc = sbol2.FunctionalComponent(
+                uri=f"{transformed_strain.displayId}_plasmid_fc"
+            )
+            plasmid_fc.definition = plasmid_def.identity
+            transformed_strain.modules = [chassis_module_ref]
+            transformed_strain.functionalComponents = [plasmid_fc]
+
+            transformed_impl = sbol2.Implementation(
+                f"{transformed_strain.displayId}_impl"
+            )
+            transformed_impl.built = transformed_strain.identity
+            transformed_impl.wasGeneratedBy = transformation_activity.identity
+
+            for obj in (
+                transformation_activity,
+                chassis_usage,
+                plasmid_usage,
+                transformed_strain,
+                chassis_module_ref,
+                plasmid_fc,
+                transformed_impl,
+            ):
+                self._add_if_absent(obj)
+
+            outputs.append(
+                {
+                    "transformation_activity": transformation_activity.identity,
+                    "transformed_strain_module": transformed_strain.identity,
+                    "transformed_strain_implementation": transformed_impl.identity,
+                }
+            )
+
+        return outputs
 
 
 def rebase_restriction_enzyme(name: str, **kwargs) -> sbol2.ComponentDefinition:
@@ -298,44 +457,55 @@ def is_circular(obj: sbol2.ComponentDefinition) -> bool:
 
 
 def part_digestion(
-    reactant: sbol2.Implementation,
+    reactant: Plasmid,
     restriction_enzymes: List[sbol2.Implementation],
     assembly_activity: sbol2.Activity,
     document: sbol2.Document,
-) -> Tuple[List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]]:
-    """Runs a simulated digestion on the top level sequence in the reactant ComponentDefinition or ModuleDefinition with the given restriciton enzymes, creating a extracted part ComponentDefinition, a digestion Interaction, and converts existing scars to 5' and 3' overhangs.
-    The product ComponentDefinition is assumed the digested part in this case.
+) -> Tuple[List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]], sbol2.Activity]:
+    """Simulate restriction digestion of a part plasmid and extract the insert.
 
-    Written for use with the SBOL2.3 output of https://sbolcanvas.org
+    Uses PyDNA to cut the reactant sequence, then constructs SBOL representations
+    of the extracted part, its 5' and 3' overhangs, and any derived scar sequences.
+    Each enzyme and the reactant implementation are recorded as usages on
+    ``assembly_activity``.
 
-    :param reactant: Plasmid DNA to be digested as SBOL ComponentDefinition
-    :param restriction_enzymes: Restriction enzymes as :class:`sbol2.ComponentDefinition`
-                                (generate with :func:`rebase_restriction_enzyme`).
-    :param assembly_plan: SBOL ModuleDefinition to contain the functional components, interactions, and participations
-    :param document: original SBOL2 document to be used to extract referenced objects.
-    :return: A tuple of a list ComponentDefinitions and Sequences, and an assembly plan ModuleDefinition.
+    Expects the reactant to be circular with 2 digest products, or linear with 3
+    (backbone | part | backbone). The shorter circular product or middle linear
+    product is taken as the extracted insert.
+
+    :param reactant: Part-in-backbone plasmid to digest.
+    :param restriction_enzymes: Restriction enzyme implementations; the corresponding
+        ``ComponentDefinition.name`` must match a PyDNA/ReBase enzyme name (e.g. ``'BsaI'``).
+    :param assembly_activity: SBOL Activity to record reactant and enzyme usages on.
+    :param document: Source SBOL document used to resolve referenced definitions and sequences.
+    :return: A tuple of (extracts, activity), where extracts is a list of
+        ``(ComponentDefinition, Sequence)`` pairs covering the extracted part,
+        overhangs, and scar definitions, and activity is the updated ``assembly_activity``.
+    :raises TypeError: If the reactant has no recognised DNA type.
+    :raises ValueError: If the reactant does not have exactly one sequence, or if
+        the number of digest products is unsupported for the reactant topology.
     """
-
-    reactant_component_definition = document.get(reactant.built)
+    reactant_impl = reactant.plasmid_implementations[0]
+    reactant_component_definition = reactant.plasmid_definition
     reactant_displayId = reactant_component_definition.displayId
 
     types = set(reactant_component_definition.types or [])
 
     if not types.intersection(DNA_TYPES):
         raise TypeError(
-            f"The reactant should have a DNA type. Types found: {reactant.types}."
+            f"The reactant should have a DNA type. Types found: {reactant_component_definition.types}."
         )
     if len(reactant_component_definition.sequences) != 1:
         raise ValueError(
-            f"The reactant needs to have precisely one sequence. The input reactant has {len(reactant.sequences)} sequences"
+            f"The reactant needs to have precisely one sequence. The input reactant has {len(reactant_component_definition.sequences)} sequences"
         )
     extracts_list = []
     restriction_enzymes_pydna = []
 
     assembly_activity.usages.add(
         sbol2.Usage(
-            uri=f"{reactant.displayId}",
-            entity=reactant.identity,
+            uri=f"{reactant_impl.displayId}",
+            entity=reactant_impl.identity,
             role="http://sbols.org/v2#build",
         )
     )
@@ -497,8 +667,20 @@ def part_digestion(
     # find + add original component to product def & annotation
     for comp in reactant_component_definition.components:
         if comp.definition == original_part_def_URI:
-            prod_component_definition.components.add(comp)
-            part_extract_annotation.component = comp
+            new_comp = prod_component_definition.components.create(comp.displayId)
+            new_comp.definition = comp.definition
+            part_extract_annotation.component = new_comp
+
+            original_cd = document.getComponentDefinition(comp.definition)
+            seq = document.get(original_cd.sequences[0])
+
+            new_seq = sbol2.Sequence(
+                uri=f"{reactant_component_definition.displayId}_extracted_part_seq",
+                elements=seq.elements,
+                encoding=seq.encoding,
+            )
+            prod_component_definition.sequences.append(new_seq)
+            extracts_list.append((new_comp, new_seq))
 
     prod_component_definition.sequenceAnnotations.add(three_prime_overhang_annotation)
     prod_component_definition.sequenceAnnotations.add(five_prime_overhang_annotation)
@@ -510,24 +692,35 @@ def part_digestion(
 
 
 def backbone_digestion(
-    reactant: sbol2.Implementation,
+    reactant: Plasmid,
     restriction_enzymes: List[sbol2.Implementation],
     assembly_activity: sbol2.Activity,
     document: sbol2.Document,
-) -> Tuple[List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]]]:
-    """Runs a simulated digestion on the top level sequence in the reactant ComponentDefinition or ModuleDefinition with the given restriciton enzymes, creating an open backbone ComponentDefinition, a digestion Interaction, and converts existing scars to 5' and 3' overhangs.
-    The product ComponentDefinition is assumed the open backbone in this case.
+) -> Tuple[List[Tuple[sbol2.ComponentDefinition, sbol2.Sequence]], sbol2.Activity]:
+    """Simulate restriction digestion of a backbone plasmid and extract the linearised vector.
 
-    Written for use with the SBOL2.3 output of https://sbolcanvas.org
+    Mirrors :func:`part_digestion` but targets the backbone: for a circular reactant
+    with 2 digest products the longer fragment is taken as the open backbone; for a
+    linear reactant with 3 products the outer prefix/suffix fragments are used.
+    The resulting open-backbone ``ComponentDefinition``, its 5' and 3' overhangs, and
+    any matched scar sequences are returned as SBOL objects. The reactant implementation
+    and each enzyme are recorded as usages on ``assembly_activity``.
 
-    :param reactant: DNA to be digested as SBOL ComponentDefinition or ModuleDefinition, usually a part_in_backbone. ComponentDefinition is the best-practice type for plasmids.
-    :param restriction_enzymes: Restriction enzymes as :class:`sbol2.ComponentDefinition`
-                                (generate with :func:`rebase_restriction_enzyme`).
-    :param assembly_plan: SBOL ModuleDefinition to contain the functional components, interactions, and participations
-    :param document: original SBOL2 document to be used to extract referenced objects.
-    :return: A tuple of a list ComponentDefinitions and Sequences, and an assembly plan ModuleDefinition.
+    :param reactant: SBOL Implementation whose ``built`` URI resolves to the
+        backbone ``ComponentDefinition`` in ``document``.
+    :param restriction_enzymes: Restriction enzyme implementations; the corresponding
+        ``ComponentDefinition.name`` must match a PyDNA/ReBase enzyme name (e.g. ``'BsaI'``).
+    :param assembly_activity: SBOL Activity to record reactant and enzyme usages on.
+    :param document: Source SBOL document used to resolve referenced definitions and sequences.
+    :return: A tuple of (extracts, activity), where extracts is a list of
+        ``(ComponentDefinition, Sequence)`` pairs covering the open backbone,
+        overhangs, and scar definitions, and activity is the updated ``assembly_activity``.
+    :raises TypeError: If the reactant has no recognised DNA type.
+    :raises ValueError: If the reactant does not have exactly one sequence, or if
+        the number of digest products is unsupported for the reactant topology.
     """
-    reactant_component_definition = document.get(reactant.built)
+    reactant_impl = reactant.plasmid_implementations[0]
+    reactant_component_definition = document.get(reactant_impl.built)
     reactant_displayId = reactant_component_definition.displayId
 
     types = set(reactant_component_definition.types or [])
@@ -545,8 +738,8 @@ def backbone_digestion(
 
     assembly_activity.usages.add(
         sbol2.Usage(
-            uri=f"{reactant.displayId}",
-            entity=reactant.identity,
+            uri=f"{reactant_impl.displayId}",
+            entity=reactant_impl.identity,
             role="http://sbols.org/v2#build",
         )
     )
@@ -591,7 +784,7 @@ def backbone_digestion(
 
     if len(digested_reactant) < 2 or len(digested_reactant) > 3:
         raise ValueError(
-            f"Not supported number of products. Found: {len(digested_reactant)}"
+            f"Not supported number of products. Found: {len(digested_reactant)} after digesting {reactant_displayId}"
         )
     # TODO select them based on content rather than size.
     elif circular and len(digested_reactant) == 2:
@@ -735,17 +928,21 @@ def number_to_suffix(n):
 def ligation(
     reactants: List[sbol2.ComponentDefinition],
     assembly_activity: sbol2.Activity,
+    composite_prefix: str,
     source_document: sbol2.Document,
     final_document: sbol2.Document,
     ligase: sbol2.Implementation,
 ) -> List[sbol2.Implementation]:
     """Ligates Components using base complementarity and creates product Components and a ligation Interaction.
 
-    :param reactants: DNA parts to be ligated as SBOL ModuleDefinition.
+    :param reactants: Extracted part and backbone ``ComponentDefinition`` objects to ligate.
     :param assembly_activity: SBOL activity to track assembly inputs & outputs
-    :param document: SBOL2 document containing all reactant ComponentDefinitions.
-    :param ligase: as SBOL Implementation
-    :return: List of all composites generated, in the form of tuples of ComponentDefinition and Sequence.
+    :param composite_prefix: Prefix used when naming composite ``ComponentDefinition``
+        and ``Implementation`` identities.
+    :param source_document: SBOL Document containing all reactant definitions.
+    :param final_document: SBOL Document that receives composite definitions and implementations.
+    :param ligase: SBOL Implementation of the ligase (e.g. T4).
+    :return: List of ``sbol2.Implementation`` objects, one per composite plasmid generated.
     """
     enzyme_definition = source_document.get(ligase.built)
 
@@ -819,39 +1016,45 @@ def ligation(
         insert_sequence_uri = combination[0].sequences[0]
         insert_sequence = source_document.getSequence(insert_sequence_uri).elements
         remaining_parts = list(combination[1:])
+        insert_3prime_match_id = None
         it = 1
         while remaining_parts:
             remaining_parts_before = len(remaining_parts)
             for part in remaining_parts:
                 # match insert sequence 5' to part 3'
                 part_sequence_uri = part.sequences[0]
+                # check reverse match
+                if (
+                    source_document.getSequence(part_sequence_uri)
+                    .elements[-fusion_site_length:]
+                    .lower()
+                    == insert_sequence[:fusion_site_length].lower()
+                ):
+                    insert_3prime_match_id = part.identity
                 if (
                     source_document.getSequence(part_sequence_uri)
                     .elements[:fusion_site_length]
                     .lower()
                     == insert_sequence[-fusion_site_length:].lower()
                 ):
-                    insert_sequence = (
-                        insert_sequence[:-fusion_site_length]
-                        + source_document.getSequence(part_sequence_uri).elements
-                    )
-                    list_of_parts_per_composite.append(
-                        part
-                    )  # add sequence annotation here, index based on insert_sequence
-                    remaining_parts.remove(part)
-                # match insert sequence 3' to part 5'
-                elif (
-                    source_document.getSequence(part_sequence_uri)
-                    .elements[-fusion_site_length:]
-                    .lower()
-                    == insert_sequence[:fusion_site_length].lower()
-                ):
-                    insert_sequence = (
-                        source_document.getSequence(part_sequence_uri).elements
-                        + insert_sequence[fusion_site_length:]
-                    )
-                    list_of_parts_per_composite.insert(0, part)
-                    remaining_parts.remove(part)
+                    if (
+                        len(remaining_parts) == 1
+                        and part.identity == insert_3prime_match_id
+                    ):  # check flag and match backbone 5' on final part 3'
+                        insert_sequence = (
+                            insert_sequence[:-fusion_site_length]
+                            + source_document.getSequence(part_sequence_uri).elements
+                        )
+                        list_of_parts_per_composite.append(part)
+                        remaining_parts.remove(part)
+                    elif len(remaining_parts) > 1:
+                        insert_sequence = (
+                            insert_sequence[:-fusion_site_length]
+                            + source_document.getSequence(part_sequence_uri).elements
+                        )
+                        list_of_parts_per_composite.append(part)
+                        remaining_parts.remove(part)
+                # match backbone 5' to insert sequence 3', set flag
                 remaining_parts_after = len(remaining_parts)
 
             if remaining_parts_before == remaining_parts_after:
@@ -865,9 +1068,8 @@ def ligation(
 
     # transform list_of_parts_per_assembly into list of composites
     product_impl_list = []
-    composite_number = 1
+    composite_number = 0
 
-    # TODO: use componentinstances to append "subcomponents" to each definition that is a composite component. all composites share the "subcomponents"
     for composite in list_of_composites_per_assembly:  # a composite of the form [A,B,C]
         # calculate sequence
         composite_sequence_str = ""
@@ -944,15 +1146,25 @@ def ligation(
                         source_document.getComponentDefinition(prev_three_prime)
                     )
                 else:
+                    anno_prefix = comp.displayId
+
+                    matching_anno_prefix = [
+                        a.displayId
+                        for a in anno_list
+                        if a.displayId.startswith(f"{comp.displayId}_")
+                    ]
+                    if matching_anno_prefix:
+                        anno_prefix = f"{comp.displayId}_{len(matching_anno_prefix)}"
+
                     temp_extract_components.append(comp.definition)
                     comp_location = sbol2.Range(
-                        uri=f"{comp.displayId}_location",
+                        uri=f"{anno_prefix}_location",
                         start=len(composite_sequence_str) + fusion_site_length + 1,
                         end=len(composite_sequence_str)
                         + len(part_extract_sequence[:-4]),
-                    )  # TODO check if seq len is correct
+                    )
                     comp_anno = sbol2.SequenceAnnotation(
-                        uri=f"{comp.displayId}_annotation"
+                        uri=f"{anno_prefix}_annotation"
                     )
                     comp_anno.locations.add(comp_location)
                     anno_list.append(comp_anno)
@@ -963,14 +1175,18 @@ def ligation(
                 composite_sequence_str + part_extract_sequence[:-fusion_site_length]
             )  # needs a version for linear
 
+        suffix = f"_{composite_number}" if composite_number > 0 else ""
+
         # create dna component and sequence
         composite_component_definition, composite_seq = (
             dna_componentdefinition_with_sequence(
-                f"composite_{composite_number}", composite_sequence_str, molecule=True
+                f"{composite_prefix}{suffix}",
+                composite_sequence_str,
+                molecule=True,
             )
         )
-        composite_component_definition.name = f"composite_{composite_number}"
-        composite_component_definition.addRole(ENGINEERED_REGION)
+        composite_component_definition.name = f"{composite_prefix}{suffix}"
+        composite_component_definition.addRole(ENGINEERED_PLASMID)
         composite_component_definition.addType(CIRCULAR)
 
         prev_part_extract = None
@@ -990,8 +1206,6 @@ def ligation(
 
             prev_part_extract = comp
 
-        # _create_precedes_restriction(composite_component_definition, prev_part_extract, composite_component_definition.components[0]) # final component precedes first component; defining circular order
-
         composite_component_definition.sequenceAnnotations = anno_list
 
         composite_implementation = sbol2.Implementation(
@@ -999,6 +1213,10 @@ def ligation(
         )
         composite_implementation.built = composite_component_definition.identity
         composite_implementation.wasGeneratedBy = assembly_activity.identity
+
+        source_document.add_list(
+            [composite_component_definition, composite_seq, composite_implementation]
+        )
 
         final_document.add_list(
             [composite_component_definition, composite_seq, composite_implementation]
@@ -1041,28 +1259,6 @@ def add_object_to_doc(
             pass
         else:
             raise e
-
-
-def initialize_assembly_activity():
-    activity = sbol2.Activity("assembly")
-
-    activity.name = "DNA Assembly"
-    activity.types = "http://sbols.org/v2#build"
-
-    activity_association = sbol2.Association("assemble_")
-
-    assembly_plan = sbol2.Plan("assembly_plan")
-
-    assembly_plan.description = "MoClo DNA Assembly With Opentrons OT2"
-
-    activity_association.plan = assembly_plan
-
-    activity_agent = sbol2.Agent("BuildCompiler")
-    activity_association.agent = activity_agent
-
-    activity.associations = [activity_association]
-
-    return activity
 
 
 def _create_precedes_restriction(

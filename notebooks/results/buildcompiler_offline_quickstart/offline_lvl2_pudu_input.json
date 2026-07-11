@@ -1,0 +1,11 @@
+[
+    {
+        "Product": "http://buildcompiler.org/offline_lvl2/1",
+        "Backbone": "https://synbiohub.org/user/Gon/CIDARMoCloPlasmidsKit/DVA_AF2/1",
+        "PartsList": [
+            "http://buildcompiler.org/Gen_Gen1_plas_simple/1",
+            "http://buildcompiler.org/Gen1_Gen1_plas_simple/1"
+        ],
+        "Restriction Enzyme": "https://synbiohub.org/user/Gon/Enzyme_Implementations/BbsI/1"
+    }
+]

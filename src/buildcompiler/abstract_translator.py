@@ -90,7 +90,7 @@ def extract_fusion_sites(
         A list of fusion site component definitions.
     """
     fusion_sites = []
-    for component in plasmid.components:
+    for component in plasmid.getInSequentialOrder():
         definition = doc.getComponentDefinition(component.definition)
         if RESTRICTION_ENZYME_ASSEMBLY_SCAR in definition.roles:
             fusion_sites.append(definition)
@@ -135,14 +135,31 @@ def copy_sequences(component_definition, target_doc, collection_doc):
                 seq_obj.copy(target_doc)
 
 
-def get_or_pull(doc, sbh, uri):
+def get_or_pull(
+    doc: sbol2.Document, sbh: sbol2.PartShop, uri: str, server_mode: bool = False
+):
     """
     Get an SBOL object from a Document.
     If missing, pull it from SynBioHub and retry.
     """
-    if uri not in doc:
-        sbh.pull(uri, doc)
-    return doc.get(uri)
+
+    try:
+        return doc.get(uri)
+
+    except Exception as e:
+        pull_uri = uri
+
+        if server_mode:
+            canonical_resource = sbh.resource.replace("://api.", "://")
+
+            pull_uri = uri.replace(canonical_resource, sbh.resource)
+
+        sbh.pull(pull_uri, doc)
+
+        try:
+            return doc.get(uri)
+        except Exception:
+            raise e
 
 
 def extract_combinatorial_design_parts(
@@ -187,7 +204,30 @@ def extract_combinatorial_design_parts(
 
 
 def extract_toplevel_definition(doc: sbol2.Document) -> sbol2.ComponentDefinition:
-    return doc.componentDefinitions[0]
+    cds = list(doc.componentDefinitions)
+
+    # identities of definitions used as subcomponents
+    used_defs = set()
+
+    for cd in cds:
+        for comp in cd.components:
+            used_defs.add(comp.definition)
+
+    # candidates = composite designs not used inside another design
+    candidates = [
+        cd for cd in cds if len(cd.components) > 0 and cd.identity not in used_defs
+    ]
+
+    if len(candidates) == 1:
+        return candidates[0]
+
+    if len(candidates) == 0:
+        raise ValueError("No top-level composite ComponentDefinition found")
+
+    raise ValueError(
+        f"Multiple top-level ComponentDefinitions found: "
+        f"{[c.displayId for c in candidates]}"
+    )
 
 
 def enumerate_design_variants(component_dict):
@@ -290,9 +330,6 @@ def get_compatible_plasmids(
                 and plasmid.fusion_sites[0] == match_to.fusion_sites[match_idx]
                 and plasmid.fusion_sites[1] == backbone.fusion_sites[1]
             ):
-                print(
-                    f"matched final component {plasmid.name} with {match_to.name} and {backbone.name} on fusion sites ({plasmid.fusion_sites[0]}, {plasmid.fusion_sites[1]})!"
-                )
                 selected_plasmids.append(plasmid)
                 found = True
                 break
@@ -300,9 +337,6 @@ def get_compatible_plasmids(
                 i < len(plasmid_dict) - 1
                 and plasmid.fusion_sites[0] == match_to.fusion_sites[match_idx]
             ):
-                print(
-                    f"matched {plasmid.name} with {match_to.name} on fusion site {plasmid.fusion_sites[0]}!"
-                )
                 selected_plasmids.append(plasmid)
                 found = True
                 match_to = plasmid

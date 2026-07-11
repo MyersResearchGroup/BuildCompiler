@@ -1,0 +1,115 @@
+<?xml version="1.0" ?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:sbh="http://wiki.synbiohub.org/wiki/Terms/synbiohub#" xmlns:sbol="http://sbols.org/v2#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:prov="http://www.w3.org/ns/prov#" xmlns:om="http://www.ontology-of-units-of-measure.org/resource/om-2/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <sbol:Collection rdf:about="https://synbiohub.org/user/Gon/Enzyme_Implementations/Enzyme_Implementations_collection/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/Enzyme_Implementations_collection"/>
+    <sbol:displayId>Enzyme_Implementations_collection</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>Enzyme_Implementations</dcterms:title>
+    <dcterms:description>collection of proteins for Golden Gate BuildPlanner</dcterms:description>
+    <dc:creator>Gonzalo Vidal</dc:creator>
+    <dcterms:created>2026-03-16T21:53:12.756Z</dcterms:created>
+    <dcterms:created>2026-04-14T22:10:19.106Z</dcterms:created>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/Enzyme_Implementations_collection/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/BsaI_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/BbsI_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/SapI/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/BbsI/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/SapI_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/T4_Ligase_impl/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/BsaI/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/T4_Ligase/1"/>
+    <sbol:member rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/restriction_enzyme_purchase/1"/>
+  </sbol:Collection>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/Enzyme_Implementations/BbsI/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/BbsI"/>
+    <sbol:displayId>BbsI</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasDerivedFrom rdf:resource="http://rebase.neb.com/rebase/enz/BbsI.html"/>
+    <dcterms:title>BbsI</dcterms:title>
+    <dcterms:description>Restriction enzyme BbsI from REBASE.</dcterms:description>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/BbsI/1"/>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#Protein"/>
+    <sbol:role rdf:resource="http://identifiers.org/obi/OBI_0000732"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/Enzyme_Implementations/BsaI/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/BsaI"/>
+    <sbol:displayId>BsaI</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasDerivedFrom rdf:resource="http://rebase.neb.com/rebase/enz/BsaI.html"/>
+    <dcterms:title>BsaI</dcterms:title>
+    <dcterms:description>Restriction enzyme BsaI from REBASE.</dcterms:description>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/BsaI/1"/>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#Protein"/>
+    <sbol:role rdf:resource="http://identifiers.org/obi/OBI_0000732"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/Enzyme_Implementations/T4_Ligase/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/T4_Ligase"/>
+    <sbol:displayId>T4_Ligase</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>T4_Ligase</dcterms:title>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/T4_Ligase/1"/>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#Protein"/>
+    <sbol:role rdf:resource="http://identifiers.org/ncit/NCIT:C16796"/>
+  </sbol:ComponentDefinition>
+  <sbol:ComponentDefinition rdf:about="https://synbiohub.org/user/Gon/Enzyme_Implementations/SapI/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/SapI"/>
+    <sbol:displayId>SapI</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasDerivedFrom rdf:resource="http://rebase.neb.com/rebase/enz/SapI.html"/>
+    <dcterms:title>SapI</dcterms:title>
+    <dcterms:description>Restriction enzyme SapI from REBASE.</dcterms:description>
+    <dcterms:modified>2026-03-17T01:31:28</dcterms:modified>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/SapI/1"/>
+    <sbol:type rdf:resource="http://www.biopax.org/release/biopax-level3.owl#Protein"/>
+    <sbol:role rdf:resource="http://identifiers.org/obi/OBI_0000732"/>
+  </sbol:ComponentDefinition>
+  <prov:Activity rdf:about="https://synbiohub.org/user/Gon/Enzyme_Implementations/restriction_enzyme_purchase/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/restriction_enzyme_purchase"/>
+    <sbol:displayId>restriction_enzyme_purchase</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <dcterms:title>Restriction Enzyme Purchase</dcterms:title>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/restriction_enzyme_purchase/1"/>
+  </prov:Activity>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/Enzyme_Implementations/BsaI_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/BsaI_impl"/>
+    <sbol:displayId>BsaI_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/restriction_enzyme_purchase/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/BsaI_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/BsaI/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/Enzyme_Implementations/T4_Ligase_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/T4_Ligase_impl"/>
+    <sbol:displayId>T4_Ligase_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://SBOL2Build.org/ligase_purchase/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/T4_Ligase_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/T4_Ligase/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/Enzyme_Implementations/BbsI_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/BbsI_impl"/>
+    <sbol:displayId>BbsI_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/restriction_enzyme_purchase/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/BbsI_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/BbsI/1"/>
+  </sbol:Implementation>
+  <sbol:Implementation rdf:about="https://synbiohub.org/user/Gon/Enzyme_Implementations/SapI_impl/1">
+    <sbol:persistentIdentity rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/SapI_impl"/>
+    <sbol:displayId>SapI_impl</sbol:displayId>
+    <sbol:version>1</sbol:version>
+    <prov:wasGeneratedBy rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/restriction_enzyme_purchase/1"/>
+    <sbh:ownedBy rdf:resource="https://synbiohub.org/user/Gon"/>
+    <sbh:topLevel rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/SapI_impl/1"/>
+    <sbol:built rdf:resource="https://synbiohub.org/user/Gon/Enzyme_Implementations/SapI/1"/>
+  </sbol:Implementation>
+</rdf:RDF>
