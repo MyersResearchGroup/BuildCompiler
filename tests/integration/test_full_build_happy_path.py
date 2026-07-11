@@ -59,8 +59,22 @@ def test_full_build_happy_path_offline(default_build_options, minimal_sbol_docum
                 products=[_product("https://example.org/plasmid/lvl2_target")],
             )
         ),
-        lvl1_stage=FakeStage(lambda request: StageResult(id="unused1", stage=request.stage, status=StageStatus.BLOCKED, request_ids=[request.id])),
-        domestication_stage=FakeStage(lambda request: StageResult(id="unused2", stage=request.stage, status=StageStatus.BLOCKED, request_ids=[request.id])),
+        lvl1_stage=FakeStage(
+            lambda request: StageResult(
+                id="unused1",
+                stage=request.stage,
+                status=StageStatus.BLOCKED,
+                request_ids=[request.id],
+            )
+        ),
+        domestication_stage=FakeStage(
+            lambda request: StageResult(
+                id="unused2",
+                stage=request.stage,
+                status=StageStatus.BLOCKED,
+                request_ids=[request.id],
+            )
+        ),
     )
 
     result = executor.execute(BuildPlan(lvl2_requests=[lvl2_request]))

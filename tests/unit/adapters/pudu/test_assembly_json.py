@@ -91,9 +91,9 @@ def test_write_assembly_pudu_input_json_is_deterministic(tmp_path):
     returned_path = write_assembly_pudu_input_json(payload, output_path)
 
     assert returned_path == output_path
-    assert output_path.read_text(encoding="utf-8") == json.dumps(
-        payload, indent=4
-    ) + "\n"
+    assert (
+        output_path.read_text(encoding="utf-8") == json.dumps(payload, indent=4) + "\n"
+    )
 
 
 def test_domestication_artifact_to_pudu_json_shape_and_values():

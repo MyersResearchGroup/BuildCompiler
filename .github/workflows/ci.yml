@@ -24,6 +24,36 @@ jobs:
           python -m pip install -e ".[test]"
           python -m pip install ruff
       - name: Ruff check
-        run: ruff check tests/conftest.py tests/unit tests/stages tests/integration
+        run: >-
+          ruff check
+          src/buildcompiler/api
+          src/buildcompiler/planning
+          src/buildcompiler/execution
+          src/buildcompiler/stages
+          src/buildcompiler/sbol
+          src/buildcompiler/inventory
+          src/buildcompiler/adapters
+          src/buildcompiler/reporting
+          src/buildcompiler/domain
+          tests/conftest.py
+          tests/unit
+          tests/stages
+          tests/integration
+      - name: Ruff format check
+        run: >-
+          ruff format --check
+          src/buildcompiler/api
+          src/buildcompiler/planning
+          src/buildcompiler/execution
+          src/buildcompiler/stages
+          src/buildcompiler/sbol
+          src/buildcompiler/inventory
+          src/buildcompiler/adapters
+          src/buildcompiler/reporting
+          src/buildcompiler/domain
+          tests/conftest.py
+          tests/unit
+          tests/stages
+          tests/integration
       - name: Core tests
-        run: pytest tests/unit tests/stages tests/integration
+        run: pytest tests/unit tests/stages tests/integration -q

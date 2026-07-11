@@ -52,7 +52,10 @@ def test_resolver_gets_expected_types_from_local_document():
 
     assert resolver.get_component(ids["component"]).identity == ids["component"]
     assert resolver.get_module(ids["module"]).identity == ids["module"]
-    assert resolver.get_implementation(ids["implementation"]).identity == ids["implementation"]
+    assert (
+        resolver.get_implementation(ids["implementation"]).identity
+        == ids["implementation"]
+    )
     assert (
         resolver.get_combinatorial_derivation(ids["combinatorial"]).identity
         == ids["combinatorial"]
@@ -86,7 +89,9 @@ def test_missing_only_pulls_only_when_local_lookup_misses():
 def test_always_refresh_pulls_even_on_hit():
     doc, ids = _make_doc()
     fake = FakePullClient(doc)
-    resolver = SbolResolver(doc, pull_policy=PullPolicy.ALWAYS_REFRESH, pull_client=fake)
+    resolver = SbolResolver(
+        doc, pull_policy=PullPolicy.ALWAYS_REFRESH, pull_client=fake
+    )
 
     resolver.get_component(ids["component"])
 

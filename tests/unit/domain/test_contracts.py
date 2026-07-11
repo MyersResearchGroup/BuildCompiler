@@ -48,8 +48,12 @@ def test_blocked_vs_failed_semantics_are_documented_as_contract_data():
 
 
 def test_default_mutables_are_isolated_across_instances():
-    req1 = BuildRequest("r1", BuildStage.DOMESTICATION, "a", None, DesignKind.COMPONENT_DEFINITION)
-    req2 = BuildRequest("r2", BuildStage.DOMESTICATION, "b", None, DesignKind.COMPONENT_DEFINITION)
+    req1 = BuildRequest(
+        "r1", BuildStage.DOMESTICATION, "a", None, DesignKind.COMPONENT_DEFINITION
+    )
+    req2 = BuildRequest(
+        "r2", BuildStage.DOMESTICATION, "b", None, DesignKind.COMPONENT_DEFINITION
+    )
     req1.constraints["x"] = 1
     assert req2.constraints == {}
 
@@ -58,9 +62,13 @@ def test_default_mutables_are_isolated_across_instances():
     s1.request_ids.append("r1")
     s1.products.append(object())
     s1.missing_inputs.append(
-        MissingBuildInput(BuildStage.DOMESTICATION, "a", "b", None, "promoter", "fatal", "missing")
+        MissingBuildInput(
+            BuildStage.DOMESTICATION, "a", "b", None, "promoter", "fatal", "missing"
+        )
     )
-    s1.required_approvals.append(RequiredApproval(ApprovalStatus.REQUIRED, "biosafety", "needed"))
+    s1.required_approvals.append(
+        RequiredApproval(ApprovalStatus.REQUIRED, "biosafety", "needed")
+    )
     s1.warnings.append(BuildWarning("warn", "msg"))
     s1.protocol_artifacts["x"] = "y"
     s1.logs.append("log")

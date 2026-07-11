@@ -32,7 +32,12 @@ class BuildGraph:
             self.nodes.append(node)
 
     def add_edge(self, edge: BuildGraphEdge) -> None:
-        key = (edge.source, edge.target, edge.relationship, tuple(sorted(edge.metadata.items())))
+        key = (
+            edge.source,
+            edge.target,
+            edge.relationship,
+            tuple(sorted(edge.metadata.items())),
+        )
         keys = {
             (e.source, e.target, e.relationship, tuple(sorted(e.metadata.items())))
             for e in self.edges
@@ -60,7 +65,12 @@ class BuildGraph:
                 }
                 for e in sorted(
                     self.edges,
-                    key=lambda x: (x.source, x.target, x.relationship, sorted(x.metadata.items())),
+                    key=lambda x: (
+                        x.source,
+                        x.target,
+                        x.relationship,
+                        sorted(x.metadata.items()),
+                    ),
                 )
             ],
         }
@@ -68,7 +78,9 @@ class BuildGraph:
     def summary(self) -> dict[str, object]:
         relationship_counts: dict[str, int] = {}
         for edge in self.edges:
-            relationship_counts[edge.relationship] = relationship_counts.get(edge.relationship, 0) + 1
+            relationship_counts[edge.relationship] = (
+                relationship_counts.get(edge.relationship, 0) + 1
+            )
         return {
             "node_count": len(self.nodes),
             "edge_count": len(self.edges),
@@ -96,29 +108,100 @@ def build_graph(result: FullBuildResult) -> BuildGraph:
 
     for stage_result in result.stage_results:
         stage_node_id = f"stage_result:{stage_result.id}"
-        graph.add_node(BuildGraphNode(id=stage_node_id, kind="stage_result", label=stage_result.stage.value))
+        graph.add_node(
+            BuildGraphNode(
+                id=stage_node_id, kind="stage_result", label=stage_result.stage.value
+            )
+        )
         for request_id in sorted(stage_result.request_ids):
-            graph.add_node(BuildGraphNode(id=f"request:{request_id}", kind="abstract_design", label=request_id))
-            graph.add_edge(BuildGraphEdge(source=f"request:{request_id}", target=stage_node_id, relationship="requires"))
+            graph.add_node(
+                BuildGraphNode(
+                    id=f"request:{request_id}", kind="abstract_design", label=request_id
+                )
+            )
+            graph.add_edge(
+                BuildGraphEdge(
+                    source=f"request:{request_id}",
+                    target=stage_node_id,
+                    relationship="requires",
+                )
+            )
         for product in stage_result.products:
-            graph.add_node(BuildGraphNode(id=product.identity, kind=_kind_for_identity(product.identity), label=product.display_id))
-            graph.add_edge(BuildGraphEdge(source=stage_node_id, target=product.identity, relationship="produces"))
+            graph.add_node(
+                BuildGraphNode(
+                    id=product.identity,
+                    kind=_kind_for_identity(product.identity),
+                    label=product.display_id,
+                )
+            )
+            graph.add_edge(
+                BuildGraphEdge(
+                    source=stage_node_id,
+                    target=product.identity,
+                    relationship="produces",
+                )
+            )
         for missing in stage_result.missing_inputs:
             node_id = f"missing:{missing.missing_identity}"
-            graph.add_node(BuildGraphNode(id=node_id, kind="missing_input", label=missing.missing_display_id, metadata={"kind": missing.missing_kind}))
-            graph.add_edge(BuildGraphEdge(source=stage_node_id, target=node_id, relationship="blocks", metadata={"required_stage": str(missing.required_stage)}))
+            graph.add_node(
+                BuildGraphNode(
+                    id=node_id,
+                    kind="missing_input",
+                    label=missing.missing_display_id,
+                    metadata={"kind": missing.missing_kind},
+                )
+            )
+            graph.add_edge(
+                BuildGraphEdge(
+                    source=stage_node_id,
+                    target=node_id,
+                    relationship="blocks",
+                    metadata={"required_stage": str(missing.required_stage)},
+                )
+            )
         for approval in stage_result.required_approvals:
             approval_id = f"approval:{approval.process}"
-            graph.add_node(BuildGraphNode(id=approval_id, kind="approval", label=approval.process, metadata={"status": approval.status.value}))
-            graph.add_edge(BuildGraphEdge(source=stage_node_id, target=approval_id, relationship="requires"))
+            graph.add_node(
+                BuildGraphNode(
+                    id=approval_id,
+                    kind="approval",
+                    label=approval.process,
+                    metadata={"status": approval.status.value},
+                )
+            )
+            graph.add_edge(
+                BuildGraphEdge(
+                    source=stage_node_id, target=approval_id, relationship="requires"
+                )
+            )
 
     for product in result.final_products:
-        graph.add_node(BuildGraphNode(id=product.identity, kind=_kind_for_identity(product.identity), label=product.display_id))
+        graph.add_node(
+            BuildGraphNode(
+                id=product.identity,
+                kind=_kind_for_identity(product.identity),
+                label=product.display_id,
+            )
+        )
 
     for missing in result.missing_inputs:
-        graph.add_node(BuildGraphNode(id=f"missing:{missing.missing_identity}", kind="missing_input", label=missing.missing_display_id, metadata={"kind": missing.missing_kind}))
+        graph.add_node(
+            BuildGraphNode(
+                id=f"missing:{missing.missing_identity}",
+                kind="missing_input",
+                label=missing.missing_display_id,
+                metadata={"kind": missing.missing_kind},
+            )
+        )
 
     for approval in result.required_approvals:
-        graph.add_node(BuildGraphNode(id=f"approval:{approval.process}", kind="approval", label=approval.process, metadata={"status": approval.status.value}))
+        graph.add_node(
+            BuildGraphNode(
+                id=f"approval:{approval.process}",
+                kind="approval",
+                label=approval.process,
+                metadata={"status": approval.status.value},
+            )
+        )
 
     return graph

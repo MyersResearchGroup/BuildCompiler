@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 
 import sbol2
 
-from buildcompiler.domain import BuildStage, BuildWarning
+from buildcompiler.domain import BuildWarning
 from buildcompiler.planning.validation import classify_part_role
 
 
@@ -80,11 +80,15 @@ class DomesticationPlanner:
 
     def _resolve_sequence(self, part_component: sbol2.ComponentDefinition) -> str:
         for sequence_ref in part_component.sequences:
-            sequence_obj = part_component.doc.find(sequence_ref) if part_component.doc else None
+            sequence_obj = (
+                part_component.doc.find(sequence_ref) if part_component.doc else None
+            )
             elements = getattr(sequence_obj, "elements", None)
             if isinstance(elements, str) and elements:
                 return elements.upper()
-        raise ValueError(f"Part {part_component.identity} is missing a usable DNA sequence")
+        raise ValueError(
+            f"Part {part_component.identity} is missing a usable DNA sequence"
+        )
 
 
 def select_deterministic_flanking_sequence(

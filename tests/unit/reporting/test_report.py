@@ -1,7 +1,9 @@
 from buildcompiler.reporting import BuildReport, build_graph, build_report
 
 
-def test_build_report_includes_sections_routes_blockers_and_serialization(fake_full_build_result):
+def test_build_report_includes_sections_routes_blockers_and_serialization(
+    fake_full_build_result,
+):
     result = fake_full_build_result(with_routes=True)
     graph = build_graph(result)
     report = build_report(result, graph=graph)
@@ -23,10 +25,15 @@ def test_build_report_includes_sections_routes_blockers_and_serialization(fake_f
 def test_build_report_deterministic(fake_full_build_result):
     result = fake_full_build_result(with_routes=True)
     graph = build_graph(result)
-    assert build_report(result, graph=graph).to_json() == build_report(result, graph=graph).to_json()
+    assert (
+        build_report(result, graph=graph).to_json()
+        == build_report(result, graph=graph).to_json()
+    )
 
 
-def test_build_report_failed_status_mentions_failure_without_blockers(fake_full_build_result):
+def test_build_report_failed_status_mentions_failure_without_blockers(
+    fake_full_build_result,
+):
     result = fake_full_build_result(with_routes=False)
     result.missing_inputs = []
     result.required_approvals = []

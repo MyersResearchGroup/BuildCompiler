@@ -1,4 +1,5 @@
 import sbol2
+import pytest
 import unittest
 import copy
 import os
@@ -15,6 +16,9 @@ from buildcompiler.abstract_translator import extract_toplevel_definition, get_o
 from buildcompiler.api import domestication
 from buildcompiler.domain import IndexedBackbone, IndexedReagent, StageStatus
 from buildcompiler.inventory import Inventory
+
+
+pytestmark = [pytest.mark.synbiohub, pytest.mark.legacy]
 
 
 class Test_Buildcompiler_Functions(unittest.TestCase):

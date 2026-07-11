@@ -20,7 +20,12 @@ def _executor(include_detailed_report: bool) -> FullBuildExecutor:
         build_document=__import__("sbol2").Document(),
         options=options,
     )
-    return FullBuildExecutor(context=ctx, lvl2_stage=_NoopStage(), lvl1_stage=_NoopStage(), domestication_stage=_NoopStage())
+    return FullBuildExecutor(
+        context=ctx,
+        lvl2_stage=_NoopStage(),
+        lvl1_stage=_NoopStage(),
+        domestication_stage=_NoopStage(),
+    )
 
 
 def test_executor_always_returns_summary():

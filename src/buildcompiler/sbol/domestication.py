@@ -9,7 +9,12 @@ from typing import Any
 import sbol2
 
 from buildcompiler.constants import FUSION_SITES
-from buildcompiler.domain import IndexedBackbone, IndexedPlasmid, IndexedReagent, MaterialState
+from buildcompiler.domain import (
+    IndexedBackbone,
+    IndexedPlasmid,
+    IndexedReagent,
+    MaterialState,
+)
 
 
 ROLE_TO_FUSION_SITE_SEQUENCES = {
@@ -18,7 +23,9 @@ ROLE_TO_FUSION_SITE_SEQUENCES = {
     "cds": ("AATG", "AGGT"),
     "terminator": ("AGGT", "GCTT"),
 }
-FUSION_SITE_SEQUENCE_TO_NAME = {sequence: name for name, sequence in FUSION_SITES.items()}
+FUSION_SITE_SEQUENCE_TO_NAME = {
+    sequence: name for name, sequence in FUSION_SITES.items()
+}
 
 
 @dataclass
@@ -123,7 +130,9 @@ class DomesticationService:
                 "name": job.restriction_enzyme.name,
             },
             "ligase": {"identity": job.ligase.identity, "name": job.ligase.name},
-            "sequence_edit_proposals": [proposal.__dict__.copy() for proposal in job.sequence_edit_proposals],
+            "sequence_edit_proposals": [
+                proposal.__dict__.copy() for proposal in job.sequence_edit_proposals
+            ],
             "part_role": job.part_role,
             "fusion_site_sequences": list(fusion_site_sequences),
             "fusion_site_names": list(fusion_site_names),
@@ -153,7 +162,9 @@ class DomesticationService:
 
     def _ensure_component(self, component: Any) -> sbol2.ComponentDefinition:
         if not isinstance(component, sbol2.ComponentDefinition):
-            raise ValueError("DomesticationJob.part_component must be an sbol2.ComponentDefinition")
+            raise ValueError(
+                "DomesticationJob.part_component must be an sbol2.ComponentDefinition"
+            )
         return component
 
     def _resolve_sequence(self, component: sbol2.ComponentDefinition) -> str:
@@ -181,7 +192,9 @@ class DomesticationService:
                     "Sequence edit proposal does not match source sequence at "
                     f"position {position}."
                 )
-            sequence = sequence[:position] + proposed + sequence[position + len(original) :]
+            sequence = (
+                sequence[:position] + proposed + sequence[position + len(original) :]
+            )
         return sequence
 
     def _fusion_site_sequences(self, job: DomesticationJob) -> tuple[str, str]:
@@ -198,7 +211,9 @@ class DomesticationService:
     ) -> tuple[str, str]:
         if job.fusion_site_names is not None:
             return tuple(job.fusion_site_names)
-        return tuple(FUSION_SITE_SEQUENCE_TO_NAME[site] for site in fusion_site_sequences)
+        return tuple(
+            FUSION_SITE_SEQUENCE_TO_NAME[site] for site in fusion_site_sequences
+        )
 
     def _random_dna(self, length: int) -> str:
         return "".join(random.choices("ACGT", k=length))
@@ -251,7 +266,9 @@ class DomesticationService:
         target_document: Any,
     ) -> sbol2.ComponentDefinition | None:
         for document in (source_document, target_document):
-            candidate = document.find(backbone.identity) if document is not None else None
+            candidate = (
+                document.find(backbone.identity) if document is not None else None
+            )
             if isinstance(candidate, sbol2.ComponentDefinition):
                 return candidate
 
@@ -282,5 +299,7 @@ class DomesticationService:
             return insert_sequence
         index = len(backbone_sequence) if insertion_index is None else insertion_index
         if index < 0 or index > len(backbone_sequence):
-            raise ValueError("Backbone insertion_index is outside the backbone sequence.")
+            raise ValueError(
+                "Backbone insertion_index is outside the backbone sequence."
+            )
         return backbone_sequence[:index] + insert_sequence + backbone_sequence[index:]

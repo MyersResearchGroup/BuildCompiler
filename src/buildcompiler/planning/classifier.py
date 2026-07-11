@@ -71,8 +71,7 @@ def classify_non_combinatorial(
                     {
                         "component_count": count,
                         "observed_role_counts": {
-                            role: counts.get(role, 0)
-                            for role in RECOMMENDED_LVL1_PARTS
+                            role: counts.get(role, 0) for role in RECOMMENDED_LVL1_PARTS
                         },
                         "suggested_parts": list(RECOMMENDED_LVL1_PARTS),
                     },

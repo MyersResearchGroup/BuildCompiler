@@ -8,7 +8,9 @@ from buildcompiler.planning import (
 )
 
 
-def _part(identity: str, role: str, sequence: str | None = None) -> sbol2.ComponentDefinition:
+def _part(
+    identity: str, role: str, sequence: str | None = None
+) -> sbol2.ComponentDefinition:
     doc = sbol2.Document()
     part = sbol2.ComponentDefinition(identity)
     part.roles = role

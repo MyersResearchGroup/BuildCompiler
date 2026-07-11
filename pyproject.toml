@@ -73,4 +73,6 @@ dev = [
 [tool.pytest.ini_options]
 markers = [
   "automation: optional/manual automation tests",
+  "synbiohub: tests requiring network/SynBioHub credentials",
+  "legacy: old API or legacy behavior tests not part of required CI",
 ]

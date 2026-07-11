@@ -17,8 +17,14 @@ from buildcompiler.domain import (
 
 @pytest.fixture
 def fake_full_build_result():
-    def _make(status=BuildStatus.PARTIAL_SUCCESS, with_duplicates=False, with_routes=False):
-        p1 = IndexedPlasmid(identity="https://x/plasmidA", display_id="plasmidA", state=MaterialState.GENERATED)
+    def _make(
+        status=BuildStatus.PARTIAL_SUCCESS, with_duplicates=False, with_routes=False
+    ):
+        p1 = IndexedPlasmid(
+            identity="https://x/plasmidA",
+            display_id="plasmidA",
+            state=MaterialState.GENERATED,
+        )
         products = [p1, p1] if with_duplicates else [p1]
         missing = MissingBuildInput(
             source_stage=BuildStage.ASSEMBLY_LVL2,
@@ -29,11 +35,18 @@ def fake_full_build_result():
             required_stage=BuildStage.ASSEMBLY_LVL1,
             reason="missing region",
         )
-        approval = RequiredApproval(status=ApprovalStatus.REQUIRED, process="biosafety", reason="needed")
-        warning = BuildWarning(code="w1", message="warn", stage=BuildStage.ASSEMBLY_LVL2)
+        approval = RequiredApproval(
+            status=ApprovalStatus.REQUIRED, process="biosafety", reason="needed"
+        )
+        warning = BuildWarning(
+            code="w1", message="warn", stage=BuildStage.ASSEMBLY_LVL2
+        )
         artifacts = {}
         if with_routes:
-            artifacts = {"selected_route": {"id": "route-1"}, "rejected_routes": [{"id": "route-2"}]}
+            artifacts = {
+                "selected_route": {"id": "route-1"},
+                "rejected_routes": [{"id": "route-2"}],
+            }
         stage_result = StageResult(
             id="stage-1",
             stage=BuildStage.ASSEMBLY_LVL2,
