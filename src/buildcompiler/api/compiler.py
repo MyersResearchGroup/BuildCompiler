@@ -160,7 +160,9 @@ def domestication(
         source_display_id=component.displayId,
         source_kind=DesignKind.COMPONENT_DEFINITION,
     )
-    return DomesticationStage(inventory=inventory, options=options or BuildOptions()).run(
+    return DomesticationStage(
+        inventory=inventory, options=options or BuildOptions()
+    ).run(
         request,
         source_document=source_document,
         target_document=target_document or source_document,
@@ -202,7 +204,9 @@ def assembly_lvl1(
         source_kind=DesignKind.COMPONENT_DEFINITION,
         constraints=active_constraints,
     )
-    return AssemblyLvl1Stage(inventory=inventory, options=options or BuildOptions()).run(
+    return AssemblyLvl1Stage(
+        inventory=inventory, options=options or BuildOptions()
+    ).run(
         request,
         source_document=source_document,
         target_document=target_document or source_document,
@@ -229,7 +233,9 @@ def assembly_lvl2(
         source_kind=DesignKind.MODULE_DEFINITION,
         constraints=dict(constraints or {}),
     )
-    return AssemblyLvl2Stage(inventory=inventory, options=options or BuildOptions()).run(
+    return AssemblyLvl2Stage(
+        inventory=inventory, options=options or BuildOptions()
+    ).run(
         request,
         source_document=source_document,
         target_document=target_document or source_document,

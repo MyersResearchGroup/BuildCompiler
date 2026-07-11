@@ -1255,7 +1255,7 @@ class BuildCompiler:
         return component_dict
 
     def _get_abstract_design(self) -> sbol2.ComponentDefinition:
-        for definition in source_doc.componentDefinitions:
+        for definition in self.sbol_doc.componentDefinitions:
             if (
                 ENGINEERED_PLASMID in definition.roles
                 or PLASMID_CLONING_VECTOR in definition.roles

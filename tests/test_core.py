@@ -1,4 +1,5 @@
 import sbol2
+import pytest
 import os
 import sys
 import unittest
@@ -24,6 +25,9 @@ from buildcompiler.sbol2build import (
 from buildcompiler.plasmid import Plasmid
 
 
+pytestmark = [pytest.mark.synbiohub, pytest.mark.legacy]
+
+
 class Test_Assembly_Functions(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -33,7 +37,7 @@ class Test_Assembly_Functions(unittest.TestCase):
         password = os.environ.get("SBH_PASSWORD")
 
         if not username or not password:
-            raise RuntimeError(
+            raise unittest.SkipTest(
                 "Missing SBH_USERNAME and/or SBH_PASSWORD environment variables"
             )
 

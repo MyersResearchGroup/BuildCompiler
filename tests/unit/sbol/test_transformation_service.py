@@ -39,5 +39,5 @@ def test_transformation_service_returns_transformed_strain_with_sbol_provenance(
     assert target.find(result.product.identity) is not None
     implementation = target.find(result.product.metadata["implementation_identity"])
     assert isinstance(implementation, sbol2.Implementation)
-    assert implementation.wasGeneratedBy == result.activity_identity
+    assert implementation.wasGeneratedBy == [result.activity_identity]
     assert isinstance(target.find(result.activity_identity), sbol2.Activity)

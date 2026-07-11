@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import sbol2
 
 from buildcompiler.adapters.pudu import transformation_to_pudu_json

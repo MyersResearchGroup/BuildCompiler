@@ -51,7 +51,9 @@ class AssemblyService:
 
     def run(self, job: AssemblyJob) -> AssemblySbolResult:
         if not job.part_plasmids:
-            raise ValueError("AssemblyJob.part_plasmids must contain at least one plasmid")
+            raise ValueError(
+                "AssemblyJob.part_plasmids must contain at least one plasmid"
+            )
 
         legacy_parts = [
             self._record_to_legacy_plasmid(record, job.source_document, "part_plasmids")
@@ -111,7 +113,9 @@ class AssemblyService:
         field_name: str,
     ) -> _LegacyPlasmidAdapter:
         component = self._component_from_record(record, source_document, field_name)
-        implementation = self._implementation_from_plasmid_record(record, source_document)
+        implementation = self._implementation_from_plasmid_record(
+            record, source_document
+        )
         return _LegacyPlasmidAdapter(component, [implementation])
 
     def _component_from_record(
@@ -142,7 +146,8 @@ class AssemblyService:
             matches = [
                 impl
                 for impl in source_document.implementations
-                if isinstance(impl, sbol2.Implementation) and impl.built == component.identity
+                if isinstance(impl, sbol2.Implementation)
+                and impl.built == component.identity
             ]
             implementation = matches[0] if matches else None
 
@@ -156,7 +161,9 @@ class AssemblyService:
     def _implementation_from_record(
         self, record: IndexedReagent, source_document: sbol2.Document
     ) -> sbol2.Implementation:
-        impl_identity = record.metadata.get("implementation_identity") or record.identity
+        impl_identity = (
+            record.metadata.get("implementation_identity") or record.identity
+        )
         implementation = source_document.find(impl_identity)
         if not isinstance(implementation, sbol2.Implementation):
             raise ValueError(
@@ -179,7 +186,9 @@ class AssemblyService:
                 "source_stage": job.stage.value,
                 "source_product_identity": job.product_identity,
                 "source_product_display_id": job.product_display_id,
-                "assembly_activity_identity": product.plasmid_implementations[0].wasGeneratedBy,
+                "assembly_activity_identity": product.plasmid_implementations[
+                    0
+                ].wasGeneratedBy,
             },
             sbol_component=component,
         )

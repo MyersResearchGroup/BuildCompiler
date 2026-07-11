@@ -146,7 +146,9 @@ def test_assembly_lvl2_public_function_example(monkeypatch):
     doc.addModuleDefinition(module)
     inventory = Inventory(
         plasmids=[
-            IndexedPlasmid(f"{region}_plasmid", metadata={"insert_identities": [region]})
+            IndexedPlasmid(
+                f"{region}_plasmid", metadata={"insert_identities": [region]}
+            )
             for region in regions
         ],
         backbones=[

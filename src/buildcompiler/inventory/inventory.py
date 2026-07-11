@@ -31,8 +31,12 @@ class Inventory:
         reagents: list[IndexedReagent] | None = None,
     ) -> None:
         self.plasmids_by_identity: dict[str, IndexedPlasmid] = {}
-        self.plasmids_by_insert_identity: dict[str, list[IndexedPlasmid]] = defaultdict(list)
-        self.plasmids_by_fusion_sites: dict[tuple[str, ...], list[IndexedPlasmid]] = defaultdict(list)
+        self.plasmids_by_insert_identity: dict[str, list[IndexedPlasmid]] = defaultdict(
+            list
+        )
+        self.plasmids_by_fusion_sites: dict[tuple[str, ...], list[IndexedPlasmid]] = (
+            defaultdict(list)
+        )
         self.plasmids_by_antibiotic: dict[str, list[IndexedPlasmid]] = defaultdict(list)
 
         self.backbones_by_identity: dict[str, IndexedBackbone] = {}
@@ -69,7 +73,9 @@ class Inventory:
     def _remove_plasmid_from_secondary_indexes(self, plasmid: IndexedPlasmid) -> None:
         for insert_identity in sorted(plasmid.metadata.get("insert_identities", [])):
             existing = self.plasmids_by_insert_identity.get(insert_identity, [])
-            filtered = [indexed for indexed in existing if indexed.identity != plasmid.identity]
+            filtered = [
+                indexed for indexed in existing if indexed.identity != plasmid.identity
+            ]
             if filtered:
                 self.plasmids_by_insert_identity[insert_identity] = filtered
             else:
@@ -78,7 +84,9 @@ class Inventory:
         fusion_sites = tuple(plasmid.metadata.get("fusion_sites", ()))
         if fusion_sites:
             existing = self.plasmids_by_fusion_sites.get(fusion_sites, [])
-            filtered = [indexed for indexed in existing if indexed.identity != plasmid.identity]
+            filtered = [
+                indexed for indexed in existing if indexed.identity != plasmid.identity
+            ]
             if filtered:
                 self.plasmids_by_fusion_sites[fusion_sites] = filtered
             else:
@@ -87,7 +95,9 @@ class Inventory:
         antibiotic = plasmid.metadata.get("antibiotic")
         if antibiotic:
             existing = self.plasmids_by_antibiotic.get(antibiotic, [])
-            filtered = [indexed for indexed in existing if indexed.identity != plasmid.identity]
+            filtered = [
+                indexed for indexed in existing if indexed.identity != plasmid.identity
+            ]
             if filtered:
                 self.plasmids_by_antibiotic[antibiotic] = filtered
             else:
@@ -169,13 +179,19 @@ class Inventory:
                 )
             )
         else:
-            candidates = sorted(self.backbones_by_identity.values(), key=lambda b: b.identity)
+            candidates = sorted(
+                self.backbones_by_identity.values(), key=lambda b: b.identity
+            )
             if fusion_sites is not None:
                 candidates = [
-                    b for b in candidates if tuple(b.metadata.get("fusion_sites", ())) == tuple(fusion_sites)
+                    b
+                    for b in candidates
+                    if tuple(b.metadata.get("fusion_sites", ())) == tuple(fusion_sites)
                 ]
             if antibiotic is not None:
-                candidates = [b for b in candidates if b.metadata.get("antibiotic") == antibiotic]
+                candidates = [
+                    b for b in candidates if b.metadata.get("antibiotic") == antibiotic
+                ]
         if stage is not None:
             candidates = [b for b in candidates if self._backbone_stage(b) == stage]
         return candidates[0] if candidates else None
@@ -192,7 +208,11 @@ class Inventory:
             if reagent and reagent.reagent_type == "ligase":
                 return reagent
         ligases = sorted(
-            (r for r in self.reagents_by_identity.values() if r.reagent_type == "ligase"),
+            (
+                r
+                for r in self.reagents_by_identity.values()
+                if r.reagent_type == "ligase"
+            ),
             key=lambda r: r.identity,
         )
         return ligases[0] if ligases else None

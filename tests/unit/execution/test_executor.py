@@ -192,7 +192,9 @@ def test_lvl2_promoted_lvl1_request_inherits_region_part_identities():
                 source_identity="https://x/mod",
                 source_display_id="mod",
                 source_kind=DesignKind.MODULE_DEFINITION,
-                constraints={"lvl1_region_part_identities": {missing_region: part_order}},
+                constraints={
+                    "lvl1_region_part_identities": {missing_region: part_order}
+                },
             )
         ]
     )

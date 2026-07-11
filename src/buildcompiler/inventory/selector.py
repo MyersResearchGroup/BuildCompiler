@@ -8,7 +8,12 @@ from typing import Any
 
 from buildcompiler.api.options import BuildOptions
 from buildcompiler.domain import BuildStage, MaterialState
-from buildcompiler.inventory.compatibility import Lvl1Route, Lvl2Route, RouteScore, RouteSelection
+from buildcompiler.inventory.compatibility import (
+    Lvl1Route,
+    Lvl2Route,
+    RouteScore,
+    RouteSelection,
+)
 from buildcompiler.inventory.inventory import Inventory
 
 
@@ -22,7 +27,9 @@ _STATE_RANK = {
 
 
 class CompatibilitySelector:
-    def __init__(self, inventory: Inventory, *, options: BuildOptions | None = None) -> None:
+    def __init__(
+        self, inventory: Inventory, *, options: BuildOptions | None = None
+    ) -> None:
         self.inventory = inventory
         self.options = options or BuildOptions()
 
@@ -32,7 +39,9 @@ class CompatibilitySelector:
             return source in {"generated", "planned"}
         return plasmid.state in {MaterialState.PLANNED, MaterialState.GENERATED}
 
-    def _constraint_filter(self, items: list[Any], constraints: Mapping[str, Any]) -> list[Any]:
+    def _constraint_filter(
+        self, items: list[Any], constraints: Mapping[str, Any]
+    ) -> list[Any]:
         allowed = set(constraints.get("allowed_identities", []))
         forbidden = set(constraints.get("forbidden_identities", []))
         antibiotic = constraints.get("antibiotic")
@@ -47,7 +56,9 @@ class CompatibilitySelector:
             out.append(item)
         return out
 
-    def _best_candidate(self, candidates: list[Any], constraints: Mapping[str, Any]) -> Any | None:
+    def _best_candidate(
+        self, candidates: list[Any], constraints: Mapping[str, Any]
+    ) -> Any | None:
         filtered = self._constraint_filter(candidates, constraints)
         if not filtered:
             return None
@@ -56,18 +67,28 @@ class CompatibilitySelector:
         prefer_state = self.options.selection.prefer_higher_material_state
 
         def _key(p: Any) -> tuple[int, int, str]:
-            generated_penalty = int(prefer_existing and self._is_generated_or_planned(p))
+            generated_penalty = int(
+                prefer_existing and self._is_generated_or_planned(p)
+            )
             state_penalty = -_STATE_RANK[p.state] if prefer_state else 0
             return (generated_penalty, state_penalty, p.identity)
 
         return sorted(filtered, key=_key)[0]
 
-    def select_lvl1_route(self, *, request_id: str, part_identities: Sequence[str], constraints: Mapping[str, Any] | None = None) -> RouteSelection:
+    def select_lvl1_route(
+        self,
+        *,
+        request_id: str,
+        part_identities: Sequence[str],
+        constraints: Mapping[str, Any] | None = None,
+    ) -> RouteSelection:
         active_constraints = constraints or {}
         selected = []
         missing = []
         for part_identity in part_identities:
-            candidates = self.inventory.find_single_part_plasmids(part_identity, antibiotic=active_constraints.get("antibiotic"))
+            candidates = self.inventory.find_single_part_plasmids(
+                part_identity, antibiotic=active_constraints.get("antibiotic")
+            )
             choice = self._best_candidate(candidates, active_constraints)
             if choice is None:
                 missing.append(part_identity)
@@ -75,23 +96,44 @@ class CompatibilitySelector:
                 selected.append(choice)
 
         backbone = self.inventory.find_backbone(
-            fusion_sites=tuple(active_constraints["fusion_sites"]) if "fusion_sites" in active_constraints else None,
+            fusion_sites=tuple(active_constraints["fusion_sites"])
+            if "fusion_sites" in active_constraints
+            else None,
             antibiotic=active_constraints.get("antibiotic"),
             stage=BuildStage.ASSEMBLY_LVL1,
         )
         score = RouteScore(
             missing_required_products=len(missing),
             missing_domestications=len(missing),
-            generated_or_planned_materials=sum(1 for p in selected if self._is_generated_or_planned(p)),
-            lower_material_state_penalty=sum((_STATE_RANK[MaterialState.PLATED] - _STATE_RANK[p.state]) for p in selected)
+            generated_or_planned_materials=sum(
+                1 for p in selected if self._is_generated_or_planned(p)
+            ),
+            lower_material_state_penalty=sum(
+                (_STATE_RANK[MaterialState.PLATED] - _STATE_RANK[p.state])
+                for p in selected
+            )
             if self.options.selection.prefer_higher_material_state
             else 0,
-            identity_tiebreak=tuple(sorted(p.identity for p in selected)) + tuple(missing),
+            identity_tiebreak=tuple(sorted(p.identity for p in selected))
+            + tuple(missing),
         )
-        route = Lvl1Route(request_id, tuple(part_identities), tuple(selected), tuple(missing), backbone, score)
+        route = Lvl1Route(
+            request_id,
+            tuple(part_identities),
+            tuple(selected),
+            tuple(missing),
+            backbone,
+            score,
+        )
         return RouteSelection(selected=route, rejected=())
 
-    def select_lvl2_route(self, *, request_id: str, region_identities: Sequence[str], constraints: Mapping[str, Any] | None = None) -> RouteSelection:
+    def select_lvl2_route(
+        self,
+        *,
+        request_id: str,
+        region_identities: Sequence[str],
+        constraints: Mapping[str, Any] | None = None,
+    ) -> RouteSelection:
         active_constraints = constraints or {}
         max_regions = self.options.planning.lvl2_search.max_exhaustive_region_count
         allow_large = self.options.planning.lvl2_search.allow_large_order_search
@@ -147,19 +189,37 @@ class CompatibilitySelector:
             score = RouteScore(
                 missing_required_products=len(missing),
                 missing_lvl1_plasmids=len(missing),
-                generated_or_planned_materials=sum(1 for p in selected if self._is_generated_or_planned(p)),
-                lower_material_state_penalty=sum((_STATE_RANK[MaterialState.PLATED] - _STATE_RANK[p.state]) for p in selected)
+                generated_or_planned_materials=sum(
+                    1 for p in selected if self._is_generated_or_planned(p)
+                ),
+                lower_material_state_penalty=sum(
+                    (_STATE_RANK[MaterialState.PLATED] - _STATE_RANK[p.state])
+                    for p in selected
+                )
                 if self.options.selection.prefer_higher_material_state
                 else 0,
                 total_assemblies=int(bool(missing)),
                 identity_tiebreak=tuple(p.identity for p in selected) + tuple(missing),
             )
             backbone = self.inventory.find_backbone(
-                fusion_sites=tuple(active_constraints["fusion_sites"]) if "fusion_sites" in active_constraints else None,
+                fusion_sites=tuple(active_constraints["fusion_sites"])
+                if "fusion_sites" in active_constraints
+                else None,
                 antibiotic=active_constraints.get("antibiotic"),
                 stage=BuildStage.ASSEMBLY_LVL2,
             )
-            routes.append(Lvl2Route(request_id, tuple(order), tuple(selected), tuple(missing), backbone, score))
+            routes.append(
+                Lvl2Route(
+                    request_id,
+                    tuple(order),
+                    tuple(selected),
+                    tuple(missing),
+                    backbone,
+                    score,
+                )
+            )
 
         ranked = sorted(routes, key=lambda r: r.score.sort_key())
-        return RouteSelection(selected=ranked[0] if ranked else None, rejected=tuple(ranked[1:4]))
+        return RouteSelection(
+            selected=ranked[0] if ranked else None, rejected=tuple(ranked[1:4])
+        )

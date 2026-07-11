@@ -25,7 +25,16 @@ def test_assembly_service_runs_and_returns_normalized_products(monkeypatch):
             self.assembly_activity = sbol2.Activity("fake_assembly")
 
         def run(self, include_extracted_parts=False):
-            return [type("LegacyProduct", (), {"plasmid_definition": product_component, "plasmid_implementations": [product_impl]})()], source
+            return [
+                type(
+                    "LegacyProduct",
+                    (),
+                    {
+                        "plasmid_definition": product_component,
+                        "plasmid_implementations": [product_impl],
+                    },
+                )()
+            ], source
 
     monkeypatch.setattr("buildcompiler.sbol.assembly.Assembly", FakeLegacyAssembly)
 
@@ -73,7 +82,9 @@ def test_assembly_service_raises_clear_error_for_missing_component():
                 product_display_id="p001",
                 part_plasmids=[IndexedPlasmid(identity="https://example.org/missing")],
                 backbone=IndexedBackbone(identity="https://example.org/backbone"),
-                restriction_enzyme=IndexedReagent(identity="https://example.org/reagent/re"),
+                restriction_enzyme=IndexedReagent(
+                    identity="https://example.org/reagent/re"
+                ),
                 ligase=IndexedReagent(identity="https://example.org/reagent/ligase"),
                 source_document=doc,
                 target_document=sbol2.Document(),

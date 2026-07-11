@@ -52,7 +52,9 @@ class TransformationService:
 
         inherited_chassis = transformed_module.modules.create("chassis")
         inherited_chassis.definition = chassis_module.identity
-        plasmid_fc = transformed_module.functionalComponents.create("engineered_plasmid")
+        plasmid_fc = transformed_module.functionalComponents.create(
+            "engineered_plasmid"
+        )
         plasmid_fc.definition = plasmid_component.identity
         transformed_module.wasDerivedFrom = chassis_module.identity
 
@@ -146,7 +148,9 @@ class TransformationService:
         self, job: TransformationJob, component: sbol2.ComponentDefinition
     ) -> sbol2.Implementation:
         impl_identity = job.plasmid.metadata.get("implementation_identity")
-        implementation = job.source_document.find(impl_identity) if impl_identity else None
+        implementation = (
+            job.source_document.find(impl_identity) if impl_identity else None
+        )
         if isinstance(implementation, sbol2.Implementation):
             return implementation
         for candidate in job.source_document.implementations:

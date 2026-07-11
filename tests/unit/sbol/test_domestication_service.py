@@ -38,15 +38,23 @@ def test_domestication_service_returns_generated_plasmid_with_provenance() -> No
                     "insertion_index": 4,
                 },
             ),
-            restriction_enzyme=IndexedReagent("https://example.org/bsai", name="BsaI", reagent_type="restriction_enzyme"),
-            ligase=IndexedReagent("https://example.org/lig", name="T4_DNA_ligase", reagent_type="ligase"),
+            restriction_enzyme=IndexedReagent(
+                "https://example.org/bsai",
+                name="BsaI",
+                reagent_type="restriction_enzyme",
+            ),
+            ligase=IndexedReagent(
+                "https://example.org/lig", name="T4_DNA_ligase", reagent_type="ligase"
+            ),
             source_document=source,
             target_document=target,
             part_role="promoter",
             fusion_site_sequences=("GGAG", "TACT"),
             fusion_site_names=("A", "B"),
             sequence_edit_proposals=[
-                SequenceEditProposal(part.identity, "BsaI", "GGTCTC", 4, "GGTCTC", "GGTCTA", "reason")
+                SequenceEditProposal(
+                    part.identity, "BsaI", "GGTCTC", 4, "GGTCTC", "GGTCTA", "reason"
+                )
             ],
         )
     )
@@ -65,20 +73,27 @@ def test_domestication_service_returns_generated_plasmid_with_provenance() -> No
     assert result.product.metadata["backbone_sequence"] == "CCCCGGGG"
     assert result.product.metadata["fusion_site_sequences"] == ["GGAG", "TACT"]
     assert result.product.metadata["fusion_site_names"] == ["A", "B"]
-    assert result.product.metadata["final_plasmid_sequence"] == "CCCCGGAGAAAAGGTCTATTTTTACTGGGG"
+    assert (
+        result.product.metadata["final_plasmid_sequence"]
+        == "CCCCGGAGAAAAGGTCTATTTTTACTGGGG"
+    )
     insert_component = target.find(result.product.metadata["generated_insert_identity"])
     assert isinstance(insert_component, sbol2.ComponentDefinition)
     assert insert_component.sequences == [
         result.product.metadata["generated_insert_sequence_identity"]
     ]
-    insert_sequence = target.find(result.product.metadata["generated_insert_sequence_identity"])
+    insert_sequence = target.find(
+        result.product.metadata["generated_insert_sequence_identity"]
+    )
     assert isinstance(insert_sequence, sbol2.Sequence)
     assert insert_sequence.elements == generated_insert
     implementation_identity = result.product.metadata["implementation_identity"]
     implementation = target.find(implementation_identity)
     assert isinstance(implementation, sbol2.Implementation)
     assert implementation.built == result.product.identity
-    final_sequence = target.find(result.product.metadata["final_plasmid_sequence_identity"])
+    final_sequence = target.find(
+        result.product.metadata["final_plasmid_sequence_identity"]
+    )
     assert isinstance(final_sequence, sbol2.Sequence)
     assert final_sequence.elements == "CCCCGGAGAAAAGGTCTATTTTTACTGGGG"
     assert result.logs
