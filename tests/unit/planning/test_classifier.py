@@ -53,3 +53,38 @@ def test_classifier_domestication_and_unsupported_and_deterministic_id():
     rid1 = request_id_for(BuildStage.ASSEMBLY_LVL1, "https://example.org/A", "A")
     rid2 = request_id_for(BuildStage.ASSEMBLY_LVL1, "https://example.org/A", "A")
     assert rid1 == rid2
+
+
+def test_classifier_carries_lvl2_region_order_constraints():
+    doc = sbol2.Document()
+    promoter = sbol2.ComponentDefinition("https://example.org/p_region")
+    promoter.roles = ["http://identifiers.org/so/SO:0000167"]
+    rbs = sbol2.ComponentDefinition("https://example.org/r_region")
+    rbs.roles = ["http://identifiers.org/so/SO:0000139"]
+    cds = sbol2.ComponentDefinition("https://example.org/c_region")
+    cds.roles = ["http://identifiers.org/so/SO:0000316"]
+    terminator = sbol2.ComponentDefinition("https://example.org/t_region")
+    terminator.roles = ["http://identifiers.org/so/SO:0000141"]
+    region = sbol2.ComponentDefinition("https://example.org/region")
+    module = sbol2.ModuleDefinition("https://example.org/mod_with_region")
+
+    for obj in (promoter, rbs, cds, terminator, region):
+        doc.addComponentDefinition(obj)
+    for idx, part in enumerate((promoter, rbs, cds, terminator), start=1):
+        region.components.create(f"part{idx}").definition = part.identity
+    fc = module.functionalComponents.create("region_fc")
+    fc.definition = region.identity
+    doc.addModuleDefinition(module)
+
+    out = classify_non_combinatorial(module)
+
+    assert out.stage == BuildStage.ASSEMBLY_LVL2
+    assert out.constraints["engineered_region_identities"] == [region.identity]
+    assert out.constraints["lvl1_region_part_identities"] == {
+        region.identity: [
+            promoter.identity,
+            rbs.identity,
+            cds.identity,
+            terminator.identity,
+        ]
+    }

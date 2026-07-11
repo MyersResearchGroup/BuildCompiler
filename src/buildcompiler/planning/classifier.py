@@ -9,7 +9,7 @@ import sbol2
 
 from buildcompiler.domain import BuildRequest, BuildStage, DesignKind
 from buildcompiler.planning.models import UnsupportedPlanningRecord
-from buildcompiler.planning.validation import classify_part_role
+from buildcompiler.planning.validation import classify_part_role, ordered_lvl1_parts
 
 RECOMMENDED_LVL1_PARTS = ("promoter", "rbs", "cds", "terminator")
 
@@ -36,12 +36,34 @@ def classify_non_combinatorial(
     design: object,
 ) -> BuildRequest | UnsupportedPlanningRecord:
     if isinstance(design, sbol2.ModuleDefinition):
+        region_identities: list[str] = []
+        region_part_identities: dict[str, list[str]] = {}
+        doc = getattr(design, "doc", None)
+
+        for functional_component in design.functionalComponents:
+            region_identity = functional_component.definition
+            if not region_identity:
+                continue
+            region_identities.append(region_identity)
+            region_definition = doc.find(region_identity) if doc is not None else None
+            if isinstance(region_definition, sbol2.ComponentDefinition):
+                ordered_parts, _warnings = ordered_lvl1_parts(region_definition)
+                if ordered_parts:
+                    region_part_identities[region_identity] = ordered_parts
+
+        constraints = {}
+        if region_identities:
+            constraints["engineered_region_identities"] = region_identities
+        if region_part_identities:
+            constraints["lvl1_region_part_identities"] = region_part_identities
+
         return BuildRequest(
             request_id_for(BuildStage.ASSEMBLY_LVL2, design.identity, design.displayId),
             BuildStage.ASSEMBLY_LVL2,
             design.identity,
             design.displayId,
             DesignKind.MODULE_DEFINITION,
+            constraints=constraints,
         )
 
     if isinstance(design, sbol2.ComponentDefinition):
