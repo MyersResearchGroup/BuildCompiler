@@ -1,5 +1,7 @@
 # BuildCompiler
 
+[![Documentation Status](https://readthedocs.org/projects/buildcompiler/badge/?version=latest)](https://buildcompiler.readthedocs.io/en/latest/?badge=latest)
+
 BuildCompiler is a Python compiler pipeline for synthetic biology build planning. It takes abstract SBOL designs and indexed biological inventory, then produces an executable build plan across domestication, MoClo assembly level 1, MoClo assembly level 2, transformation, and plating.
 
 This repository is being refactored around a clean architecture. The existing codebase is useful as working evidence, especially the level-1 assembly path and SBOL digestion/ligation behavior, but the new implementation should not preserve old APIs, old import paths, or legacy module boundaries except the root package name `buildcompiler`.
@@ -11,6 +13,8 @@ Designing a genetic construct is easier than building it in the lab. BuildCompil
 ```text
 abstract SBOL design + inventory -> build plan -> SBOL build artifacts -> PUDU JSON -> optional manual/OT-2 protocols
 ```
+
+The Read the Docs site is available at [buildcompiler.readthedocs.io](https://buildcompiler.readthedocs.io/en/latest/) and is built from the Sphinx documentation in `docs/`.
 
 The compiler should answer:
 
