@@ -1,0 +1,36 @@
+{
+  "agar_plates": {
+    "plate_1": {
+      "dilution_1": {
+        "ratio": "1/10",
+        "wells": {
+          "A1": {
+            "construct": "E_coli_DH5alpha_with_standard_GFP_transformation_lvl1, Competent_Cell_DH5alpha, standard_GFP_transformation_lvl1, Media_1",
+            "source_well": "A1",
+            "replicate": 1
+          },
+          "B1": {
+            "construct": "E_coli_DH5alpha_with_standard_GFP_transformation_lvl1, Competent_Cell_DH5alpha, standard_GFP_transformation_lvl1, Media_1",
+            "source_well": "B1",
+            "replicate": 1
+          }
+        }
+      },
+      "dilution_2": {
+        "ratio": "1/100",
+        "wells": {
+          "A7": {
+            "construct": "E_coli_DH5alpha_with_standard_GFP_transformation_lvl1, Competent_Cell_DH5alpha, standard_GFP_transformation_lvl1, Media_1",
+            "source_well": "A1",
+            "replicate": 1
+          },
+          "B7": {
+            "construct": "E_coli_DH5alpha_with_standard_GFP_transformation_lvl1, Competent_Cell_DH5alpha, standard_GFP_transformation_lvl1, Media_1",
+            "source_well": "B1",
+            "replicate": 1
+          }
+        }
+      }
+    }
+  }
+}

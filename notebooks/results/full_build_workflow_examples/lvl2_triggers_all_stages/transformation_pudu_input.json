@@ -1,0 +1,23 @@
+[
+  {
+    "Strain": "http://buildcompiler.org/domesticated_missing_promoter/1_strain",
+    "Chassis": "E_coli_DH5alpha",
+    "Plasmids": [
+      "http://buildcompiler.org/domesticated_missing_promoter/1"
+    ]
+  },
+  {
+    "Strain": "http://buildcompiler.org/assembled_demo_tu/1_strain",
+    "Chassis": "E_coli_DH5alpha",
+    "Plasmids": [
+      "http://buildcompiler.org/assembled_demo_tu/1"
+    ]
+  },
+  {
+    "Strain": "http://buildcompiler.org/assembled_demo_lvl2/1_strain",
+    "Chassis": "E_coli_DH5alpha",
+    "Plasmids": [
+      "http://buildcompiler.org/assembled_demo_lvl2/1"
+    ]
+  }
+]

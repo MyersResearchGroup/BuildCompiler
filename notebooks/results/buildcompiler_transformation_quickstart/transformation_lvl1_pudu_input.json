@@ -1,0 +1,9 @@
+[
+  {
+    "Strain": "http://buildcompiler.org/E_coli_DH5alpha_with_standard_GFP_transformation_lvl1/1",
+    "Chassis": "https://sbolcanvas.org/DH5alpha/1",
+    "Plasmids": [
+      "http://buildcompiler.org/standard_GFP_transformation_lvl1/1"
+    ]
+  }
+]

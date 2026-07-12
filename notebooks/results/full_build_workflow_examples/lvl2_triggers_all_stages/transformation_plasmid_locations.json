@@ -1,0 +1,11 @@
+{
+  "http://buildcompiler.org/domesticated_missing_promoter/1": [
+    "A1"
+  ],
+  "http://buildcompiler.org/assembled_demo_tu/1": [
+    "B1"
+  ],
+  "http://buildcompiler.org/assembled_demo_lvl2/1": [
+    "C1"
+  ]
+}

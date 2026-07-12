@@ -1,0 +1,152 @@
+Parts and reagents in temp_module
+{'Deionized Water': 'A1', 'T4 DNA Ligase Buffer': 'B1', 'T4 DNA Ligase': 'C1', 'Restriction Enzyme BsaI': 'D1', 'DVK_AE': 'A2', 'pB0015_DE': 'B2', 'pB0034_BC': 'C2', 'pE0040_CD': 'D2', 'pJ23100_AB': 'A3'}
+Assembled parts in thermocycler_module
+{'Replicate: 1, Product: standard_GFP_transformation_lvl1': 'A1'}
+DNA list for transformation protocol
+['standard_GFP_transformation_lvl1_rep1']
+Protocol requires 9 tips (1 racks)
+Loaded Deionized Water at position A1
+Loaded T4 DNA Ligase Buffer at position B1
+Loaded T4 DNA Ligase at position C1
+Loaded Restriction Enzyme BsaI at position D1
+Loaded DVK_AE at position A2
+Loaded pB0015_DE at position B2
+Loaded pB0034_BC at position C2
+Loaded pE0040_CD at position D2
+Loaded pJ23100_AB at position A3
+Opening Thermocycler lid
+Setting Temperature Module temperature to 4.0 °C (rounded off to nearest integer)
+Setting Thermocycler well block temperature to 4.0 °C
+Picking up tip from A1 of Opentrons OT-2 96 Tip Rack 20 µL on slot 2
+Aspirating 2.0 uL from A1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 3.78 uL/sec
+Dispensing 2.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7 at 7.56 uL/sec
+Blowing out at A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7
+Touching tip
+Dropping tip into Trash Bin on slot 12
+Picking up tip from B1 of Opentrons OT-2 96 Tip Rack 20 µL on slot 2
+Mixing 3 times with a volume of 2.0 ul
+	Aspirating 2.0 uL from B1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into B1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Aspirating 2.0 uL from B1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into B1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Aspirating 2.0 uL from B1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into B1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+Aspirating 2.0 uL from B1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 3.78 uL/sec
+Dispensing 2.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7 at 7.56 uL/sec
+Blowing out at A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7
+Touching tip
+Dropping tip into Trash Bin on slot 12
+Picking up tip from C1 of Opentrons OT-2 96 Tip Rack 20 µL on slot 2
+Mixing 3 times with a volume of 4.0 ul
+	Aspirating 4.0 uL from C1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 4.0 uL into C1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Aspirating 4.0 uL from C1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 4.0 uL into C1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Aspirating 4.0 uL from C1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 4.0 uL into C1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+Aspirating 4.0 uL from C1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 3.78 uL/sec
+Dispensing 4.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7 at 7.56 uL/sec
+Blowing out at A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7
+Touching tip
+Dropping tip into Trash Bin on slot 12
+Picking up tip from D1 of Opentrons OT-2 96 Tip Rack 20 µL on slot 2
+Mixing 3 times with a volume of 2.0 ul
+	Aspirating 2.0 uL from D1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into D1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Aspirating 2.0 uL from D1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into D1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Aspirating 2.0 uL from D1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into D1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+Aspirating 2.0 uL from D1 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 3.78 uL/sec
+Dispensing 2.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7 at 7.56 uL/sec
+Blowing out at A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7
+Touching tip
+Dropping tip into Trash Bin on slot 12
+Picking up tip from E1 of Opentrons OT-2 96 Tip Rack 20 µL on slot 2
+Mixing 3 times with a volume of 2.0 ul
+	Aspirating 2.0 uL from A2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into A2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Aspirating 2.0 uL from A2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into A2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Aspirating 2.0 uL from A2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into A2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+Aspirating 2.0 uL from A2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 3.78 uL/sec
+Dispensing 2.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7 at 7.56 uL/sec
+Blowing out at A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7
+Touching tip
+Dropping tip into Trash Bin on slot 12
+Picking up tip from F1 of Opentrons OT-2 96 Tip Rack 20 µL on slot 2
+Mixing 3 times with a volume of 2.0 ul
+	Aspirating 2.0 uL from A3 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into A3 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Aspirating 2.0 uL from A3 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into A3 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Aspirating 2.0 uL from A3 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into A3 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+Aspirating 2.0 uL from A3 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 3.78 uL/sec
+Dispensing 2.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7 at 7.56 uL/sec
+Blowing out at A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7
+Touching tip
+Dropping tip into Trash Bin on slot 12
+Picking up tip from G1 of Opentrons OT-2 96 Tip Rack 20 µL on slot 2
+Mixing 3 times with a volume of 2.0 ul
+	Aspirating 2.0 uL from C2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into C2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Aspirating 2.0 uL from C2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into C2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Aspirating 2.0 uL from C2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into C2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+Aspirating 2.0 uL from C2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 3.78 uL/sec
+Dispensing 2.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7 at 7.56 uL/sec
+Blowing out at A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7
+Touching tip
+Dropping tip into Trash Bin on slot 12
+Picking up tip from H1 of Opentrons OT-2 96 Tip Rack 20 µL on slot 2
+Mixing 3 times with a volume of 2.0 ul
+	Aspirating 2.0 uL from D2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into D2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Aspirating 2.0 uL from D2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into D2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Aspirating 2.0 uL from D2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into D2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+Aspirating 2.0 uL from D2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 3.78 uL/sec
+Dispensing 2.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7 at 7.56 uL/sec
+Blowing out at A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7
+Touching tip
+Dropping tip into Trash Bin on slot 12
+Picking up tip from A2 of Opentrons OT-2 96 Tip Rack 20 µL on slot 2
+Mixing 3 times with a volume of 2.0 ul
+	Aspirating 2.0 uL from B2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into B2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Aspirating 2.0 uL from B2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into B2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Aspirating 2.0 uL from B2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+	Dispensing 2.0 uL into B2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 7.56 uL/sec
+Aspirating 2.0 uL from B2 of Opentrons 24 Well Aluminum Block with NEST 1.5 mL Snapcap on Temperature Module GEN1 on slot 1 at 3.78 uL/sec
+Dispensing 2.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7 at 7.56 uL/sec
+Blowing out at A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7
+Touching tip
+Aspirating 20.0 uL from A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7 at 7.56 uL/sec
+Dispensing 20.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7 at 7.56 uL/sec
+Blowing out at A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7
+Touching tip
+Aspirating 20.0 uL from A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7 at 7.56 uL/sec
+Dispensing 20.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7 at 7.56 uL/sec
+Blowing out at A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on Thermocycler Module GEN1 on slot 7
+Touching tip
+Dropping tip into Trash Bin on slot 12
+Take out the reagents since the temperature module will be turn off
+Closing Thermocycler lid
+Setting Thermocycler lid temperature to 42.0 °C
+Deactivating Temperature Module
+Thermocycler starting 75 repetitions of cycle composed of the following steps: [{'temperature': 42, 'hold_time_minutes': 2}, {'temperature': 16, 'hold_time_minutes': 5}]
+Thermocycler starting 1 repetitions of cycle composed of the following steps: [{'temperature': 60, 'hold_time_minutes': 10}, {'temperature': 80, 'hold_time_minutes': 10}]
+Setting Thermocycler well block temperature to 4.0 °C
+
+======================================================================
+Generated transformation_input.json for transformation protocol
+  Products: 1
+======================================================================
+/Users/gonzalovidal/.opentrons/robot_settings.json not found. Loading defaults
+Deck calibration not found.
+/Users/gonzalovidal/.opentrons/deck_calibration.json not found. Loading defaults

@@ -1,0 +1,13 @@
+{
+  "plate_implementation": "solid_96_well_plate",
+  "protocol_type": "manual",
+  "well_map": [
+    {
+      "well": "A1",
+      "source_transformed_strain_implementation": "http://buildcompiler.org/E_coli_DH5alpha_with_standard_GFP_full_build_impl/1",
+      "strain_module": "http://buildcompiler.org/E_coli_DH5alpha_with_standard_GFP_full_build/1",
+      "plated_strain_implementation": "1_plated_A1_impl",
+      "strain_display_name": "1_plated_A1_impl"
+    }
+  ]
+}

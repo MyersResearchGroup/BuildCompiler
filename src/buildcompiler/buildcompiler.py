@@ -4,6 +4,7 @@ import random
 import re
 import shutil
 import warnings
+import zipfile
 from typing import Any, List, Dict, Tuple
 import urllib.parse
 import csv
@@ -32,7 +33,13 @@ from .robotutils import (
     write_plate_map_json,
     write_plating_protocol_script,
 )
-from .adapters.pudu import legacy_assembly_routes_to_pudu_json
+from .adapters.pudu import (
+    legacy_assembly_routes_to_pudu_json,
+    plasmid_locations_to_pudu_json,
+    plating_to_pudu_json,
+    transformations_to_pudu_json,
+    write_assembly_pudu_input_json,
+)
 from .constants import (
     AMP,
     ENGINEERED_REGION,
@@ -80,6 +87,7 @@ class BuildCompiler:
         self.restriction_enzyme_implementations = []
         self.ligase_implementations = []
         self.last_assembly_pudu_json = []
+        self.last_assembly_pudu_json_by_stage = {}
         self.BsaI_impl = None
         self.BbsI_impl = None
         self.T4_ligase_impl = None
@@ -103,6 +111,7 @@ class BuildCompiler:
         compiler.restriction_enzyme_implementations = []
         compiler.ligase_implementations = []
         compiler.last_assembly_pudu_json = []
+        compiler.last_assembly_pudu_json_by_stage = {}
         compiler.BsaI_impl = None
         compiler.BbsI_impl = None
         compiler.T4_ligase_impl = None
@@ -294,6 +303,7 @@ class BuildCompiler:
 
         dsDNAs = []
         domesticated_parts = []
+        pudu_payloads = []
 
         for part in parts:
             part_role = next(
@@ -394,7 +404,21 @@ class BuildCompiler:
             assembly_products, assembly_doc = assembly.run()
             product_definition = assembly_products[0].plasmid_definition
             domesticated_parts.append(product_definition)
+            pudu_payloads.extend(
+                legacy_assembly_routes_to_pudu_json(
+                    product_plasmids=assembly_products,
+                    part_plasmid_routes=[
+                        [insert_plasmid] for _ in range(len(assembly_products))
+                    ],
+                    backbones=[backbone for _ in range(len(assembly_products))],
+                    restriction_enzymes=[
+                        self.BsaI_impl for _ in range(len(assembly_products))
+                    ],
+                )
+            )
 
+        self.last_assembly_pudu_json = pudu_payloads
+        self.last_assembly_pudu_json_by_stage["domestication"] = list(pudu_payloads)
         return domesticated_parts
 
     def assembly_lvl1(
@@ -429,8 +453,8 @@ class BuildCompiler:
 
             enumerated_part_lists = enumerate_design_variants(combinatorial_part_dict)
 
-            for i, list in enumerate(enumerated_part_lists):
-                plasmid_dict = self._construct_plasmid_dict(list, AMP)
+            for i, part_list in enumerate(enumerated_part_lists):
+                plasmid_dict = self._construct_plasmid_dict(part_list, AMP)
 
                 if isinstance(backbone, dict):
                     raise ValueError(
@@ -567,6 +591,7 @@ class BuildCompiler:
                 assembly_dict[abstract_design.identity] = composite_plasmids
 
         self.last_assembly_pudu_json = pudu_payloads
+        self.last_assembly_pudu_json_by_stage["assembly_lvl1"] = list(pudu_payloads)
         return assembly_dict, final_doc
 
     def assembly_lvl2(
@@ -610,6 +635,7 @@ class BuildCompiler:
         composite_plasmid_dict, final_doc = self.assembly_lvl1(
             TUs, backbone=backbone_dict, product_name=f"{TU.displayId}_plas"
         )
+        lvl1_pudu_payloads = list(self.last_assembly_pudu_json)
 
         for key, composites in composite_plasmid_dict.items():
             simplified_representation, new_defs = self._encapsulate_TU(composites[0])
@@ -655,12 +681,15 @@ class BuildCompiler:
         )
 
         lvl2_plasmids, final_doc = assembly.run()  # TODO upload product_doc?
-        self.last_assembly_pudu_json = legacy_assembly_routes_to_pudu_json(
+        lvl2_pudu_payloads = legacy_assembly_routes_to_pudu_json(
             product_plasmids=lvl2_plasmids,
             part_plasmid_routes=[lvl1_plasmids for _ in range(len(lvl2_plasmids))],
             backbones=[backbone for _ in range(len(lvl2_plasmids))],
             restriction_enzymes=[self.BbsI_impl for _ in range(len(lvl2_plasmids))],
         )
+        self.last_assembly_pudu_json = lvl2_pudu_payloads
+        self.last_assembly_pudu_json_by_stage["assembly_lvl1"] = lvl1_pudu_payloads
+        self.last_assembly_pudu_json_by_stage["assembly_lvl2"] = list(lvl2_pudu_payloads)
         self.indexed_plasmids.extend(lvl2_plasmids)
 
         return lvl2_plasmids, final_doc
@@ -1064,6 +1093,842 @@ class BuildCompiler:
             },
             "protocol_artifacts": protocol_artifacts,
         }
+
+    def full_build(
+        self,
+        designs: Any = None,
+        results_dir: str | Path = "full_build_results",
+        overwrite: bool = False,
+        chassis_name: str = "E_coli_DH5alpha",
+        plating_protocol_type: str = "manual",
+        plating_advanced_params: dict | None = None,
+        product_name: str = "full_build",
+    ) -> Dict[str, Any]:
+        """Run the legacy full build workflow and return packaged artifacts.
+
+        The workflow is deliberately file-oriented: each stage writes explicit
+        intermediates/protocol inputs under ``results_dir`` and the return value
+        includes a zip archive containing those artifacts.
+        """
+
+        results_path = Path(results_dir)
+        if results_path.exists() and overwrite:
+            shutil.rmtree(results_path)
+        results_path.mkdir(parents=True, exist_ok=True)
+        self.last_assembly_pudu_json = []
+        self.last_assembly_pudu_json_by_stage = {}
+
+        result: Dict[str, Any] = {
+            "results_dir": str(results_path),
+            "domestication": {"successful": [], "failed": []},
+            "assembly_lvl1": {"successful": [], "failed": []},
+            "assembly_lvl2": {"successful": [], "failed": []},
+            "transformation": {"successful": [], "failed": []},
+            "plating": {"successful": [], "failed": []},
+            "skipped": [],
+            "artifacts": [],
+        }
+        assembly_payloads: Dict[str, list[dict[str, object]]] = {
+            "assembly_lvl1": [],
+            "assembly_lvl2": [],
+            "domestication": [],
+        }
+
+        lvl2_docs, lvl1_designs = self._split_full_build_inputs(designs)
+
+        for index, lvl2_doc in enumerate(lvl2_docs, start=1):
+            label = f"lvl2_{index}"
+            try:
+                lvl2_products, lvl2_doc_out = self._run_full_build_lvl2(
+                    lvl2_doc,
+                    product_name=f"{product_name}_{label}",
+                    result=result,
+                    assembly_payloads=assembly_payloads,
+                    chassis_name=chassis_name,
+                    results_path=results_path,
+                    plating_protocol_type=plating_protocol_type,
+                    plating_advanced_params=plating_advanced_params,
+                    overwrite=overwrite,
+                )
+                self._run_transformation_and_plating(
+                    lvl2_products,
+                    stage_label=f"{label}_final",
+                    result=result,
+                    results_path=results_path,
+                    chassis_name=chassis_name,
+                    transformation_doc=lvl2_doc_out,
+                    plating_protocol_type=plating_protocol_type,
+                    plating_advanced_params=plating_advanced_params,
+                    overwrite=overwrite,
+                )
+            except Exception as exc:
+                result["assembly_lvl2"]["failed"].append(
+                    {"design": label, "error": str(exc)}
+                )
+
+        if lvl1_designs:
+            self._run_full_build_lvl1_designs(
+                lvl1_designs,
+                result=result,
+                assembly_payloads=assembly_payloads,
+                chassis_name=chassis_name,
+                results_path=results_path,
+                plating_protocol_type=plating_protocol_type,
+                plating_advanced_params=plating_advanced_params,
+                overwrite=overwrite,
+                product_name=product_name,
+            )
+        elif not lvl2_docs:
+            result["skipped"].append(
+                {"stage": "assembly_lvl2", "reason": "no level-2 design provided"}
+            )
+
+        artifact_paths = self._write_full_build_artifacts(
+            result=result,
+            assembly_payloads=assembly_payloads,
+            results_path=results_path,
+        )
+        result["artifacts"].extend(str(path) for path in artifact_paths)
+
+        manifest_path = results_path / "full_build_manifest.json"
+        zip_path = self._resolve_full_build_zip_path(results_path, overwrite=overwrite)
+        result["manifest_path"] = str(manifest_path)
+        result["zip_path"] = str(zip_path)
+        result["artifact_zip"] = str(zip_path)
+        self._write_json(manifest_path, result)
+        self._archive_full_build_results(results_path, zip_path)
+
+        return result
+
+    def _split_full_build_inputs(
+        self, designs: Any
+    ) -> tuple[list[sbol2.Document], list[sbol2.ComponentDefinition]]:
+        if designs is None:
+            return [], [self._get_abstract_design()]
+        if isinstance(designs, sbol2.Document):
+            return [designs], []
+        if isinstance(designs, sbol2.CombinatorialDerivation):
+            return [], self._normalize_full_build_designs(designs)
+        if isinstance(designs, sbol2.ComponentDefinition):
+            return [], [designs]
+        if isinstance(designs, list) or isinstance(designs, tuple):
+            lvl2_docs = [item for item in designs if isinstance(item, sbol2.Document)]
+            lvl1_inputs = [
+                item for item in designs if not isinstance(item, sbol2.Document)
+            ]
+            lvl1_designs = (
+                self._normalize_full_build_designs(lvl1_inputs)
+                if lvl1_inputs
+                else []
+            )
+            return lvl2_docs, lvl1_designs
+        return [], self._normalize_full_build_designs(designs)
+
+    def _run_full_build_lvl2(
+        self,
+        lvl2_doc: sbol2.Document,
+        *,
+        product_name: str,
+        result: Dict[str, Any],
+        assembly_payloads: Dict[str, list[dict[str, object]]],
+        chassis_name: str,
+        results_path: Path,
+        plating_protocol_type: str,
+        plating_advanced_params: dict | None,
+        overwrite: bool,
+    ) -> tuple[list[Any], sbol2.Document]:
+        try:
+            lvl2_products, lvl2_doc_out = self.assembly_lvl2(
+                lvl2_doc, product_name=product_name
+            )
+            result["assembly_lvl2"]["successful"].append(
+                {
+                    "design": self._document_label(lvl2_doc),
+                    "products": self._product_identities(lvl2_products),
+                }
+            )
+            self._capture_assembly_payloads(assembly_payloads)
+            return list(lvl2_products), lvl2_doc_out
+        except Exception as lvl2_exc:
+            result["assembly_lvl2"]["failed"].append(
+                {
+                    "design": self._document_label(lvl2_doc),
+                    "error": str(lvl2_exc),
+                    "recovery": "attempting level-1 assembly and domestication",
+                }
+            )
+
+        tus = _extract_lvl2_TUs(lvl2_doc)
+        lvl1_products = self._attempt_lvl1_then_domesticate(
+            tus,
+            result=result,
+            assembly_payloads=assembly_payloads,
+            product_name=f"{product_name}_lvl1",
+            results_path=results_path,
+            chassis_name=chassis_name,
+            plating_protocol_type=plating_protocol_type,
+            plating_advanced_params=plating_advanced_params,
+            overwrite=overwrite,
+        )
+        if lvl1_products:
+            self._run_transformation_and_plating(
+                lvl1_products,
+                stage_label=f"{product_name}_lvl1",
+                result=result,
+                results_path=results_path,
+                chassis_name=chassis_name,
+                transformation_doc=self.sbol_doc,
+                plating_protocol_type=plating_protocol_type,
+                plating_advanced_params=plating_advanced_params,
+                overwrite=overwrite,
+            )
+
+        lvl2_products, lvl2_doc_out = self.assembly_lvl2(
+            lvl2_doc, product_name=product_name
+        )
+        result["assembly_lvl2"]["successful"].append(
+            {
+                "design": self._document_label(lvl2_doc),
+                "products": self._product_identities(lvl2_products),
+                "after_recovery": True,
+            }
+        )
+        self._capture_assembly_payloads(assembly_payloads)
+        return list(lvl2_products), lvl2_doc_out
+
+    def _run_full_build_lvl1_designs(
+        self,
+        designs: list[sbol2.ComponentDefinition],
+        *,
+        result: Dict[str, Any],
+        assembly_payloads: Dict[str, list[dict[str, object]]],
+        chassis_name: str,
+        results_path: Path,
+        plating_protocol_type: str,
+        plating_advanced_params: dict | None,
+        overwrite: bool,
+        product_name: str,
+    ) -> None:
+        missing_parts = []
+        seen_missing = set()
+        for design in designs:
+            for missing in self._find_missing_parts_for_lvl1(design):
+                part = missing["part"]
+                if part.identity not in seen_missing:
+                    missing_parts.append(part)
+                    seen_missing.add(part.identity)
+
+        if missing_parts:
+            self._run_domestication(
+                missing_parts,
+                result=result,
+                assembly_payloads=assembly_payloads,
+                results_path=results_path,
+                chassis_name=chassis_name,
+                plating_protocol_type=plating_protocol_type,
+                plating_advanced_params=plating_advanced_params,
+                overwrite=overwrite,
+            )
+
+        for design in designs:
+            try:
+                products, stage_doc = self._run_one_lvl1_design(
+                    design,
+                    result=result,
+                    assembly_payloads=assembly_payloads,
+                    product_name=product_name,
+                )
+            except Exception as exc:
+                result["assembly_lvl1"]["failed"].append(
+                    {"design": design.displayId or design.identity, "error": str(exc)}
+                )
+                continue
+            self._run_transformation_and_plating(
+                products,
+                stage_label=design.displayId or "lvl1",
+                result=result,
+                results_path=results_path,
+                chassis_name=chassis_name,
+                transformation_doc=stage_doc,
+                plating_protocol_type=plating_protocol_type,
+                plating_advanced_params=plating_advanced_params,
+                overwrite=overwrite,
+            )
+
+        result["skipped"].append(
+            {"stage": "assembly_lvl2", "reason": "no level-2 design provided"}
+        )
+
+    def _attempt_lvl1_then_domesticate(
+        self,
+        designs: list[sbol2.ComponentDefinition],
+        *,
+        result: Dict[str, Any],
+        assembly_payloads: Dict[str, list[dict[str, object]]],
+        product_name: str,
+        results_path: Path,
+        chassis_name: str,
+        plating_protocol_type: str,
+        plating_advanced_params: dict | None,
+        overwrite: bool,
+    ) -> list[Any]:
+        products: list[Any] = []
+        failed_designs: list[sbol2.ComponentDefinition] = []
+        for design in designs:
+            try:
+                design_products, _ = self._run_one_lvl1_design(
+                    design,
+                    result=result,
+                    assembly_payloads=assembly_payloads,
+                    product_name=product_name,
+                )
+                products.extend(design_products)
+            except Exception as exc:
+                result["assembly_lvl1"]["failed"].append(
+                    {"design": design.displayId or design.identity, "error": str(exc)}
+                )
+                failed_designs.append(design)
+
+        missing_parts = []
+        seen_missing = set()
+        for design in failed_designs:
+            for missing in self._find_missing_parts_for_lvl1(design):
+                part = missing["part"]
+                if part.identity not in seen_missing:
+                    missing_parts.append(part)
+                    seen_missing.add(part.identity)
+
+        if missing_parts:
+            self._run_domestication(
+                missing_parts,
+                result=result,
+                assembly_payloads=assembly_payloads,
+                results_path=results_path,
+                chassis_name=chassis_name,
+                plating_protocol_type=plating_protocol_type,
+                plating_advanced_params=plating_advanced_params,
+                overwrite=overwrite,
+            )
+
+        for design in failed_designs:
+            design_products, _ = self._run_one_lvl1_design(
+                design,
+                result=result,
+                assembly_payloads=assembly_payloads,
+                product_name=product_name,
+            )
+            products.extend(design_products)
+
+        return products
+
+    def _run_one_lvl1_design(
+        self,
+        design: sbol2.ComponentDefinition,
+        *,
+        result: Dict[str, Any],
+        assembly_payloads: Dict[str, list[dict[str, object]]],
+        product_name: str,
+    ) -> tuple[list[Any], sbol2.Document]:
+        output = self.assembly_lvl1([design], product_name=product_name)
+        products, stage_doc = self._normalize_lvl1_output(output, design)
+        result["assembly_lvl1"]["successful"].append(
+            {
+                "design": design.displayId or design.identity,
+                "products": self._product_identities(products),
+            }
+        )
+        self._capture_assembly_payloads(assembly_payloads, default_stage="assembly_lvl1")
+        return products, stage_doc
+
+    def _run_domestication(
+        self,
+        parts: list[sbol2.ComponentDefinition],
+        *,
+        result: Dict[str, Any],
+        assembly_payloads: Dict[str, list[dict[str, object]]],
+        results_path: Path,
+        chassis_name: str,
+        plating_protocol_type: str,
+        plating_advanced_params: dict | None,
+        overwrite: bool,
+    ) -> list[Any]:
+        try:
+            products = list(self.domestication(parts))
+        except Exception as exc:
+            result["domestication"]["failed"].append(
+                {
+                    "parts": [part.displayId or part.identity for part in parts],
+                    "error": str(exc),
+                }
+            )
+            return []
+
+        self._index_domestication_products(products)
+
+        result["domestication"]["successful"].append(
+            {
+                "parts": [part.displayId or part.identity for part in parts],
+                "products": self._product_identities(products),
+            }
+        )
+        self._capture_assembly_payloads(assembly_payloads, default_stage="domestication")
+        self._run_transformation_and_plating(
+            products,
+            stage_label="domestication",
+            result=result,
+            results_path=results_path,
+            chassis_name=chassis_name,
+            transformation_doc=self.sbol_doc,
+            plating_protocol_type=plating_protocol_type,
+            plating_advanced_params=plating_advanced_params,
+            overwrite=overwrite,
+        )
+        return products
+
+
+    def _index_domestication_products(self, products: list[Any]) -> None:
+        """Make domesticated plasmids available to subsequent assembly retries."""
+        for product in products:
+            if isinstance(product, Plasmid):
+                if not self._get_indexed_plasmid(
+                    self.indexed_plasmids, product.plasmid_definition
+                ):
+                    self.indexed_plasmids.append(product)
+                continue
+
+            if isinstance(product, sbol2.ComponentDefinition):
+                self._sort_plasmid_components(product, self.sbol_doc)
+
+    def _run_transformation_and_plating(
+        self,
+        products: list[Any],
+        *,
+        stage_label: str,
+        result: Dict[str, Any],
+        results_path: Path,
+        chassis_name: str,
+        transformation_doc: sbol2.Document,
+        plating_protocol_type: str,
+        plating_advanced_params: dict | None,
+        overwrite: bool,
+    ) -> None:
+        if not products:
+            return
+        try:
+            transformation_result = self.transformation(
+                products,
+                chassis_name=chassis_name,
+                transformation_doc=transformation_doc,
+            )
+            result["transformation"]["successful"].append(
+                {
+                    "stage_label": stage_label,
+                    "products": self._product_identities(products),
+                    "result": transformation_result,
+                }
+            )
+        except Exception as exc:
+            result["transformation"]["failed"].append(
+                {
+                    "stage_label": stage_label,
+                    "products": self._product_identities(products),
+                    "error": str(exc),
+                }
+            )
+            return
+
+        try:
+            plating_result = self.plating(
+                transformation_result,
+                results_dir=results_path / f"{stage_label}_plating",
+                protocol_type=plating_protocol_type,
+                advanced_params=plating_advanced_params,
+                plating_doc=transformation_doc,
+                overwrite=overwrite,
+            )
+            result["plating"]["successful"].append(
+                {"stage_label": stage_label, "result": plating_result}
+            )
+        except Exception as exc:
+            result["plating"]["failed"].append(
+                {"stage_label": stage_label, "error": str(exc)}
+            )
+
+    def _normalize_full_build_designs(self, designs: Any) -> list[sbol2.ComponentDefinition]:
+        if isinstance(designs, sbol2.ComponentDefinition):
+            return [designs]
+        if isinstance(designs, sbol2.CombinatorialDerivation):
+            return self._expand_combinatorial_derivation(designs)
+        if isinstance(designs, list) or isinstance(designs, tuple):
+            normalized: list[sbol2.ComponentDefinition] = []
+            for design in designs:
+                if isinstance(design, sbol2.CombinatorialDerivation):
+                    normalized.extend(self._expand_combinatorial_derivation(design))
+                elif isinstance(design, sbol2.ComponentDefinition):
+                    normalized.append(design)
+                else:
+                    raise ValueError(
+                        "full_build designs must be SBOL ComponentDefinitions, "
+                        "CombinatorialDerivations, Documents, or lists of those."
+                    )
+            return normalized
+        raise ValueError(
+            "full_build designs must be SBOL ComponentDefinitions, "
+            "CombinatorialDerivations, Documents, or lists of those."
+        )
+
+    def _expand_combinatorial_derivation(
+        self,
+        derivation: sbol2.CombinatorialDerivation,
+        product_name_prefix: str = "full_build",
+    ) -> list[sbol2.ComponentDefinition]:
+        template = get_or_pull(
+            self.sbol_doc, self.sbh, derivation.masterTemplate, self.server_mode
+        )
+        variant_lists = enumerate_design_variants(
+            extract_combinatorial_design_parts(template, derivation)
+        )
+        variants = []
+        for index, parts in enumerate(variant_lists, start=1):
+            variant = sbol2.ComponentDefinition(
+                f"{product_name_prefix}_variant_{index:03d}"
+            )
+            self.sbol_doc.add(variant)
+            created_components = []
+            for part_index, part in enumerate(parts, start=1):
+                component = variant.components.create(f"part_{part_index}")
+                component.definition = part.identity
+                created_components.append(component)
+            for constraint_index in range(len(created_components) - 1):
+                constraint = variant.sequenceConstraints.create(
+                    f"constraint_{constraint_index + 1}"
+                )
+                constraint.subject = created_components[constraint_index].identity
+                constraint.object = created_components[constraint_index + 1].identity
+                constraint.restriction = sbol2.SBOL_RESTRICTION_PRECEDES
+            variants.append(variant)
+        return variants
+
+    def _find_missing_parts_for_lvl1(
+        self, design: sbol2.ComponentDefinition
+    ) -> list[dict[str, Any]]:
+        missing = []
+        parts = self._extract_design_parts(design)
+        plasmid_dict = self._construct_plasmid_dict(parts, AMP)
+        for part in parts:
+            if not plasmid_dict.get(part.displayId):
+                missing.append({"part": part, "reason": "no implemented plasmid"})
+
+        if missing:
+            return missing
+
+        backbone, compatible = self._get_backbone(
+            plasmid_dict, antibiotic_resistance=KAN
+        )
+        if backbone is None or not compatible:
+            return [
+                {
+                    "part": part,
+                    "reason": "no compatible level-1 route",
+                }
+                for part in parts
+            ]
+        return []
+
+    def _normalize_lvl1_output(
+        self, output: Any, design: sbol2.ComponentDefinition
+    ) -> tuple[list[Any], sbol2.Document]:
+        stage_doc = self.sbol_doc
+        payload = output
+        if isinstance(output, tuple):
+            payload = output[0]
+            if len(output) > 1 and isinstance(output[1], sbol2.Document):
+                stage_doc = output[1]
+        if isinstance(payload, dict):
+            products = list(payload.get(design.identity, []))
+            if not products:
+                products = [
+                    product
+                    for product_list in payload.values()
+                    for product in (
+                        product_list
+                        if isinstance(product_list, list)
+                        else [product_list]
+                    )
+                ]
+            return products, stage_doc
+        if isinstance(payload, list):
+            return payload, stage_doc
+        return [payload], stage_doc
+
+    def _capture_assembly_payloads(
+        self,
+        assembly_payloads: Dict[str, list[dict[str, object]]],
+        default_stage: str = "assembly_lvl1",
+    ) -> None:
+        staged = getattr(self, "last_assembly_pudu_json_by_stage", {}) or {}
+        if staged:
+            for stage, payloads in staged.items():
+                assembly_payloads.setdefault(stage, [])
+                assembly_payloads[stage].extend(self._dedupe_payloads(payloads))
+            return
+        payloads = getattr(self, "last_assembly_pudu_json", []) or []
+        assembly_payloads.setdefault(default_stage, [])
+        assembly_payloads[default_stage].extend(self._dedupe_payloads(payloads))
+
+    def _write_full_build_artifacts(
+        self,
+        *,
+        result: Dict[str, Any],
+        assembly_payloads: Dict[str, list[dict[str, object]]],
+        results_path: Path,
+    ) -> list[Path]:
+        written: list[Path] = []
+
+        for stage, payloads in sorted(assembly_payloads.items()):
+            payloads = self._dedupe_payloads(payloads)
+            if not payloads:
+                continue
+            json_path = write_assembly_pudu_input_json(
+                payloads, results_path / f"{stage}_pudu_assembly_input.json"
+            )
+            written.append(json_path)
+            written.append(
+                self._write_pudu_assembly_protocol_script(
+                    results_path / f"{stage}_pudu_assembly_protocol.py",
+                    payloads,
+                    protocol_name=f"BuildCompiler {stage} Assembly",
+                )
+            )
+
+        transformation_payloads = []
+        plasmid_location_inputs = []
+        for entry in result["transformation"]["successful"]:
+            products = entry.get("products", [])
+            tx_result = entry.get("result", {})
+            artifacts = tx_result.get("sbol_artifacts", []) if isinstance(tx_result, dict) else []
+            strain_ids = [
+                artifact.get("transformed_strain_module")
+                or artifact.get("transformed_strain_implementation")
+                for artifact in artifacts
+                if isinstance(artifact, dict)
+            ]
+            if not strain_ids:
+                strain_ids = [f"{entry.get('stage_label', 'transformation')}_strain"]
+            chassis = (
+                tx_result.get("chassis", "E_coli_DH5alpha")
+                if isinstance(tx_result, dict)
+                else "E_coli_DH5alpha"
+            )
+            transformation_payloads.extend(
+                transformations_to_pudu_json(
+                    strain_identities=strain_ids,
+                    chassis_identities=[chassis for _ in strain_ids],
+                    plasmid_sets=self._plasmid_sets_for_transformed_strains(
+                        products, strain_ids
+                    ),
+                )
+            )
+            plasmid_location_inputs.extend(products)
+
+        if transformation_payloads:
+            tx_path = results_path / "transformation_pudu_input.json"
+            self._write_json(tx_path, transformation_payloads)
+            written.append(tx_path)
+            location_payload = plasmid_locations_to_pudu_json(plasmid_location_inputs)
+            loc_path = results_path / "transformation_plasmid_locations.json"
+            self._write_json(loc_path, location_payload)
+            written.append(loc_path)
+            written.append(
+                self._write_pudu_transformation_protocol_script(
+                    results_path / "pudu_transformation_protocol.py",
+                    transformation_payloads,
+                    location_payload,
+                )
+            )
+
+        plating_payloads = []
+        for entry in result["plating"]["successful"]:
+            plating_result = entry.get("result", {})
+            if not isinstance(plating_result, dict):
+                continue
+            plating_data = (
+                plating_result.get("json_intermediate", {}).get("plating_data", {})
+            )
+            bacterium_locations = plating_data.get("bacterium_locations")
+            if bacterium_locations:
+                plating_payloads.append(
+                    plating_to_pudu_json(bacterium_locations=bacterium_locations)
+                )
+
+        if plating_payloads:
+            plating_payload = (
+                plating_payloads[0]
+                if len(plating_payloads) == 1
+                else {"batches": plating_payloads}
+            )
+            plating_path = results_path / "plating_pudu_input.json"
+            self._write_json(plating_path, plating_payload)
+            written.append(plating_path)
+            written.append(
+                self._write_pudu_plating_protocol_script(
+                    results_path / "pudu_plating_protocol.py", plating_payload
+                )
+            )
+
+        return written
+
+    def _plasmid_sets_for_transformed_strains(
+        self, products: list[Any], strain_ids: list[str]
+    ) -> list[list[str]]:
+        product_ids = self._product_identities(products)
+        if len(product_ids) == len(strain_ids):
+            return [[product_id] for product_id in product_ids]
+        return [product_ids for _ in strain_ids]
+
+    def _write_pudu_assembly_protocol_script(
+        self, path: Path, payload: list[dict[str, object]], protocol_name: str
+    ) -> Path:
+        script = (
+            "from pudu.assembly import SBOLLoopAssembly\n"
+            "from opentrons import protocol_api\n\n"
+            f"assembly_data = {json.dumps(payload, indent=4)}\n\n"
+            "metadata = {\n"
+            f"    'protocolName': {protocol_name!r},\n"
+            "    'author': 'BuildCompiler',\n"
+            "    'apiLevel': '2.21',\n"
+            "}\n\n"
+            "def run(protocol: protocol_api.ProtocolContext):\n"
+            "    protocol_instance = SBOLLoopAssembly(assembly_data=assembly_data)\n"
+            "    protocol_instance.run(protocol)\n"
+        )
+        path.write_text(script, encoding="utf-8")
+        return path
+
+    def _write_pudu_transformation_protocol_script(
+        self,
+        path: Path,
+        transformation_payload: list[dict[str, object]],
+        plasmid_locations: dict[str, list[str]],
+    ) -> Path:
+        script = (
+            "from pudu.transformation import HeatShockTransformation\n"
+            "from opentrons import protocol_api\n\n"
+            f"transformation_data = {json.dumps(transformation_payload, indent=4)}\n\n"
+            f"plasmid_locations = {json.dumps(plasmid_locations, indent=4)}\n\n"
+            "metadata = {\n"
+            "    'protocolName': 'BuildCompiler Transformation',\n"
+            "    'author': 'BuildCompiler',\n"
+            "    'apiLevel': '2.21',\n"
+            "}\n\n"
+            "def run(protocol: protocol_api.ProtocolContext):\n"
+            "    protocol_instance = HeatShockTransformation(\n"
+            "        transformation_data=transformation_data,\n"
+            "        plasmid_locations=plasmid_locations,\n"
+            "    )\n"
+            "    protocol_instance.run(protocol)\n"
+        )
+        path.write_text(script, encoding="utf-8")
+        return path
+
+    def _write_pudu_plating_protocol_script(
+        self, path: Path, plating_payload: dict[str, object]
+    ) -> Path:
+        script = (
+            "from pudu.plating import Plating\n"
+            "from opentrons import protocol_api\n\n"
+            f"plating_data = {json.dumps(plating_payload, indent=4)}\n\n"
+            "metadata = {\n"
+            "    'protocolName': 'BuildCompiler Plating',\n"
+            "    'author': 'BuildCompiler',\n"
+            "    'apiLevel': '2.21',\n"
+            "}\n\n"
+            "def run(protocol: protocol_api.ProtocolContext):\n"
+            "    protocol_instance = Plating(plating_data=plating_data)\n"
+            "    protocol_instance.run(protocol)\n"
+        )
+        path.write_text(script, encoding="utf-8")
+        return path
+
+    def _resolve_full_build_zip_path(
+        self, results_path: Path, overwrite: bool
+    ) -> Path:
+        zip_path = results_path.with_suffix(".zip")
+        if zip_path.exists() and overwrite:
+            zip_path.unlink()
+        if zip_path.exists():
+            index = 1
+            while True:
+                candidate = results_path.with_name(f"{results_path.name}_{index}.zip")
+                if not candidate.exists():
+                    zip_path = candidate
+                    break
+                index += 1
+        return zip_path
+
+    def _archive_full_build_results(
+        self, results_path: Path, zip_path: Path
+    ) -> Path:
+        with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            for path in sorted(results_path.rglob("*")):
+                if path.is_file():
+                    archive.write(path, path.relative_to(results_path))
+        return zip_path
+
+    def _write_json(self, path: Path, payload: Any) -> Path:
+        path.write_text(
+            json.dumps(self._json_safe(payload), indent=2) + "\n",
+            encoding="utf-8",
+        )
+        return path
+
+    def _json_safe(self, value: Any) -> Any:
+        if isinstance(value, Path):
+            return str(value)
+        if isinstance(value, dict):
+            return {str(key): self._json_safe(item) for key, item in value.items()}
+        if isinstance(value, (list, tuple, set)):
+            return [self._json_safe(item) for item in value]
+        if isinstance(value, (str, int, float, bool)) or value is None:
+            return value
+        if hasattr(value, "identity"):
+            return getattr(value, "identity")
+        if hasattr(value, "plasmid_definition"):
+            return self._plasmid_identity(value)
+        return str(value)
+
+    def _product_identities(self, products: list[Any]) -> list[str]:
+        return [self._plasmid_identity(product) for product in products]
+
+    def _plasmid_identity(self, product: Any) -> str:
+        if isinstance(product, str):
+            return product
+        definition = getattr(product, "plasmid_definition", product)
+        return str(
+            getattr(definition, "identity", None)
+            or getattr(definition, "displayId", None)
+            or product
+        )
+
+    def _document_label(self, doc: sbol2.Document) -> str:
+        try:
+            top_level = extract_toplevel_definition(doc)
+            return top_level.displayId or top_level.identity
+        except Exception:
+            return "level_2_design"
+
+    def _dedupe_payloads(
+        self, payloads: list[dict[str, object]]
+    ) -> list[dict[str, object]]:
+        deduped = []
+        seen = set()
+        for payload in payloads or []:
+            key = json.dumps(self._json_safe(payload), sort_keys=True)
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(payload)
+        return deduped
 
     def _extract_plasmids_from_strain(
         self,
@@ -1642,6 +2507,57 @@ class BuildCompiler:
     def _add_if_absent(self, doc: sbol2.Document, obj: Any):
         if doc.find(obj.identity) is None:
             doc.add(obj)
+
+    def _normalize_transformation_inputs(
+        self, assembly_products: List[Any]
+    ) -> List[Dict[str, sbol2.ComponentDefinition | str]]:
+        """Normalize supported transformation inputs into plasmid definitions.
+
+        Transformation can be called directly after assembly, where inputs are
+        BuildCompiler ``Plasmid`` objects, or independently with SBOL plasmid
+        definitions/dict payloads.  This keeps that adapter logic out of the SBOL
+        writer so transformation remains usable as a standalone stage.
+        """
+
+        normalized_products = []
+        for product in assembly_products:
+            source = None
+            plasmid = None
+
+            if isinstance(product, dict):
+                source = product.get("source") or product.get("name")
+                product = product.get("plasmid") or product.get("plasmid_definition")
+
+            if isinstance(product, Plasmid):
+                plasmid = product.plasmid_definition
+                source = source or product.name or plasmid.displayId
+            elif isinstance(product, sbol2.ComponentDefinition):
+                plasmid = product
+                source = source or plasmid.displayId
+            elif hasattr(product, "plasmid_definition"):
+                plasmid = product.plasmid_definition
+                source = source or getattr(product, "name", None) or plasmid.displayId
+
+            if plasmid is None:
+                raise ValueError(
+                    "transformation inputs must be Plasmid objects, "
+                    "sbol2.ComponentDefinition plasmids, or dictionaries with a "
+                    "'plasmid' entry."
+                )
+            if not isinstance(plasmid, sbol2.ComponentDefinition):
+                raise ValueError(
+                    f"transformation plasmid input must resolve to a "
+                    f"ComponentDefinition, got {type(plasmid).__name__}."
+                )
+
+            normalized_products.append(
+                {
+                    "source": source or plasmid.displayId or plasmid.identity,
+                    "plasmid": plasmid,
+                }
+            )
+
+        return normalized_products
 
     def _get_or_create_chassis(
         self, doc: sbol2.Document, chassis_name: str

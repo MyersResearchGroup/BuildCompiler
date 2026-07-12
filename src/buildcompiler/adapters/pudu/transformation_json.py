@@ -5,6 +5,11 @@ from collections.abc import Sequence
 from buildcompiler.domain import IndexedPlasmid
 
 
+PUDU_96_WELL_ORDER = tuple(
+    f"{row}{column}" for column in range(1, 13) for row in "ABCDEFGH"
+)
+
+
 def _stable_identifier(identity: str, display_id: str | None) -> str:
     return identity or display_id or ""
 
@@ -51,3 +56,31 @@ def transformations_to_pudu_json(
             strict=True,
         )
     ]
+
+
+def plasmid_locations_to_pudu_json(
+    plasmids: Sequence[IndexedPlasmid | str],
+    *,
+    wells: Sequence[str] | None = None,
+) -> dict[str, list[str]]:
+    """Create PUDU's assembly-output plasmid location map.
+
+    PUDU's transformation protocol optionally consumes the
+    ``transformation_input.json`` emitted by its assembly simulation.  The shape
+    is ``{"plasmid_uri": ["A1"]}``, where each value is a list because one
+    plasmid may be available in multiple source wells.
+    """
+
+    if wells is None:
+        wells = PUDU_96_WELL_ORDER[: len(plasmids)]
+    if len(plasmids) != len(wells):
+        raise ValueError("plasmids and wells must have the same length.")
+
+    locations: dict[str, list[str]] = {}
+    for plasmid, well in zip(plasmids, wells, strict=True):
+        plasmid_id = _plasmid_identifier(plasmid)
+        if not plasmid_id:
+            raise ValueError("plasmid identity cannot be empty.")
+        locations.setdefault(plasmid_id, []).append(well)
+
+    return locations
