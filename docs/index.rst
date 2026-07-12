@@ -1,32 +1,61 @@
-.. SBOL2Build documentation master file, created by
-   sphinx-quickstart on Mon Apr 14 14:04:32 2025.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+BuildCompiler
+=============
 
-Welcome to SBOL2Build's documentation!
-======================================
+BuildCompiler compiles SBOL designs into practical synthetic biology build
+workflows. It indexes available parts, plasmids, backbones, and reagents, then
+plans the build steps needed to produce constructs through domestication,
+MoClo assembly, transformation, and plating.
 
-SBOL2Build is a Python library for assisting in the planning, documentation, and distribution of DNA assembly plans using the Synthetic Biology Open Language 2.3 data standard. 
+The repository currently exposes two useful layers:
 
-It was developed to support build functionality and workflows in `SynBioSuite <https://synbiosuite.org/>`_, based off the `SBOL Best Practices <https://github.com/SynBioDex/SBOL-examples/tree/main/SBOL/best-practices/BP011/>`_.
+* A legacy, artifact-producing compiler in :mod:`buildcompiler.buildcompiler`
+  that is used by the offline notebooks and PUDU examples.
+* A newer modular API in :mod:`buildcompiler.api`, :mod:`buildcompiler.stages`,
+  :mod:`buildcompiler.planning`, and :mod:`buildcompiler.execution`.
 
+The examples in this documentation focus on offline, reproducible workflows
+using the SBOL fixture collections in ``tests/test_files``.
+
+Core workflow
+-------------
+
+.. code-block:: text
+
+   SBOL design + local SBOL collections
+      -> BuildCompiler inventory/indexing
+      -> domestication / assembly level 1 / assembly level 2
+      -> transformation
+      -> plating
+      -> SBOL artifacts + PUDU JSON + optional OT-2 protocols
+
+Representative use cases
+------------------------
+
+* Run a level-1 MoClo assembly from a local abstract design.
+* Generate PUDU-compatible assembly JSON for OT-2 protocol generation.
+* Transform an assembled plasmid into a chassis strain.
+* Simulate the PUDU assembly, transformation, and plating protocol chain.
+* Run a full build that can trigger upstream stages when inputs are missing.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
-   
+   :caption: User Guide
+
+   installation
+   quickstart
+   examples/offline_lvl1
+   examples/transformation_pudu
+   examples/full_build
+   notebooks
+
+.. toctree::
+   :hidden:
+
    Tutorials
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Reference
+
    API_Reference
-
-============
-Installation
-============
-
-Install SBOL2Build with:
-
-.. code:: python
-    
-   pip install sbol2build
-
-
-
+   development

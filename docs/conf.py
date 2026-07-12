@@ -1,39 +1,45 @@
+"""Sphinx configuration for BuildCompiler documentation."""
+
+from __future__ import annotations
+
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../src')) #adjust file path
+from importlib import metadata
 
-# Configuration file for the Sphinx documentation builder.
-#
-# For the full list of built-in configuration values, see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
+sys.path.insert(0, os.path.abspath("../src"))
 
-# -- Project information -----------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+project = "BuildCompiler"
+copyright = "2026, BuildCompiler contributors"
+author = "BuildCompiler contributors"
 
-project = 'SBOL2Build'
-copyright = '2025, Ryan Greer'
-author = 'Ryan Greer'
-release = '0.0b1'
+try:
+    release = metadata.version("synbio-buildcompiler")
+except metadata.PackageNotFoundError:
+    release = "0.0.0"
 
-# -- General configuration ---------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
+]
 
-extensions = [ "sphinx.ext.autodoc", "sphinx.ext.viewcode"]
+autosummary_generate = True
+autodoc_typehints = "description"
+autodoc_member_order = "bysource"
 
-templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+templates_path = ["_templates"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
-
-
-# -- Options for HTML output -------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
-
-html_theme = 'furo'
-html_static_path = ['_static']
+html_theme = "furo"
+html_title = "BuildCompiler"
+html_static_path = ["_static"]
+html_logo = "../images/buildcompiler_logo.png"
 
 html_theme_options = {
+    "source_repository": "https://github.com/MyersResearchGroup/BuildCompiler/",
+    "source_branch": "main",
+    "source_directory": "docs/",
     "light_css_variables": {},
     "dark_css_variables": {},
-    "default_color_mode": "light",
-    "color_mode_toggle": True,
 }
