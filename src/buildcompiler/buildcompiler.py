@@ -1463,9 +1463,7 @@ class BuildCompiler:
             )
             return []
 
-        for product in products:
-            if isinstance(product, sbol2.ComponentDefinition):
-                self._sort_plasmid_components(product, self.sbol_doc)
+        self._index_domestication_products(products)
 
         result["domestication"]["successful"].append(
             {
@@ -1486,6 +1484,20 @@ class BuildCompiler:
             overwrite=overwrite,
         )
         return products
+
+
+    def _index_domestication_products(self, products: list[Any]) -> None:
+        """Make domesticated plasmids available to subsequent assembly retries."""
+        for product in products:
+            if isinstance(product, Plasmid):
+                if not self._get_indexed_plasmid(
+                    self.indexed_plasmids, product.plasmid_definition
+                ):
+                    self.indexed_plasmids.append(product)
+                continue
+
+            if isinstance(product, sbol2.ComponentDefinition):
+                self._sort_plasmid_components(product, self.sbol_doc)
 
     def _run_transformation_and_plating(
         self,

@@ -11,6 +11,7 @@ import sbol2
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
 from buildcompiler.buildcompiler import BuildCompiler
+from buildcompiler.plasmid import Plasmid
 from buildcompiler.constants import ENGINEERED_PLASMID
 
 
@@ -117,6 +118,44 @@ class TestFullBuild(unittest.TestCase):
         self.assertEqual(len(missing), 1)
         self.assertEqual(missing[0]["part"].displayId, "part_y")
         self.assertEqual(missing[0]["reason"], "no implemented plasmid")
+
+    def test_run_domestication_indexes_products_before_retry(self):
+        missing_part = self._make_part("missing_for_retry")
+        domesticated = self._make_plasmid("domesticated_for_retry")
+
+        with tempfile.TemporaryDirectory() as tmpdir, patch.object(
+            self.compiler, "domestication", return_value=[domesticated]
+        ), patch.object(
+            self.compiler, "_sort_plasmid_components"
+        ) as mock_sort, patch.object(
+            self.compiler, "_run_transformation_and_plating"
+        ):
+            self.compiler._run_domestication(
+                [missing_part],
+                result={
+                    "domestication": {"successful": [], "failed": []},
+                    "transformation": {"successful": [], "failed": []},
+                    "plating": {"successful": [], "failed": []},
+                },
+                assembly_payloads={},
+                results_path=Path(tmpdir),
+                chassis_name="E_coli_DH5alpha",
+                plating_protocol_type="manual",
+                plating_advanced_params=None,
+                overwrite=True,
+            )
+
+        mock_sort.assert_called_once_with(domesticated, self.compiler.sbol_doc)
+
+    def test_index_domestication_products_adds_plasmid_routes_once(self):
+        domesticated = self._make_plasmid("domesticated_route_for_retry")
+        route = object.__new__(Plasmid)
+        route.plasmid_definition = domesticated
+
+        self.compiler._index_domestication_products([route])
+        self.compiler._index_domestication_products([route])
+
+        self.assertEqual(self.compiler.indexed_plasmids, [route])
 
     def test_full_build_orchestration_and_stage_skip(self):
         design_a = self._make_design("dA", ["pa"])
