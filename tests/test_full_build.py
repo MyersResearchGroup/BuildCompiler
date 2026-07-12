@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import tempfile
@@ -221,6 +222,54 @@ class TestFullBuild(unittest.TestCase):
             with zipfile.ZipFile(zip_path, "r") as archive:
                 names = archive.namelist()
                 self.assertIn("full_build_manifest.json", names)
+
+    def test_full_build_pudu_transformation_pairs_each_strain_with_own_product(self):
+        result = {
+            "transformation": {
+                "successful": [
+                    {
+                        "stage_label": "assembly_lvl1",
+                        "products": ["plasmid_a", "plasmid_b"],
+                        "result": {
+                            "chassis": "E_coli_DH5alpha",
+                            "sbol_artifacts": [
+                                {"transformed_strain_module": "strain_a"},
+                                {"transformed_strain_module": "strain_b"},
+                            ],
+                        },
+                    }
+                ]
+            },
+            "plating": {"successful": []},
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self.compiler._write_full_build_artifacts(
+                result=result,
+                assembly_payloads={},
+                results_path=Path(tmpdir),
+            )
+            payload = json.loads(
+                (Path(tmpdir) / "transformation_pudu_input.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+
+        self.assertEqual(
+            payload,
+            [
+                {
+                    "Strain": "strain_a",
+                    "Chassis": "E_coli_DH5alpha",
+                    "Plasmids": ["plasmid_a"],
+                },
+                {
+                    "Strain": "strain_b",
+                    "Chassis": "E_coli_DH5alpha",
+                    "Plasmids": ["plasmid_b"],
+                },
+            ],
+        )
 
     def test_full_build_lvl2_example_packages_pudu_protocols_for_recovery_stack(self):
         lvl2_doc, _ = self._make_lvl2_document()
