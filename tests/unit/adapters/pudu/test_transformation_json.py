@@ -50,7 +50,9 @@ def test_plasmid_locations_to_pudu_json_uses_deterministic_wells():
 
 
 def test_plasmid_locations_to_pudu_json_accepts_explicit_wells_and_duplicates():
-    payload = plasmid_locations_to_pudu_json(["p1", "p1", "p2"], wells=["A1", "B1", "C1"])
+    payload = plasmid_locations_to_pudu_json(
+        ["p1", "p1", "p2"], wells=["A1", "B1", "C1"]
+    )
 
     assert payload == {
         "p1": ["A1", "B1"],
