@@ -1,0 +1,164 @@
+{
+  "results_dir": "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl2_triggers_all_stages",
+  "domestication": {
+    "successful": [
+      {
+        "parts": [
+          "missing_promoter"
+        ],
+        "products": [
+          "http://buildcompiler.org/domesticated_missing_promoter/1"
+        ]
+      }
+    ],
+    "failed": []
+  },
+  "assembly_lvl1": {
+    "successful": [
+      {
+        "design": "demo_tu",
+        "products": [
+          "http://buildcompiler.org/assembled_demo_tu/1"
+        ]
+      }
+    ],
+    "failed": [
+      {
+        "design": "demo_tu",
+        "error": "level-1 input is missing a domesticated part"
+      }
+    ]
+  },
+  "assembly_lvl2": {
+    "successful": [
+      {
+        "design": "demo_lvl2_design",
+        "products": [
+          "http://buildcompiler.org/assembled_demo_lvl2/1"
+        ],
+        "after_recovery": true
+      }
+    ],
+    "failed": [
+      {
+        "design": "demo_lvl2_design",
+        "error": "level-2 input is missing level-1 regions",
+        "recovery": "attempting level-1 assembly and domestication"
+      }
+    ]
+  },
+  "transformation": {
+    "successful": [
+      {
+        "stage_label": "domestication",
+        "products": [
+          "http://buildcompiler.org/domesticated_missing_promoter/1"
+        ],
+        "result": {
+          "stage": "transformation",
+          "chassis": "E_coli_DH5alpha",
+          "sbol_artifacts": [
+            {
+              "transformed_strain_module": "http://buildcompiler.org/domesticated_missing_promoter/1_strain",
+              "transformed_strain_implementation": "http://buildcompiler.org/domesticated_missing_promoter/1_strain_impl"
+            }
+          ]
+        }
+      },
+      {
+        "stage_label": "full_build_lvl2_1_lvl1",
+        "products": [
+          "http://buildcompiler.org/assembled_demo_tu/1"
+        ],
+        "result": {
+          "stage": "transformation",
+          "chassis": "E_coli_DH5alpha",
+          "sbol_artifacts": [
+            {
+              "transformed_strain_module": "http://buildcompiler.org/assembled_demo_tu/1_strain",
+              "transformed_strain_implementation": "http://buildcompiler.org/assembled_demo_tu/1_strain_impl"
+            }
+          ]
+        }
+      },
+      {
+        "stage_label": "lvl2_1_final",
+        "products": [
+          "http://buildcompiler.org/assembled_demo_lvl2/1"
+        ],
+        "result": {
+          "stage": "transformation",
+          "chassis": "E_coli_DH5alpha",
+          "sbol_artifacts": [
+            {
+              "transformed_strain_module": "http://buildcompiler.org/assembled_demo_lvl2/1_strain",
+              "transformed_strain_implementation": "http://buildcompiler.org/assembled_demo_lvl2/1_strain_impl"
+            }
+          ]
+        }
+      }
+    ],
+    "failed": []
+  },
+  "plating": {
+    "successful": [
+      {
+        "stage_label": "domestication",
+        "result": {
+          "stage": "plating",
+          "json_intermediate": {
+            "plating_data": {
+              "bacterium_locations": {
+                "A1": "demo_transformed_strain"
+              }
+            }
+          }
+        }
+      },
+      {
+        "stage_label": "full_build_lvl2_1_lvl1",
+        "result": {
+          "stage": "plating",
+          "json_intermediate": {
+            "plating_data": {
+              "bacterium_locations": {
+                "A1": "demo_transformed_strain"
+              }
+            }
+          }
+        }
+      },
+      {
+        "stage_label": "lvl2_1_final",
+        "result": {
+          "stage": "plating",
+          "json_intermediate": {
+            "plating_data": {
+              "bacterium_locations": {
+                "A1": "demo_transformed_strain"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "failed": []
+  },
+  "skipped": [],
+  "artifacts": [
+    "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl2_triggers_all_stages/assembly_lvl1_pudu_assembly_input.json",
+    "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl2_triggers_all_stages/assembly_lvl1_pudu_assembly_protocol.py",
+    "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl2_triggers_all_stages/assembly_lvl2_pudu_assembly_input.json",
+    "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl2_triggers_all_stages/assembly_lvl2_pudu_assembly_protocol.py",
+    "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl2_triggers_all_stages/domestication_pudu_assembly_input.json",
+    "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl2_triggers_all_stages/domestication_pudu_assembly_protocol.py",
+    "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl2_triggers_all_stages/transformation_pudu_input.json",
+    "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl2_triggers_all_stages/transformation_plasmid_locations.json",
+    "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl2_triggers_all_stages/pudu_transformation_protocol.py",
+    "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl2_triggers_all_stages/plating_pudu_input.json",
+    "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl2_triggers_all_stages/pudu_plating_protocol.py"
+  ],
+  "manifest_path": "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl2_triggers_all_stages/full_build_manifest.json",
+  "zip_path": "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl2_triggers_all_stages.zip",
+  "artifact_zip": "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl2_triggers_all_stages.zip"
+}

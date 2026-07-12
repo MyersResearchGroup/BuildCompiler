@@ -1,0 +1,105 @@
+Using one plate: 2 wells per dilution fits in each half
+Using one plate: 2 wells per dilution fits in each half
+Setting Thermocycler well block temperature to 4.0 °C
+Opening Thermocycler lid
+
+=== Step 1: Distributing LB to dilution wells ===
+Picking up tip from A1 of Opentrons OT-2 96 Filter Tip Rack 200 µL on slot 1
+Conical calculation: 10000µL remaining = 61.7mm height
+Distributing to wells 1-4
+Distributing 18.0 from A1 of Opentrons 15 Tube Rack with Falcon 15 mL Conical on slot 4 to A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2
+	Transferring 18.0 from A1 of Opentrons 15 Tube Rack with Falcon 15 mL Conical on slot 4 to A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2
+		Aspirating 76.0 uL from A1 of Opentrons 15 Tube Rack with Falcon 15 mL Conical on slot 4 at 92.86 uL/sec
+		Dispensing 18.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 92.86 uL/sec
+		Dispensing 18.0 uL into B1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 92.86 uL/sec
+		Dispensing 18.0 uL into A7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 92.86 uL/sec
+		Dispensing 18.0 uL into B7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 92.86 uL/sec
+		Blowing out into Trash Bin on slot 12
+Dropping tip into Trash Bin on slot 12
+
+=== Step 2: Transferring bacteria and plating ===
+
+Processing construct 1: ['E_coli_DH5alpha_with_standard_GFP_transformation_lvl1', 'Competent_Cell_DH5alpha', 'standard_GFP_transformation_lvl1', 'Media_1']
+Picking up tip from A1 of Opentrons OT-2 96 Filter Tip Rack 20 µL on slot 9
+Aspirating 2.0 uL from A1 of Bio-Rad 96 Well Plate 200 µL PCR on Thermocycler Module GEN1 on slot 7 at 3.78 uL/sec
+Dispensing 2.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+Mixing 5 times with a volume of 19.0 ul
+	Aspirating 19.0 uL from A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Aspirating 19.0 uL from A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Aspirating 19.0 uL from A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Aspirating 19.0 uL from A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Aspirating 19.0 uL from A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+Aspirating 2.0 uL from A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 3.78 uL/sec
+Dispensing 2.0 uL into A7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+Mixing 5 times with a volume of 19.0 ul
+	Aspirating 19.0 uL from A7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into A7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Aspirating 19.0 uL from A7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into A7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Aspirating 19.0 uL from A7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into A7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Aspirating 19.0 uL from A7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into A7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Aspirating 19.0 uL from A7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into A7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+Aspirating 4.0 uL from A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 3.78 uL/sec
+Dispensing 4.0 uL into A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 5 at 7.56 uL/sec
+Blowing out at A1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 5
+Dropping tip into Trash Bin on slot 12
+Picking up tip from B1 of Opentrons OT-2 96 Filter Tip Rack 20 µL on slot 9
+Aspirating 4.0 uL from A7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 3.78 uL/sec
+Dispensing 4.0 uL into A7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 5 at 7.56 uL/sec
+Blowing out at A7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 5
+Dropping tip into Trash Bin on slot 12
+
+Processing construct 2: ['E_coli_DH5alpha_with_standard_GFP_transformation_lvl1', 'Competent_Cell_DH5alpha', 'standard_GFP_transformation_lvl1', 'Media_1']
+Picking up tip from C1 of Opentrons OT-2 96 Filter Tip Rack 20 µL on slot 9
+Aspirating 2.0 uL from B1 of Bio-Rad 96 Well Plate 200 µL PCR on Thermocycler Module GEN1 on slot 7 at 3.78 uL/sec
+Dispensing 2.0 uL into B1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+Mixing 5 times with a volume of 19.0 ul
+	Aspirating 19.0 uL from B1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into B1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Aspirating 19.0 uL from B1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into B1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Aspirating 19.0 uL from B1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into B1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Aspirating 19.0 uL from B1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into B1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Aspirating 19.0 uL from B1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into B1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+Aspirating 2.0 uL from B1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 3.78 uL/sec
+Dispensing 2.0 uL into B7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+Mixing 5 times with a volume of 19.0 ul
+	Aspirating 19.0 uL from B7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into B7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Aspirating 19.0 uL from B7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into B7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Aspirating 19.0 uL from B7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into B7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Aspirating 19.0 uL from B7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into B7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Aspirating 19.0 uL from B7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+	Dispensing 19.0 uL into B7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 7.56 uL/sec
+Aspirating 4.0 uL from B1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 3.78 uL/sec
+Dispensing 4.0 uL into B1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 5 at 7.56 uL/sec
+Blowing out at B1 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 5
+Dropping tip into Trash Bin on slot 12
+Picking up tip from D1 of Opentrons OT-2 96 Filter Tip Rack 20 µL on slot 9
+Aspirating 4.0 uL from B7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 2 at 3.78 uL/sec
+Dispensing 4.0 uL into B7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 5 at 7.56 uL/sec
+Blowing out at B7 of NEST 96 Well Plate 100 µL PCR Full Skirt on slot 5
+Dropping tip into Trash Bin on slot 12
+
+=== Plating protocol complete ===
+Plated 2 constructs with 1 replicates
+Created a total of 4 colonies
+Generated plating_layout.json
+Generated plating_layout.xlsx
+/Users/gonzalovidal/.opentrons/robot_settings.json not found. Loading defaults
+Deck calibration not found.
+/Users/gonzalovidal/.opentrons/deck_calibration.json not found. Loading defaults

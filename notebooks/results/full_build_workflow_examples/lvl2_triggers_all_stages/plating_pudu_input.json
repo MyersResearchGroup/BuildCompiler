@@ -1,0 +1,19 @@
+{
+  "batches": [
+    {
+      "bacterium_locations": {
+        "A1": "demo_transformed_strain"
+      }
+    },
+    {
+      "bacterium_locations": {
+        "A1": "demo_transformed_strain"
+      }
+    },
+    {
+      "bacterium_locations": {
+        "A1": "demo_transformed_strain"
+      }
+    }
+  ]
+}

@@ -3,17 +3,17 @@ from buildcompiler.adapters.pudu import plating_to_pudu_json
 
 def test_plating_to_pudu_json_shape_and_values():
     payload = plating_to_pudu_json(
-        bacterium_locations={"strain_b": "B2", "strain_a": "A1"},
+        bacterium_locations={"B2": "strain_b", "A1": "strain_a"},
         advanced_parameters={"replicates": 2},
     )
 
     assert payload == {
-        "bacterium_locations": {"strain_a": "A1", "strain_b": "B2"},
-        "advanced_parameters": {"replicates": 2},
+        "bacterium_locations": {"A1": "strain_a", "B2": "strain_b"},
+        "replicates": 2,
     }
 
 
-def test_plating_to_pudu_json_defaults_advanced_parameters():
-    payload = plating_to_pudu_json(bacterium_locations={"strain_a": "A1"})
+def test_plating_to_pudu_json_omits_empty_advanced_parameters():
+    payload = plating_to_pudu_json(bacterium_locations={"A1": "strain_a"})
 
-    assert payload["advanced_parameters"] == {}
+    assert payload == {"bacterium_locations": {"A1": "strain_a"}}

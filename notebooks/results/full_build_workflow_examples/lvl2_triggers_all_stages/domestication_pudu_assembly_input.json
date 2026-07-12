@@ -1,0 +1,10 @@
+[
+    {
+        "Product": "http://buildcompiler.org/domesticated_missing_promoter/1",
+        "Backbone": "demo_domestication_backbone",
+        "PartsList": [
+            "http://buildcompiler.org/missing_promoter/1"
+        ],
+        "Restriction Enzyme": "BsaI"
+    }
+]

@@ -1,0 +1,6 @@
+{
+  "python.defaultInterpreterPath": "/Users/gonzalovidal/opt/anaconda3/envs/GLLDB_py310/bin/python",
+  "python.terminal.activateEnvironment": true,
+  "jupyter.interactiveWindow.creationMode": "perFile",
+  "jupyter.notebookFileRoot": "${workspaceFolder}"
+}

@@ -1,0 +1,49 @@
+{
+  "stage": "transformation",
+  "inputs": [
+    "standard_GFP_transformation_lvl1_A_E"
+  ],
+  "chassis": "E_coli_DH5alpha",
+  "sbol_artifacts": [
+    {
+      "transformation_activity": "http://buildcompiler.org/transform_standard_GFP_transformation_lvl1_1/1",
+      "transformed_strain_module": "http://buildcompiler.org/E_coli_DH5alpha_with_standard_GFP_transformation_lvl1/1",
+      "transformed_strain_implementation": "http://buildcompiler.org/E_coli_DH5alpha_with_standard_GFP_transformation_lvl1_impl/1"
+    }
+  ],
+  "json_intermediate": {
+    "protocol": "chemical_transformation",
+    "version": "0.1",
+    "steps": [
+      {
+        "step": 1,
+        "plasmid": "standard_GFP_transformation_lvl1",
+        "chassis": "E_coli_DH5alpha",
+        "mix_ul": {
+          "competent_cells": 50,
+          "assembly_product": 5
+        },
+        "heat_shock": {
+          "temperature_c": 42,
+          "duration_seconds": 45
+        },
+        "recovery": {
+          "medium": "SOC",
+          "volume_ul": 950,
+          "duration_min": 60
+        }
+      }
+    ]
+  },
+  "protocol_artifacts": {
+    "ot2_script": "TODO: adapter to protocol generator",
+    "human_instructions": [
+      "Thaw competent cells on ice.",
+      "Combine assembly product with competent cells as specified.",
+      "Run heat shock and recovery according to generated parameters."
+    ],
+    "logs": [
+      "Prepared transformation input for plasmid standard_GFP_transformation_lvl1 into chassis E_coli_DH5alpha."
+    ]
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "results_dir": "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl1_success",
+  "domestication": {
+    "successful": [],
+    "failed": []
+  },
+  "assembly_lvl1": {
+    "successful": [
+      {
+        "design": "standard_GFP",
+        "products": [
+          "http://buildcompiler.org/standard_GFP_full_build/1"
+        ]
+      }
+    ],
+    "failed": []
+  },
+  "assembly_lvl2": {
+    "successful": [],
+    "failed": []
+  },
+  "transformation": {
+    "successful": [
+      {
+        "stage_label": "standard_GFP",
+        "products": [
+          "http://buildcompiler.org/standard_GFP_full_build/1"
+        ],
+        "result": {
+          "stage": "transformation",
+          "inputs": [
+            "standard_GFP_full_build_A_E"
+          ],
+          "chassis": "E_coli_DH5alpha",
+          "sbol_artifacts": [
+            {
+              "transformation_activity": "http://buildcompiler.org/transform_standard_GFP_full_build_1/1",
+              "transformed_strain_module": "http://buildcompiler.org/E_coli_DH5alpha_with_standard_GFP_full_build/1",
+              "transformed_strain_implementation": "http://buildcompiler.org/E_coli_DH5alpha_with_standard_GFP_full_build_impl/1"
+            }
+          ],
+          "json_intermediate": {
+            "protocol": "chemical_transformation",
+            "version": "0.1",
+            "steps": [
+              {
+                "step": 1,
+                "plasmid": "standard_GFP_full_build",
+                "chassis": "E_coli_DH5alpha",
+                "mix_ul": {
+                  "competent_cells": 50,
+                  "assembly_product": 5
+                },
+                "heat_shock": {
+                  "temperature_c": 42,
+                  "duration_seconds": 45
+                },
+                "recovery": {
+                  "medium": "SOC",
+                  "volume_ul": 950,
+                  "duration_min": 60
+                }
+              }
+            ]
+          },
+          "protocol_artifacts": {
+            "ot2_script": "TODO: adapter to protocol generator",
+            "human_instructions": [
+              "Thaw competent cells on ice.",
+              "Combine assembly product with competent cells as specified.",
+              "Run heat shock and recovery according to generated parameters."
+            ],
+            "logs": [
+              "Prepared transformation input for plasmid standard_GFP_full_build into chassis E_coli_DH5alpha."
+            ]
+          }
+        }
+      }
+    ],
+    "failed": []
+  },
+  "plating": {
+    "successful": [
+      {
+        "stage_label": "standard_GFP",
+        "result": {
+          "stage": "plating",
+          "protocol_type": "manual",
+          "plate": {
+            "plate_implementation": "solid_96_well_plate",
+            "plate_map": {
+              "A1": "1_plated_A1_impl"
+            }
+          },
+          "metadata": {
+            "plate_rows": [
+              {
+                "well": "A1",
+                "source_transformed_strain_implementation": "http://buildcompiler.org/E_coli_DH5alpha_with_standard_GFP_full_build_impl/1",
+                "strain_module": "http://buildcompiler.org/E_coli_DH5alpha_with_standard_GFP_full_build/1",
+                "plated_strain_implementation": "1_plated_A1_impl",
+                "strain_display_name": "1_plated_A1_impl"
+              }
+            ],
+            "layout_dataframe_columns": [
+              "well",
+              "source_transformed_strain_implementation",
+              "strain_module",
+              "plated_strain_implementation",
+              "strain_display_name"
+            ]
+          },
+          "json_intermediate": {
+            "plating_data": {
+              "bacterium_locations": {
+                "A1": "1_plated_A1_impl"
+              }
+            },
+            "advanced_params": {}
+          },
+          "protocol_artifacts": {
+            "plate_map_json": "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl1_success/standard_GFP_plating/plate_map.json",
+            "plate_map_csv": "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl1_success/standard_GFP_plating/plate_map.csv",
+            "plate_layout_dataframe_csv": "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl1_success/standard_GFP_plating/plate_layout_dataframe.csv",
+            "logs": [],
+            "pudu": {
+              "runner_script": "https://github.com/MyersResearchGroup/PUDU/blob/main/scripts/run_sbol2plating_with_params.py",
+              "mode": "manual",
+              "advanced_params": {}
+            },
+            "manual_protocol_markdown": "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl1_success/standard_GFP_plating/manual_plating_protocol.md"
+          }
+        }
+      }
+    ],
+    "failed": []
+  },
+  "skipped": [
+    {
+      "stage": "assembly_lvl2",
+      "reason": "no level-2 design provided"
+    }
+  ],
+  "artifacts": [
+    "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl1_success/assembly_lvl1_pudu_assembly_input.json",
+    "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl1_success/assembly_lvl1_pudu_assembly_protocol.py",
+    "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl1_success/transformation_pudu_input.json",
+    "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl1_success/transformation_plasmid_locations.json",
+    "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl1_success/pudu_transformation_protocol.py",
+    "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl1_success/plating_pudu_input.json",
+    "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl1_success/pudu_plating_protocol.py"
+  ],
+  "manifest_path": "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl1_success/full_build_manifest.json",
+  "zip_path": "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl1_success.zip",
+  "artifact_zip": "/Users/gonzalovidal/Documents/GitHub/BuildCompiler/notebooks/results/full_build_workflow_examples/lvl1_success.zip"
+}

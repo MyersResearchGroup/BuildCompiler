@@ -1,11 +1,13 @@
 import os
 import sys
 import unittest
+from pathlib import Path
 
 import sbol2
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
+from buildcompiler.abstract_translator import extract_toplevel_definition
 from buildcompiler.buildcompiler import BuildCompiler
 from buildcompiler.constants import ENGINEERED_PLASMID
 
@@ -58,6 +60,46 @@ class TestBuildCompilerTransformation(unittest.TestCase):
     def test_transformation_requires_inputs(self):
         with self.assertRaises(ValueError):
             self.compiler.transformation([])
+
+    def test_transformation_accepts_lvl1_assembly_products(self):
+        test_files = Path(__file__).parent / "test_files"
+        collection_docs = []
+        for filename in (
+            "CIDARMoCloParts_collection.xml",
+            "CIDARMoCloPlasmidsKit_collection.xml",
+            "Enzyme_Implementations_collection.xml",
+            "impl_test_collection.xml",
+        ):
+            doc = sbol2.Document()
+            doc.read(str(test_files / filename))
+            collection_docs.append(doc)
+
+        design_doc = sbol2.Document()
+        design_doc.read(str(test_files / "abstract_design.xml"))
+        design = extract_toplevel_definition(design_doc)
+        compiler = BuildCompiler.from_local_documents(
+            collection_docs, design_doc=design_doc
+        )
+
+        assembly_routes, assembly_doc = compiler.assembly_lvl1(
+            [design],
+            final_doc=sbol2.Document(),
+            product_name="transformation_lvl1",
+        )
+
+        products = assembly_routes[design.identity]
+        result = compiler.transformation(
+            products,
+            chassis_name="E_coli_DH5alpha",
+            transformation_doc=assembly_doc,
+        )
+
+        self.assertEqual(result["stage"], "transformation")
+        self.assertEqual(result["inputs"], [products[0].name])
+        self.assertEqual(len(result["sbol_artifacts"]), 1)
+        self.assertIsNotNone(
+            assembly_doc.find(result["sbol_artifacts"][0]["transformation_activity"])
+        )
 
 
 if __name__ == "__main__":

@@ -1,0 +1,9 @@
+[
+  {
+    "Strain": "http://buildcompiler.org/E_coli_DH5alpha_with_standard_GFP_full_build/1",
+    "Chassis": "E_coli_DH5alpha",
+    "Plasmids": [
+      "http://buildcompiler.org/standard_GFP_full_build/1"
+    ]
+  }
+]

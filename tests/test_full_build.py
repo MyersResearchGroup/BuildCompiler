@@ -57,6 +57,16 @@ class TestFullBuild(unittest.TestCase):
         self.doc.add(plasmid)
         return plasmid
 
+    def _make_lvl2_document(self) -> tuple[sbol2.Document, sbol2.ComponentDefinition]:
+        doc = sbol2.Document()
+        tu = sbol2.ComponentDefinition("example_tu")
+        lvl2 = sbol2.ComponentDefinition("example_lvl2_design")
+        doc.add(tu)
+        doc.add(lvl2)
+        comp = lvl2.components.create("tu_component")
+        comp.definition = tu.identity
+        return doc, tu
+
     def test_normalize_full_build_designs_input_shapes(self):
         d1 = self._make_design("design_a", ["part_a"])
         d2 = self._make_design("design_b", ["part_b"])
@@ -172,6 +182,133 @@ class TestFullBuild(unittest.TestCase):
             with zipfile.ZipFile(zip_path, "r") as archive:
                 names = archive.namelist()
                 self.assertIn("full_build_manifest.json", names)
+
+    def test_full_build_lvl2_example_packages_pudu_protocols_for_recovery_stack(self):
+        lvl2_doc, _ = self._make_lvl2_document()
+        missing_part = self._make_part("missing_promoter")
+        domesticated = self._make_plasmid("domesticated_missing_promoter")
+        lvl1_product = self._make_plasmid("assembled_example_tu")
+        lvl2_product = self._make_plasmid("assembled_example_lvl2")
+        calls = []
+
+        def fake_assembly_lvl2(*args, **kwargs):
+            calls.append("assembly_lvl2")
+            if calls.count("assembly_lvl2") == 1:
+                raise RuntimeError("level-2 input is missing level-1 regions")
+            self.compiler.last_assembly_pudu_json_by_stage = {
+                "assembly_lvl2": [
+                    {
+                        "Product": lvl2_product.identity,
+                        "Backbone": "lvl2_backbone",
+                        "PartsList": [lvl1_product.identity],
+                        "Restriction Enzyme": "BbsI",
+                    }
+                ]
+            }
+            return [lvl2_product], self.doc
+
+        def fake_assembly_lvl1(*args, **kwargs):
+            calls.append("assembly_lvl1")
+            if calls.count("assembly_lvl1") == 1:
+                raise RuntimeError("level-1 input is missing domesticated part")
+            self.compiler.last_assembly_pudu_json_by_stage = {
+                "assembly_lvl1": [
+                    {
+                        "Product": lvl1_product.identity,
+                        "Backbone": "lvl1_backbone",
+                        "PartsList": [domesticated.identity],
+                        "Restriction Enzyme": "BsaI",
+                    }
+                ]
+            }
+            return [lvl1_product], self.doc
+
+        def fake_domestication(parts):
+            calls.append("domestication")
+            self.compiler.last_assembly_pudu_json_by_stage = {
+                "domestication": [
+                    {
+                        "Product": domesticated.identity,
+                        "Backbone": "domestication_backbone",
+                        "PartsList": [missing_part.identity],
+                        "Restriction Enzyme": "BsaI",
+                    }
+                ]
+            }
+            return [domesticated]
+
+        def fake_transformation(
+            products, chassis_name="E_coli_DH5alpha", transformation_doc=None
+        ):
+            calls.append("transformation")
+            product_id = products[0].identity
+            return {
+                "stage": "transformation",
+                "chassis": chassis_name,
+                "sbol_artifacts": [
+                    {
+                        "transformed_strain_module": f"{product_id}_strain",
+                        "transformed_strain_implementation": f"{product_id}_strain_impl",
+                    }
+                ],
+            }
+
+        def fake_plating(*args, **kwargs):
+            calls.append("plating")
+            return {
+                "stage": "plating",
+                "json_intermediate": {
+                    "plating_data": {
+                        "bacterium_locations": {"A1": "example_transformed_strain"}
+                    }
+                },
+            }
+
+        with tempfile.TemporaryDirectory() as tmpdir, patch.object(
+            self.compiler, "assembly_lvl2", side_effect=fake_assembly_lvl2
+        ), patch.object(
+            self.compiler, "assembly_lvl1", side_effect=fake_assembly_lvl1
+        ), patch.object(
+            self.compiler,
+            "_find_missing_parts_for_lvl1",
+            return_value=[{"part": missing_part}],
+        ), patch.object(
+            self.compiler, "domestication", side_effect=fake_domestication
+        ), patch.object(
+            self.compiler, "transformation", side_effect=fake_transformation
+        ), patch.object(
+            self.compiler, "plating", side_effect=fake_plating
+        ):
+            result = self.compiler.full_build(
+                designs=lvl2_doc,
+                results_dir=Path(tmpdir) / "lvl2_full_build",
+                overwrite=True,
+            )
+            zip_path = Path(result["zip_path"])
+            self.assertTrue(zip_path.exists())
+            with zipfile.ZipFile(zip_path, "r") as archive:
+                names = set(archive.namelist())
+
+        self.assertEqual(
+            calls[:3], ["assembly_lvl2", "assembly_lvl1", "domestication"]
+        )
+        self.assertEqual(result["artifact_zip"], result["zip_path"])
+
+        expected_artifacts = {
+            "assembly_lvl1_pudu_assembly_input.json",
+            "assembly_lvl2_pudu_assembly_input.json",
+            "domestication_pudu_assembly_input.json",
+            "assembly_lvl1_pudu_assembly_protocol.py",
+            "assembly_lvl2_pudu_assembly_protocol.py",
+            "domestication_pudu_assembly_protocol.py",
+            "transformation_pudu_input.json",
+            "transformation_plasmid_locations.json",
+            "pudu_transformation_protocol.py",
+            "plating_pudu_input.json",
+            "pudu_plating_protocol.py",
+            "full_build_manifest.json",
+        }
+        self.assertTrue(expected_artifacts.issubset(names))
 
 
 if __name__ == "__main__":

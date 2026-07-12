@@ -1,0 +1,16 @@
+{
+  "bacterium_locations": {
+    "A1": [
+      "E_coli_DH5alpha_with_standard_GFP_transformation_lvl1",
+      "Competent_Cell_DH5alpha",
+      "standard_GFP_transformation_lvl1",
+      "Media_1"
+    ],
+    "B1": [
+      "E_coli_DH5alpha_with_standard_GFP_transformation_lvl1",
+      "Competent_Cell_DH5alpha",
+      "standard_GFP_transformation_lvl1",
+      "Media_1"
+    ]
+  }
+}
