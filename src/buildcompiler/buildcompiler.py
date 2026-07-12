@@ -1463,9 +1463,7 @@ class BuildCompiler:
             )
             return []
 
-        for product in products:
-            if isinstance(product, sbol2.ComponentDefinition):
-                self._sort_plasmid_components(product, self.sbol_doc)
+        self._index_domestication_products(products)
 
         result["domestication"]["successful"].append(
             {
@@ -1486,6 +1484,20 @@ class BuildCompiler:
             overwrite=overwrite,
         )
         return products
+
+
+    def _index_domestication_products(self, products: list[Any]) -> None:
+        """Make domesticated plasmids available to subsequent assembly retries."""
+        for product in products:
+            if isinstance(product, Plasmid):
+                if not self._get_indexed_plasmid(
+                    self.indexed_plasmids, product.plasmid_definition
+                ):
+                    self.indexed_plasmids.append(product)
+                continue
+
+            if isinstance(product, sbol2.ComponentDefinition):
+                self._sort_plasmid_components(product, self.sbol_doc)
 
     def _run_transformation_and_plating(
         self,
@@ -1712,7 +1724,9 @@ class BuildCompiler:
                 transformations_to_pudu_json(
                     strain_identities=strain_ids,
                     chassis_identities=[chassis for _ in strain_ids],
-                    plasmid_sets=[products for _ in strain_ids],
+                    plasmid_sets=self._plasmid_sets_for_transformed_strains(
+                        products, strain_ids
+                    ),
                 )
             )
             plasmid_location_inputs.extend(products)
@@ -1763,6 +1777,14 @@ class BuildCompiler:
             )
 
         return written
+
+    def _plasmid_sets_for_transformed_strains(
+        self, products: list[Any], strain_ids: list[str]
+    ) -> list[list[str]]:
+        product_ids = self._product_identities(products)
+        if len(product_ids) == len(strain_ids):
+            return [[product_id] for product_id in product_ids]
+        return [product_ids for _ in strain_ids]
 
     def _write_pudu_assembly_protocol_script(
         self, path: Path, payload: list[dict[str, object]], protocol_name: str
