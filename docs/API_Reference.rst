@@ -358,6 +358,7 @@ buildcompiler.abstract_translator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: buildcompiler.abstract_translator
+   :no-index:
    :members:
    :undoc-members:
    :show-inheritance:

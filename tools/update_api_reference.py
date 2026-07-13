@@ -32,6 +32,7 @@ LEGACY_MODULES = {
 }
 
 EXCLUDED_MODULES = {"buildcompiler.__init__"}
+NO_INDEX_MODULES = {"buildcompiler.abstract_translator"}
 
 
 def underline(text: str, char: str = "=") -> str:
@@ -61,16 +62,21 @@ def modules_for_section(modules: list[str], package: str) -> list[str]:
 
 
 def render_module(name: str) -> list[str]:
-    return [
+    lines = [
         name,
         underline(name, "~"),
         "",
         f".. automodule:: {name}",
+    ]
+    if name in NO_INDEX_MODULES:
+        lines.append("   :no-index:")
+    lines.extend([
         "   :members:",
         "   :undoc-members:",
         "   :show-inheritance:",
         "",
-    ]
+    ])
+    return lines
 
 
 def render_api_reference() -> str:
