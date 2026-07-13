@@ -6,19 +6,24 @@ on:
       - ".github/workflows/docs.yml"
       - ".readthedocs.yaml"
       - "docs/**"
+      - "images/**"
       - "src/**"
       - "tools/update_api_reference.py"
       - "pyproject.toml"
+      - "setup.py"
   push:
     branches:
       - main
+      - master
     paths:
       - ".github/workflows/docs.yml"
       - ".readthedocs.yaml"
       - "docs/**"
+      - "images/**"
       - "src/**"
       - "tools/update_api_reference.py"
       - "pyproject.toml"
+      - "setup.py"
 
 permissions:
   contents: read
