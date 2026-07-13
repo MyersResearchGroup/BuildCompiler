@@ -1,2 +1,2 @@
-sphinx>=7
+sphinx>=7,<9
 furo>=2024.1.29

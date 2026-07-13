@@ -1,12 +1,27 @@
 name: Documentation
 
 on:
+  pull_request:
+    paths:
+      - ".github/workflows/docs.yml"
+      - ".readthedocs.yaml"
+      - "docs/**"
+      - "src/**"
+      - "tools/update_api_reference.py"
+      - "pyproject.toml"
   push:
     branches:
       - main
+    paths:
+      - ".github/workflows/docs.yml"
+      - ".readthedocs.yaml"
+      - "docs/**"
+      - "src/**"
+      - "tools/update_api_reference.py"
+      - "pyproject.toml"
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: docs-${{ github.ref }}
@@ -18,14 +33,15 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            pyproject.toml
+            docs/requirements.txt
 
       - name: Install documentation dependencies
         run: |
@@ -33,20 +49,10 @@ jobs:
           python -m pip install -e .
           python -m pip install -r docs/requirements.txt
 
-      - name: Update API reference record
-        run: python tools/update_api_reference.py
+      - name: Verify API reference is current
+        run: |
+          python tools/update_api_reference.py
+          git diff --exit-code -- docs/API_Reference.rst
 
       - name: Build Read the Docs site
         run: sphinx-build -b html -W --keep-going docs docs/_build/html
-
-      - name: Commit API reference updates
-        run: |
-          if git diff --quiet -- docs/API_Reference.rst; then
-            echo "API reference is already current."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/API_Reference.rst
-          git commit -m "docs: update API reference"
-          git push
