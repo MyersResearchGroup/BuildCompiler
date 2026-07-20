@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "synbio-buildcompiler"
-version = "0.0.1a1"
+version = "0.0.1a2"
 description = "BuildCompiler is an open-source tool that bridges the Design and Build stages of the Synthetic Biology DBTL cycle"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -49,7 +49,7 @@ dev = [
 automation = [
   "pudupy",
   "opentrons",
-  "SBOLInventory @ git+https://github.com/DRAGGON-Lab/SBOLInventory.git ; python_version >= '3.10'",
+  "SBOLInventory",
 ]
 
 [project.urls]
