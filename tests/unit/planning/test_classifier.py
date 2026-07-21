@@ -26,6 +26,39 @@ def test_classifier_maps_module_and_components():
     er.components.create("c4").definition = t.identity
     out2 = classify_non_combinatorial(er)
     assert out2.stage == BuildStage.ASSEMBLY_LVL1
+    assert out2.constraints["ordered_part_identities"] == []
+
+
+def test_classifier_lvl1_request_carries_ordered_part_identities_and_warnings():
+    doc = sbol2.Document()
+    role_identities = {
+        "promoter": "http://identifiers.org/so/SO:0000167",
+        "rbs": "http://identifiers.org/so/SO:0000139",
+        "cds": "http://identifiers.org/so/SO:0000316",
+        "terminator": "http://identifiers.org/so/SO:0000141",
+    }
+    parts = []
+    for role, ontology_identity in role_identities.items():
+        part = sbol2.ComponentDefinition(f"https://example.org/parts/{role}")
+        part.roles = [ontology_identity]
+        doc.addComponentDefinition(part)
+        parts.append(part)
+
+    design = sbol2.ComponentDefinition("https://example.org/designs/lvl1")
+    for index, part in enumerate(parts, start=1):
+        design.components.create(f"part{index}").definition = part.identity
+    doc.addComponentDefinition(design)
+
+    out = classify_non_combinatorial(design)
+
+    assert out.stage == BuildStage.ASSEMBLY_LVL1
+    assert out.constraints["ordered_part_identities"] == [
+        part.identity for part in parts
+    ]
+    assert all(
+        warning["code"].startswith("lvl1.")
+        for warning in out.constraints.get("ordering_warnings", [])
+    )
 
 
 def test_classifier_warns_for_invalid_lvl1_part_mix():

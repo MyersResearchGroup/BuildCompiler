@@ -98,6 +98,13 @@ def classify_non_combinatorial(
                         "suggested_parts": list(RECOMMENDED_LVL1_PARTS),
                     },
                 )
+            ordered_part_identities, ordering_warnings = ordered_lvl1_parts(design)
+            constraints = {"ordered_part_identities": ordered_part_identities}
+            if ordering_warnings:
+                constraints["ordering_warnings"] = [
+                    warning.__dict__.copy() for warning in ordering_warnings
+                ]
+
             return BuildRequest(
                 request_id_for(
                     BuildStage.ASSEMBLY_LVL1, design.identity, design.displayId
@@ -106,6 +113,7 @@ def classify_non_combinatorial(
                 design.identity,
                 design.displayId,
                 DesignKind.COMPONENT_DEFINITION,
+                constraints=constraints,
             )
         if count <= 1 and classify_part_role(design) is not None:
             return BuildRequest(

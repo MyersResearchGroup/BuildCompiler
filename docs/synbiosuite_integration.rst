@@ -70,6 +70,11 @@ primitives, lists, and dictionaries. ``dumps_json_dto`` emits deterministic
 strict JSON. Schema version 1 uses ``"schema_version": "1.0"`` and the DTO
 kinds ``"build_plan"`` and ``"build_result"``.
 
+For a valid four-part Level-1 ComponentDefinition, planning includes the
+canonical ``ordered_part_identities`` constraint. Any SBOL ordering warning is
+preserved in ``ordering_warnings`` so an approved, deserialized plan executes
+with the exact reviewed order.
+
 The same module exports focused serializers for ``BuildRequest``,
 ``UnsupportedPlanningRecord``, ``StageResult``, warnings, missing inputs,
 approvals, plasmids, backbones, strains, reagents, summaries, and reports.
