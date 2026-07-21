@@ -23,6 +23,14 @@ buildcompiler.api.options
    :undoc-members:
    :show-inheritance:
 
+buildcompiler.api.serialization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: buildcompiler.api.serialization
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Stages
 ------
 
@@ -120,6 +128,14 @@ buildcompiler.inventory.compatibility
    :undoc-members:
    :show-inheritance:
 
+buildcompiler.inventory.indexing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: buildcompiler.inventory.indexing
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 buildcompiler.inventory.inventory
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -159,6 +175,14 @@ buildcompiler.sbol.resolver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: buildcompiler.sbol.resolver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+buildcompiler.sbol.synbiohub
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: buildcompiler.sbol.synbiohub
    :members:
    :undoc-members:
    :show-inheritance:

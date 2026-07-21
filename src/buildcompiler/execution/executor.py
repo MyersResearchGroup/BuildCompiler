@@ -67,12 +67,13 @@ class FullBuildExecutor:
         adapters: Any = None,
         graph: Any = None,
         logger: Any = None,
+        resolver: SbolResolver | None = None,
         **stage_overrides: Any,
     ) -> "FullBuildExecutor":
-        resolver = SbolResolver(sbol_document)
+        active_resolver = resolver or SbolResolver(sbol_document)
         return cls(
             context=BuildContext(
-                sbol=resolver,
+                sbol=active_resolver,
                 inventory=inventory,
                 build_document=sbol_document,
                 options=options,

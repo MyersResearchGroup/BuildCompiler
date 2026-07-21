@@ -46,6 +46,7 @@ Representative use cases
    examples/offline_lvl1
    examples/transformation_pudu
    examples/full_build
+   synbiosuite_integration
    notebooks
 
 .. toctree::

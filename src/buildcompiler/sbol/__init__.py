@@ -7,6 +7,7 @@ from .domestication import (
     DomesticationService,
 )
 from .resolver import PullPolicy, SbolResolver
+from .synbiohub import load_synbiohub_collections
 from .transformation import (
     TransformationJob,
     TransformationSbolResult,
@@ -22,6 +23,7 @@ __all__ = [
     "DomesticationService",
     "PullPolicy",
     "SbolResolver",
+    "load_synbiohub_collections",
     "TransformationJob",
     "TransformationSbolResult",
     "TransformationService",

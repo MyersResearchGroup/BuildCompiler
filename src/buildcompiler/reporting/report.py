@@ -4,7 +4,7 @@ import json
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-from buildcompiler.domain import BuildStatus, FullBuildResult
+from buildcompiler.domain import BuildStage, BuildStatus, FullBuildResult
 from buildcompiler.reporting.graph import BuildGraph, build_graph
 
 
@@ -205,7 +205,9 @@ def build_report(
             asdict(x)
             | {
                 "source_stage": x.source_stage.value,
-                "required_stage": str(x.required_stage),
+                "required_stage": x.required_stage.value
+                if isinstance(x.required_stage, BuildStage)
+                else x.required_stage,
             }
             for x in result.missing_inputs
         ],

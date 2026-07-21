@@ -75,8 +75,8 @@ def test_from_synbiohub_placeholder_without_collection_loading():
     assert isinstance(compiler, BuildCompiler)
 
 
-def test_from_synbiohub_raises_when_collection_loading_is_requested():
-    with pytest.raises(NotImplementedError, match="collection loading/indexing"):
+def test_from_synbiohub_requires_connection_details_for_collection_loading():
+    with pytest.raises(ValueError, match="sbh_registry"):
         BuildCompiler.from_synbiohub(collections=["https://example.org/collection"])
 
 

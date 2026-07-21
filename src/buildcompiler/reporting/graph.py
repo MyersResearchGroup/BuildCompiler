@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from buildcompiler.domain import FullBuildResult
+from buildcompiler.domain import BuildStage, FullBuildResult
 
 
 @dataclass(frozen=True)
@@ -156,7 +156,11 @@ def build_graph(result: FullBuildResult) -> BuildGraph:
                     source=stage_node_id,
                     target=node_id,
                     relationship="blocks",
-                    metadata={"required_stage": str(missing.required_stage)},
+                    metadata={
+                        "required_stage": missing.required_stage.value
+                        if isinstance(missing.required_stage, BuildStage)
+                        else missing.required_stage
+                    },
                 )
             )
         for approval in stage_result.required_approvals:

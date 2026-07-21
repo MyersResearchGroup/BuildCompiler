@@ -9,9 +9,11 @@ from typing import Any
 import sbol2
 
 from buildcompiler.domain import BuildRequest, BuildStage, DesignKind, IndexedPlasmid
-from buildcompiler.inventory import Inventory
+from buildcompiler.errors import SynBioHubConfigurationError
+from buildcompiler.inventory import Inventory, index_collections
 from buildcompiler.planning import FullBuildPlanner
 from buildcompiler.planning.validation import ordered_lvl1_parts
+from buildcompiler.sbol import PullPolicy, SbolResolver, load_synbiohub_collections
 from buildcompiler.stages import (
     AssemblyLvl1Stage,
     AssemblyLvl2Stage,
@@ -29,6 +31,7 @@ class BuildCompiler:
     planner: Any = None
     executor: Any = None
     adapters: Any = None
+    resolver: SbolResolver | None = None
     options: BuildOptions = field(default_factory=BuildOptions)
 
     @classmethod
@@ -38,16 +41,58 @@ class BuildCompiler:
         collections: list[str] | None = None,
         sbh_registry: str | None = None,
         auth_token: str | None = None,
-        sbol_doc: Any = None,
+        sbol_doc: sbol2.Document | None = None,
         options: BuildOptions | None = None,
-        **kwargs: Any,
     ) -> "BuildCompiler":
-        if collections:
-            raise NotImplementedError(
-                "Automatic SynBioHub collection loading/indexing is not implemented "
-                "yet. Inject inventory dependencies directly for now."
+        """Create a compiler from token-authenticated SynBioHub collections.
+
+        The token is assigned only to a transient ``sbol2.PartShop`` while the
+        collections and their references are downloaded. It is neither retained
+        by the compiler nor included in any returned domain object.
+        """
+
+        if collections is not None and not isinstance(collections, list):
+            raise SynBioHubConfigurationError(
+                "collections must be a list of SBOL identities."
             )
-        return cls(sbol_document=sbol_doc, options=options or BuildOptions(), **kwargs)
+        collection_ids = list(collections or [])
+        if any(
+            not isinstance(identity, str) or not identity for identity in collection_ids
+        ):
+            raise SynBioHubConfigurationError(
+                "collections must contain only nonempty SBOL identity strings."
+            )
+        if collection_ids and not sbh_registry:
+            raise SynBioHubConfigurationError(
+                "sbh_registry is required when SynBioHub collections are supplied."
+            )
+        if collection_ids and not auth_token:
+            raise SynBioHubConfigurationError(
+                "auth_token is required when SynBioHub collections are supplied."
+            )
+
+        document = sbol_doc or sbol2.Document()
+        if collection_ids:
+            load_synbiohub_collections(
+                collection_ids,
+                sbh_registry=sbh_registry or "",
+                auth_token=auth_token or "",
+                document=document,
+            )
+        resolver = SbolResolver(document, pull_policy=PullPolicy.NEVER)
+        inventory = index_collections(
+            document,
+            collection_identities=collection_ids,
+            resolver=resolver,
+        )
+        compiler_options = options or BuildOptions()
+        return cls(
+            inventory=inventory,
+            sbol_document=document,
+            planner=FullBuildPlanner(options=compiler_options, resolver=resolver),
+            resolver=resolver,
+            options=compiler_options,
+        )
 
     def plan(self, abstract_designs: Any, options: BuildOptions | None = None) -> Any:
         effective_options = options or self.options
@@ -73,6 +118,7 @@ class BuildCompiler:
                 sbol_document=self.sbol_document,
                 options=effective_options,
                 adapters=self.adapters,
+                resolver=self.resolver,
             )
         return executor.execute(plan, options=effective_options)
 
@@ -111,12 +157,15 @@ def full_build(
             auth_token=auth_token,
             sbol_doc=sbol_doc,
             options=compiler_options,
-            inventory=inventory,
-            planner=planner,
-            executor=executor,
-            adapters=adapters,
-            **kwargs,
         )
+        compiler.inventory = inventory or compiler.inventory
+        compiler.planner = planner or compiler.planner
+        compiler.executor = executor or compiler.executor
+        compiler.adapters = adapters
+        for name, value in kwargs.items():
+            if name in {"username", "password"}:
+                raise TypeError(f"full_build() does not accept {name}")
+            setattr(compiler, name, value)
     else:
         compiler = BuildCompiler(
             inventory=inventory,
