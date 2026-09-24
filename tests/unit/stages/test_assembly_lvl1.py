@@ -140,6 +140,13 @@ def test_assembly_lvl1_success_returns_products_json_and_indexes_generated():
         result.json_intermediate
         and result.json_intermediate["Product"] == "https://example.org/designs/d1"
     )
+    assert (
+        result.protocol_requests[0].reactions[0].product.identity
+        == result.products[0].identity
+    )
+    assert [
+        part.identity for part in result.protocol_requests[0].reactions[0].parts
+    ] == result.json_intermediate["PartsList"]
     assert result.sbol_document is not None
     assert inv.find_lvl1_region_plasmids("https://example.org/designs/d1")
     assert result.logs

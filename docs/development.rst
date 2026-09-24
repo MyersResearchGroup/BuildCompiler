@@ -19,6 +19,14 @@ Run the focused tests for the documented PUDU path:
        tests/unit/adapters/pudu/test_plating_json.py \
        tests/test_buildcompiler_transformation.py
 
+Run native protocol acceptance separately in the Python 3.10 simulation
+environment described in ``tests/automation/README.md``:
+
+.. code-block:: bash
+
+   PUDU_REPOSITORY=../PUDU BUILDCOMPILER_REQUIRE_EQUIVALENCE=1 \
+       python -m pytest tests/automation -q
+
 Build docs locally:
 
 .. code-block:: bash

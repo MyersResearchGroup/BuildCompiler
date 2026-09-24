@@ -8,6 +8,7 @@ from typing import Any
 import sbol2
 
 from buildcompiler.adapters.pudu import assembly_route_to_pudu_json
+from buildcompiler.adapters.protocol_requests import assembly_request_from_route
 from buildcompiler.api.options import BuildOptions
 from buildcompiler.domain import (
     BuildRequest,
@@ -206,6 +207,17 @@ class AssemblyLvl1Stage:
             warnings=warnings,
             sbol_document=assembly_result.stage_document,
             json_intermediate=json_intermediate,
+            protocol_requests=(
+                assembly_request_from_route(
+                    stage_id=f"{request.id}:{BuildStage.ASSEMBLY_LVL1.value}",
+                    products=assembly_result.products,
+                    parts=route.selected_part_plasmids,
+                    backbone=route.backbone,
+                    restriction_enzyme=restriction_enzyme,
+                ),
+            )
+            if assembly_result.products
+            else (),
             protocol_artifacts={"assembly_spec": json_intermediate["Parameters"]},
             logs=logs,
         )

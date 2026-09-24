@@ -24,20 +24,17 @@ Install test dependencies:
 Optional automation dependencies
 --------------------------------
 
-PUDU and Opentrons support are optional. BuildCompiler can emit PUDU-compatible
-JSON without importing PUDU. To generate or simulate OT-2 protocols, install the
-automation dependencies or use a local PUDU checkout:
+Native protocol compilation and PUDU-compatible JSON generation are included in
+the core package. To run the pinned simulator or equivalence tests, use Python
+3.10 and install:
 
 .. code-block:: bash
 
-   python -m pip install -e ".[automation,test]"
+   python -m pip install -e ".[simulation,test]"
 
-In the development environment used for the repository examples, PUDU was
-available as a sibling checkout:
-
-.. code-block:: text
-
-   /Users/gonzalovidal/Documents/GitHub/PUDU
+The equivalence suite additionally needs a PUDU reference checkout, as described
+in ``tests/automation/README.md``. Generated native scripts do not need PUDU.
+See :doc:`protocols` for compilation, artifact writing and handoffs.
 
 Read the Docs
 -------------

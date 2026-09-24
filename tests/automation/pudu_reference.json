@@ -1,0 +1,11 @@
+{
+  "repository": "https://github.com/MyersResearchGroup/PUDU",
+  "revision": "cdf7bde2128871c889fb25a4a0c168d5d8f0c1d3",
+  "sha256": {
+    "src/pudu/assembly.py": "8f9f105c452ab4eea03499e792d47ff6a5cb208f9c0eea3f7d7eb80f23ad5e95",
+    "src/pudu/utils.py": "75e469d0b25e40576efa09b32fb20ae2aa08c3d89763bc35831cad0d8e9323c3",
+    "src/pudu/transformation.py": "1723e05b08106c5a9d8aaf00a09c7358127a42e3686e912c5c2dcd1bcf0b5ff3",
+    "src/pudu/plating.py": "6dd82bca10a8f20e8ea70600145f4378dee465f6a06144dea29d6e990575f917"
+  },
+  "simulator": "8.8.2"
+}

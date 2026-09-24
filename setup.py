@@ -37,6 +37,10 @@ setup(
         "pydna",
     ],
     extras_require={
+        "simulation": [
+            "opentrons==8.8.2 ; python_version == '3.10'",
+            "xlsxwriter>=3.2.5",
+        ],
         "test": [
             "pytest>=7,<9",
             "pytest-cov[all]",
@@ -49,8 +53,7 @@ setup(
             "twine>=5.0",
         ],
         "automation": [
-            "pudupy",
-            "opentrons",
+            "opentrons==8.8.2 ; python_version == '3.10'",
             "SBOLInventory @ "
             "git+https://github.com/DRAGGON-Lab/SBOLInventory.git ; "
             "python_version >= '3.10'",

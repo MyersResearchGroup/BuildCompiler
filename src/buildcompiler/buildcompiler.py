@@ -32,6 +32,11 @@ from .robotutils import (
     write_plate_map_json,
     write_plating_protocol_script,
 )
+from buildcompiler.adapters.native_protocols import (
+    compile_assembly_payload,
+    compile_transformation_payload,
+    compile_plating_payload,
+)
 from .adapters.pudu import (
     legacy_assembly_routes_to_pudu_json,
     plasmid_locations_to_pudu_json,
@@ -1768,11 +1773,16 @@ class BuildCompiler:
             plating_path = results_path / "plating_pudu_input.json"
             self._write_json(plating_path, plating_payload)
             written.append(plating_path)
-            written.append(
-                self._write_pudu_plating_protocol_script(
-                    results_path / "pudu_plating_protocol.py", plating_payload
+            for batch_index, batch_payload in enumerate(plating_payloads):
+                filename = (
+                    "pudu_plating_protocol.py" if batch_index == 0
+                    else f"pudu_plating_protocol_batch_{batch_index + 1}.py"
                 )
-            )
+                written.append(
+                    self._write_pudu_plating_protocol_script(
+                        results_path / filename, batch_payload
+                    )
+                )
 
         return written
 
@@ -1787,65 +1797,25 @@ class BuildCompiler:
     def _write_pudu_assembly_protocol_script(
         self, path: Path, payload: list[dict[str, object]], protocol_name: str
     ) -> Path:
-        script = (
-            "from pudu.assembly import SBOLLoopAssembly\n"
-            "from opentrons import protocol_api\n\n"
-            f"assembly_data = {json.dumps(payload, indent=4)}\n\n"
-            "metadata = {\n"
-            f"    'protocolName': {protocol_name!r},\n"
-            "    'author': 'BuildCompiler',\n"
-            "    'apiLevel': '2.21',\n"
-            "}\n\n"
-            "def run(protocol: protocol_api.ProtocolContext):\n"
-            "    protocol_instance = SBOLLoopAssembly(assembly_data=assembly_data)\n"
-            "    protocol_instance.run(protocol)\n"
-        )
-        path.write_text(script, encoding="utf-8")
+        compiled = compile_assembly_payload(payload, name=protocol_name)
+        path.write_text(compiled.script, encoding="utf-8")
         return path
 
     def _write_pudu_transformation_protocol_script(
-        self,
-        path: Path,
-        transformation_payload: list[dict[str, object]],
+        self, path: Path, transformation_payload: list[dict[str, object]],
         plasmid_locations: dict[str, list[str]],
     ) -> Path:
-        script = (
-            "from pudu.transformation import HeatShockTransformation\n"
-            "from opentrons import protocol_api\n\n"
-            f"transformation_data = {json.dumps(transformation_payload, indent=4)}\n\n"
-            f"plasmid_locations = {json.dumps(plasmid_locations, indent=4)}\n\n"
-            "metadata = {\n"
-            "    'protocolName': 'BuildCompiler Transformation',\n"
-            "    'author': 'BuildCompiler',\n"
-            "    'apiLevel': '2.21',\n"
-            "}\n\n"
-            "def run(protocol: protocol_api.ProtocolContext):\n"
-            "    protocol_instance = HeatShockTransformation(\n"
-            "        transformation_data=transformation_data,\n"
-            "        plasmid_locations=plasmid_locations,\n"
-            "    )\n"
-            "    protocol_instance.run(protocol)\n"
+        compiled = compile_transformation_payload(
+            transformation_payload, plasmid_locations=plasmid_locations
         )
-        path.write_text(script, encoding="utf-8")
+        path.write_text(compiled.script, encoding="utf-8")
         return path
 
     def _write_pudu_plating_protocol_script(
         self, path: Path, plating_payload: dict[str, object]
     ) -> Path:
-        script = (
-            "from pudu.plating import Plating\n"
-            "from opentrons import protocol_api\n\n"
-            f"plating_data = {json.dumps(plating_payload, indent=4)}\n\n"
-            "metadata = {\n"
-            "    'protocolName': 'BuildCompiler Plating',\n"
-            "    'author': 'BuildCompiler',\n"
-            "    'apiLevel': '2.21',\n"
-            "}\n\n"
-            "def run(protocol: protocol_api.ProtocolContext):\n"
-            "    protocol_instance = Plating(plating_data=plating_data)\n"
-            "    protocol_instance.run(protocol)\n"
-        )
-        path.write_text(script, encoding="utf-8")
+        compiled = compile_plating_payload(plating_payload)
+        path.write_text(compiled.script, encoding="utf-8")
         return path
 
     def _resolve_full_build_zip_path(

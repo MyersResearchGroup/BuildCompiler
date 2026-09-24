@@ -10,6 +10,11 @@ from buildcompiler.errors import (
     SynBioHubResponseError,
 )
 from buildcompiler.inventory import index_collections
+from buildcompiler.api.protocols import (
+    compile_assembly,
+    compile_transformation,
+    compile_plating,
+)
 
 from .compiler import (
     BuildCompiler,
@@ -82,6 +87,9 @@ __all__ = [
     "TransformationOptions",
     "assembly_lvl1",
     "assembly_lvl2",
+    "compile_assembly",
+    "compile_plating",
+    "compile_transformation",
     "deserialize_build_plan",
     "domestication",
     "dumps_json_dto",

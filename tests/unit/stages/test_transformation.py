@@ -1,6 +1,7 @@
 import sbol2
 
-from buildcompiler.api import BuildOptions
+from buildcompiler.api import BuildOptions, compile_transformation, compile_plating
+from buildcompiler.protocols import TransformationConfig
 from buildcompiler.domain import IndexedPlasmid, StageStatus
 from buildcompiler.stages import TransformationStage
 
@@ -38,3 +39,12 @@ def test_transformation_stage_returns_json_and_sbol_product():
     assert result.products
     assert result.json_intermediate["Chassis"] == "dh5alpha"
     assert result.sbol_document.find(result.products[0].identity) is not None
+    request = result.protocol_requests[0]
+    assert request.source_stage_id == result.id
+    assert request.reactions[0].strain.identity == result.products[0].identity
+    assert request.reactions[0].plasmids[0].identity == plasmid.identity
+    compiled = compile_transformation(result, config=TransformationConfig(replicates=1))
+    assert compiled.manifest.samples[0].material.identity == result.products[0].identity
+    plated = compile_plating(compiled.manifest)
+    assert len(plated.manifest.samples) == 2
+    assert "from pudu" not in compiled.script + plated.script
