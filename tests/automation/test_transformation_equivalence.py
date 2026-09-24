@@ -12,7 +12,7 @@ from buildcompiler.protocols import (
     plasmid_manifest_from_json,
     transformation_request_from_json,
 )
-from buildcompiler.protocols.backends.opentrons.simulation import simulate_source
+from buildcompiler.protocols.backends.simulation import simulate_source
 
 pytestmark = pytest.mark.automation
 

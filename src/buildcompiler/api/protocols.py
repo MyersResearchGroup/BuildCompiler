@@ -1,22 +1,25 @@
 """Compile stage requests and physical handoffs without rerunning SBOL operations."""
 
+from dataclasses import fields
+
 from buildcompiler.domain import StageResult, StageStatus
 from buildcompiler.domain.protocol_requests import (
     AssemblyRequest,
     TransformationRequest,
 )
-from buildcompiler.protocols.allocation.models import OutputManifest
 from buildcompiler.protocols import (
     AssemblyConfig,
     CompiledProtocol,
     OpentronsAssemblyProfile,
-    ProtocolCompiler,
-    TransformationConfig,
+    OpentronsPlatingProfile,
     OpentronsTransformationProfile,
     PlatingConfig,
     PlatingRequest,
-    OpentronsPlatingProfile,
+    ProtocolCompiler,
+    TransformationConfig,
 )
+from buildcompiler.protocols.inputs import bacterium_manifest_from_json
+from buildcompiler.protocols.models import OutputManifest
 
 
 def compile_assembly(
@@ -92,3 +95,27 @@ def compile_plating(
     return ProtocolCompiler(plating=config).compile(
         request, profile=profile, inputs=inputs
     )
+
+
+def compile_plating_json(payload, *, advanced_params=None):
+    """Compile a JSON plating payload with explicitly supplied overrides."""
+
+    parameters = dict(payload)
+    parameters.update(advanced_params or {})
+    inputs = bacterium_manifest_from_json(parameters)
+    parameters.pop("bacterium_locations")
+    name = parameters.pop("protocol_name", "BuildCompiler Plating")
+    config_names = {f.name for f in fields(PlatingConfig)}
+    profile_names = {f.name for f in fields(OpentronsPlatingProfile)}
+    config = PlatingConfig(
+        **{key: value for key, value in parameters.items() if key in config_names}
+    )
+    profile = OpentronsPlatingProfile(
+        **{key: value for key, value in parameters.items() if key in profile_names}
+    )
+    unknown = set(parameters) - config_names - profile_names
+    if unknown:
+        raise ValueError(
+            f"Unsupported native plating parameters: {sorted(unknown)}. Use a supported target profile."
+        )
+    return compile_plating(inputs, request_id=name, config=config, profile=profile)

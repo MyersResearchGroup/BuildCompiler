@@ -1,4 +1,4 @@
-"""Private worker, launched as a file so core imports never load the SDK.
+"""Private simulator worker, launched as a file so core imports never load the SDK.
 
 The trace adapter is qualified against Opentrons 8.8.2. SDK calls are
 observed, not substituted; the official simulate() entry point runs both sides.
@@ -7,11 +7,14 @@ observed, not substituted; the official simulate() entry point runs both sides.
 import functools
 import inspect
 import json
+import sys
 from importlib.metadata import version
 from pathlib import Path
 
 
 def main() -> None:
+    """Run one protocol in isolation and write a deterministic simulator trace."""
+
     from opentrons import protocol_api, types
     from opentrons.legacy_broker import LegacyBroker
     from opentrons.protocol_api import module_contexts
@@ -24,6 +27,8 @@ def main() -> None:
         raise RuntimeError("The structured trace adapter requires opentrons==8.8.2.")
 
     def normalize(value):
+        """Strip unstable SDK object identity while preserving command semantics."""
+
         if value is None or type(value) in (str, int, float, bool):
             return value
         if value is protocol_api.OFF_DECK:
@@ -62,6 +67,8 @@ def main() -> None:
     publish = LegacyBroker.publish
 
     def capture(self, topic, message):
+        """Observe nested commands without replacing SDK execution."""
+
         nonlocal depth
         if topic == "command":
             if message["$"] == "before":
@@ -81,11 +88,14 @@ def main() -> None:
     LegacyBroker.publish = capture
 
     def observe(cls, method_name):
+        """Capture bound SDK arguments that the ordinary command log omits."""
+
         original = getattr(cls, method_name)
         signature = inspect.signature(original)
 
         @functools.wraps(original)
         def wrapper(*args, **kwargs):
+            """Record resolved arguments before delegating to the SDK method."""
             bound = signature.bind(*args, **kwargs)
             bound.apply_defaults()
             parameters = {
@@ -130,4 +140,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    # Resolve the installed SDK, not the sibling opentrons.py source renderer.
+    if sys.path[0] == str(Path(__file__).resolve().parent):
+        del sys.path[0]
     main()

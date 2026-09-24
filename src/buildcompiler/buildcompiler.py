@@ -32,10 +32,10 @@ from .robotutils import (
     write_plate_map_json,
     write_plating_protocol_script,
 )
-from buildcompiler.adapters.native_protocols import (
-    compile_assembly_payload,
-    compile_transformation_payload,
-    compile_plating_payload,
+from buildcompiler.api.protocols import compile_plating_json
+from buildcompiler.protocols import (
+    ProtocolCompiler, assembly_request_from_json, transformation_request_from_json,
+    plasmid_manifest_from_json,
 )
 from .adapters.pudu import (
     legacy_assembly_routes_to_pudu_json,
@@ -1797,7 +1797,7 @@ class BuildCompiler:
     def _write_pudu_assembly_protocol_script(
         self, path: Path, payload: list[dict[str, object]], protocol_name: str
     ) -> Path:
-        compiled = compile_assembly_payload(payload, name=protocol_name)
+        compiled = ProtocolCompiler().compile(assembly_request_from_json(payload, request_id=protocol_name))
         path.write_text(compiled.script, encoding="utf-8")
         return path
 
@@ -1805,8 +1805,9 @@ class BuildCompiler:
         self, path: Path, transformation_payload: list[dict[str, object]],
         plasmid_locations: dict[str, list[str]],
     ) -> Path:
-        compiled = compile_transformation_payload(
-            transformation_payload, plasmid_locations=plasmid_locations
+        compiled = ProtocolCompiler().compile(
+            transformation_request_from_json(transformation_payload, request_id="BuildCompiler Transformation"),
+            inputs=plasmid_manifest_from_json(plasmid_locations) if plasmid_locations else None,
         )
         path.write_text(compiled.script, encoding="utf-8")
         return path
@@ -1814,7 +1815,7 @@ class BuildCompiler:
     def _write_pudu_plating_protocol_script(
         self, path: Path, plating_payload: dict[str, object]
     ) -> Path:
-        compiled = compile_plating_payload(plating_payload)
+        compiled = compile_plating_json(plating_payload)
         path.write_text(compiled.script, encoding="utf-8")
         return path
 

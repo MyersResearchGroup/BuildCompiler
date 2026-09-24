@@ -15,9 +15,8 @@ from buildcompiler.protocols import (
     ProtocolCompiler,
     assembly_request_from_json,
 )
-from buildcompiler.protocols.allocation.wells import BLOCK_24, PLATE_96
 from buildcompiler.protocols.backends.markdown import render_markdown
-from buildcompiler.protocols.steps import Transfer
+from buildcompiler.protocols.models import BLOCK_24, PLATE_96, Transfer
 
 
 def payload():
@@ -53,7 +52,7 @@ def test_compile_is_deterministic_and_never_writes(tmp_path, monkeypatch):
     ]
     assert imports == ["opentrons"]
     with pytest.raises(dataclasses.FrozenInstanceError):
-        first.allocation.protocol.id = "changed"
+        first.plan.id = "changed"
 
 
 def test_config_overrides_preserve_explicit_default_and_false():
@@ -88,7 +87,7 @@ def test_order_identity_replicates_and_locations_survive_compilation():
         request(),
         profile=OpentronsAssemblyProfile(thermocycler_starting_well=9),
     )
-    plan = compiled.allocation.protocol
+    plan = compiled.plan
     samples = {sample.id: sample for sample in plan.samples}
     outputs = [samples[identity] for identity in plan.output_sample_ids]
     assert [output.replicate for output in outputs] == [1, 2]
@@ -149,22 +148,18 @@ def test_manual_render_and_script_use_the_same_configuration():
     compiled = ProtocolCompiler(assembly=AssemblyConfig(replicates=2)).compile(
         request()
     )
-    transfers = [
-        step
-        for step in compiled.allocation.protocol.steps
-        if isinstance(step, Transfer)
-    ]
+    transfers = [step for step in compiled.plan.steps if isinstance(step, Transfer)]
     assert len(transfers) == compiled.markdown.count("Transfer ")
     assert "replicate 1" in compiled.markdown and "replicate 2" in compiled.markdown
     assert "reactions/A1" in compiled.markdown and "reactions/B1" in compiled.markdown
     assert "75" in compiled.markdown
     assert "not an execution record" in compiled.markdown
-    assert render_markdown(compiled.allocation.protocol)
+    assert render_markdown(compiled.plan)
 
 
 def test_compiled_artifacts_require_explicit_write_and_refuse_overwrite(tmp_path):
     compiled = ProtocolCompiler().compile(request())
-    paths = compiled.artifacts.write(tmp_path)
+    paths = compiled.write(tmp_path)
     assert {path.name for path in paths} == {
         "protocol.py",
         "compilation.json",
@@ -177,7 +172,7 @@ def test_compiled_artifacts_require_explicit_write_and_refuse_overwrite(tmp_path
         == compiled.manifest.to_dict()
     )
     with pytest.raises(FileExistsError):
-        compiled.artifacts.write(tmp_path)
+        compiled.write(tmp_path)
 
 
 def test_stage_to_compiled_protocol_preserves_serializable_requests():

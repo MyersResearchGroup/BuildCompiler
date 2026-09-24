@@ -1,32 +1,49 @@
 Native protocol compilation
 ===========================
 
-``buildcompiler.protocols`` owns the assembly, transformation and plating methods
-previously supplied by PUDU's ``SBOLLoopAssembly``, ``HeatShockTransformation``
-and ``Plating`` classes. The planners, allocation records and artifact renderer
-require neither PUDU nor the Opentrons SDK. Generated robot scripts import only
-Opentrons. The old automated script writers also delegate to this compiler.
+``buildcompiler.protocols`` compiles assembly, transformation and plating requests
+into review documents, structured handoffs and standalone robot scripts. Planning
+and rendering require no robot SDK. Generated scripts import only Opentrons.
 
 Structure and ownership
 -----------------------
 
-* ``domain.protocol_requests`` defines frozen ``MaterialRef``,
-  ``AssemblyReaction``, ``TransformationReaction`` and method-specific request
-  records. Requests retain full material identities and ordered components.
-* ``protocols.methods`` contains pure planners and their immutable configurations.
-  ``TransformationConfig`` owns transformation parameters; its planner owns
-  chassis grouping, tube consumption and the two replicate axes.
-* ``protocols.materials`` and ``protocols.steps`` define samples and shared
-  operations: transfer, distribute, mix, tip lifecycle and module operations.
-  ``ProtocolPlan`` records explicit inputs, intermediates, outputs and lineage.
-* ``protocols.allocation`` defines container-qualified placements and output
-  manifests. Sample identity does not depend on a display label or well name.
-* ``protocols.backends.opentrons`` owns supported hardware profiles, allocation,
-  tip scheduling, shared operation lowering and standalone source rendering.
-  It emits immutable ``OpentronsProgram`` records before rendering Python.
-* ``protocols.backends.markdown`` describes the same logical plan and allocation.
-  ``ArtifactBundle.write`` is the explicit filesystem boundary. Compilation does
-  not simulate, write files, or mutate SBOL documents.
+The package has two small subpackages. Each method keeps its configuration,
+hardware profile, planner and well allocation in one file::
+
+   protocols/
+       __init__.py
+       compiler.py
+       inputs.py
+       models.py
+       methods/
+           __init__.py
+           assembly.py
+           transformation.py
+           plating.py
+       backends/
+           __init__.py
+           markdown.py
+           opentrons.py
+           simulation.py
+           _simulation_worker.py
+
+``domain.protocol_requests`` defines immutable requests shared with build stages.
+``inputs.py`` converts existing JSON and indexed stage records into those requests.
+``models.py`` holds ``Sample``, shared operations such as ``Transfer`` and
+``Distribute``, ``ProtocolPlan`` and ``OutputManifest``. A sample keeps its material
+identity and parent sample IDs independently of its label and physical location.
+
+``ProtocolCompiler.plan(request)`` calls the appropriate method planner and returns
+a plan with unassigned sample locations. ``compile(request, profile=...)`` also
+allocates wells, then sends that same plan to both renderers. The Opentrons renderer
+emits Python directly from the operations and checks tip use and pipette capacity.
+There is no second command representation between the plan and the script.
+
+``CompiledProtocol`` contains ``plan``, ``script``, ``markdown``, ``manifest`` and a
+read-only ``files`` mapping. ``write(directory)`` is the explicit filesystem
+boundary. Compilation does not write files, simulate or mutate SBOL documents.
+``backends.simulation.simulate_source`` runs the optional SDK in a subprocess.
 
 Compiling stage results
 -----------------------
@@ -56,9 +73,9 @@ Given stage results for corresponding material identities:
        ),
    )
 
-   assembled.artifacts.write("results/assembly")
-   transformed.artifacts.write("results/transformation")
-   plated.artifacts.write("results/plating")
+   assembled.write("results/assembly")
+   transformed.write("results/transformation")
+   plated.write("results/plating")
 
 ``OutputManifest`` represents planned outputs, not evidence that a run happened.
 The transformation compiler preserves each assembly sample's ID as an upstream
@@ -68,8 +85,8 @@ counts. These multiply the configured transformation replicates; the two axes
 are not interchangeable. Without an input manifest, DNA is allocated sequentially
 on the temperature module.
 
-The plating profile is explicit here because PUDU's standalone plating default
-uses a different source plate definition from its transformation default. The
+The plating profile is explicit here because its standalone default uses a
+different source plate definition from the transformation default. The
 compiler does not infer a physical plate transfer from material identity.
 
 Compiling existing JSON
@@ -102,9 +119,10 @@ manifests retain identity and lineage throughout a workflow.
 
 Each compilation returns ``protocol.py``, ``protocol.md``, ``manifest.json``,
 ``compilation.json`` and a method-specific JSON handoff. ``compilation.json``
-records the resolved configuration, target profile, typed operation kinds,
-containers, placements and PUDU reference revision. Writing refuses existing
-files unless ``overwrite=True`` is supplied explicitly.
+records the resolved configuration, target profile and plan, including operation
+kinds and sample locations. These files are also available in memory, for example
+``compiled.files["manifest.json"]``. Writing refuses existing files unless
+``overwrite=True`` is supplied explicitly.
 
 Configuration and supported targets
 ------------------------------------
@@ -116,16 +134,15 @@ Profiles validate deck collisions, well offsets and tip offsets. Compilation
 rejects missing source bindings, duplicate placements, exhausted tips, unsupported
 profiles and capacity violations detected by the supported target.
 
-The initial targets preserve PUDU's API 2.21 hardware choices, pipettes and labware.
-They expose deck and starting-position configuration; they do not promise support
-for arbitrary replacement instruments or labware definitions. Transformation and
+The supported targets use API 2.21 with fixed pipette models and supported labware
+definitions. Profiles expose deck and starting-position configuration, rather than
+arbitrary instrument substitution. Transformation and
 plating each use one rack per pipette and reject batches that exhaust those racks.
 Assembly retains its explicit rack replacement schedule.
 
-PUDU's default transformation simulation skips temperature operations. The native
-plan retains those operations with an explicit simulation condition, so both the
-review document and script show the distinction. ``water_testing=True`` omits
-those operations altogether.
+Transformation's temperature operations carry an explicit simulation condition:
+they appear in the plan and review document but are skipped during ordinary
+simulation. ``water_testing=True`` omits those operations altogether.
 
 Validation and migration boundary
 ----------------------------------
@@ -136,13 +153,11 @@ the independent PUDU implementation with native output and tests the connected
 three-stage handoff. It separately exercises transformation's temperature path
 inside the simulator. Hardware and experimental outcomes are not tested.
 
-The native compiler does not reproduce PUDU's Excel presentation or simulation-time
-file writes. It returns structured artifacts explicitly. Other PUDU protocol
-families are outside this migration. Legacy orchestration, notebook APIs and the
-legacy manual plating summary remain compatibility surfaces; their automated
+The compiler returns structured artifacts explicitly; it does not produce Excel
+workbooks or write handoff files during simulation. Legacy orchestration, notebook
+APIs and the legacy manual plating summary remain compatibility surfaces; their automated
 assembly, transformation and plating script writers use the native compiler.
 Legacy multi-batch plating produces one standalone script per batch instead of
 passing an unsupported ``batches`` object into a single protocol.
 
-PUDU's MIT attribution is retained in ``protocols.attribution`` and generated
-scripts.
+The MIT attribution is retained in the repository's ``LICENSE`` file.

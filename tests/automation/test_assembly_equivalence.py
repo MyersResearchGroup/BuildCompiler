@@ -11,7 +11,7 @@ from buildcompiler.protocols import (
     ProtocolCompiler,
     assembly_request_from_json,
 )
-from buildcompiler.protocols.backends.opentrons.simulation import (
+from buildcompiler.protocols.backends.simulation import (
     SimulationError,
     simulate_source,
 )

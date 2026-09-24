@@ -1,4 +1,4 @@
-"""Run the real simulator in an isolated process and temporary working directory."""
+"""Run Opentrons simulation in an isolated process and temporary directory."""
 
 import json
 import os
@@ -15,6 +15,8 @@ class SimulationError(RuntimeError):
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class SimulationResult:
+    """Structured robot actions, observed SDK calls and captured process output."""
+
     simulator_version: str
     actions: tuple[dict, ...]
     sdk_calls: tuple[dict, ...]
@@ -33,7 +35,7 @@ def simulate_source(
     """Simulate explicitly supplied source; never called during compilation.
 
     Source must be trusted just like any Python protocol. Process isolation
-    prevents SDK state and PUDU's simulation file writes leaking between runs;
+    prevents SDK state and protocol file writes leaking between runs;
     it is not a security sandbox for arbitrary Python.
     """
     worker = Path(__file__).with_name("_simulation_worker.py")

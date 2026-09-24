@@ -8,7 +8,7 @@ import zipfile
 from pathlib import Path
 from typing import Any, Dict, List
 
-from buildcompiler.adapters.native_protocols import compile_plating_payload
+from buildcompiler.api.protocols import compile_plating_json
 
 
 def load_json_or_dict(value):
@@ -172,7 +172,7 @@ def write_manual_plating_protocol(path, plate_id, plate_rows, advanced_params):
 
 def write_plating_protocol_script(path, plating_data, advanced_params):
     path = Path(path)
-    compiled = compile_plating_payload(plating_data, advanced_params=advanced_params)
+    compiled = compile_plating_json(plating_data, advanced_params=advanced_params)
     script = compiled.script
     path.write_text(script, encoding="utf-8")
     return path

@@ -12,8 +12,8 @@ from buildcompiler.protocols import (
     ProtocolCompiler,
     bacterium_manifest_from_json,
 )
-from buildcompiler.protocols.allocation.wells import PLATE_96
-from buildcompiler.protocols.backends.opentrons.simulation import simulate_source
+from buildcompiler.protocols.backends.simulation import simulate_source
+from buildcompiler.protocols.models import PLATE_96
 
 pytestmark = pytest.mark.automation
 
@@ -83,10 +83,8 @@ def test_plating_equivalence(pudu_repository, tmp_path, count, config, profile):
         )
     assert actual.actions and actual.actions == expected.actions
     assert actual.sdk_calls == expected.sdk_calls
-    handoff = next(
-        a for a in compiled.artifacts.artifacts if a.name == "plating_layout.json"
-    )
-    assert expected.generated_json["plating_layout.json"] == json.loads(handoff.content)
+    handoff = compiled.files["plating_layout.json"]
+    assert expected.generated_json["plating_layout.json"] == json.loads(handoff)
     assert actual.generated_json == {}
     print(
         f"{len(actual.actions)} actions; {len(actual.sdk_calls)} SDK calls; handoff equal"

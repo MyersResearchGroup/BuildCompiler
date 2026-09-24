@@ -1,71 +1,94 @@
-"""Compilation facade; planning, rendering, writing and simulation are separate."""
+"""Compile requests into plans, review documents and standalone robot scripts."""
 
 import json
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass
+from pathlib import Path
+from types import MappingProxyType
 
 from buildcompiler.domain.protocol_requests import (
     AssemblyRequest,
-    TransformationRequest,
     PlatingRequest,
     ProtocolRequest,
+    TransformationRequest,
 )
-
-from buildcompiler.protocols.allocation.models import (
-    AllocatedProtocolPlan,
-    OutputManifest,
-)
-from buildcompiler.protocols.allocation.plating import plating_layout
-from buildcompiler.protocols.artifacts import ArtifactBundle, ProtocolArtifact
-from buildcompiler.protocols.attribution import PUDU_REVISION
 from buildcompiler.protocols.backends.markdown import render_markdown
-from buildcompiler.protocols.backends.opentrons.allocation import allocate
-from buildcompiler.protocols.backends.opentrons.lowering import lower
-from buildcompiler.protocols.backends.opentrons.profile import (
+from buildcompiler.protocols.backends.opentrons import TargetProfile, render_python
+from buildcompiler.protocols.methods.assembly import (
+    AssemblyConfig,
     OpentronsAssemblyProfile,
-    OpentronsTransformationProfile,
+    allocate_assembly,
+    plan_assembly,
+)
+from buildcompiler.protocols.methods.plating import (
     OpentronsPlatingProfile,
-)
-from buildcompiler.protocols.backends.opentrons.plating import (
+    PlatingConfig,
     allocate_plating,
-    lower_plating,
+    plan_plating,
+    plating_layout,
 )
-from buildcompiler.protocols.backends.opentrons.transformation import (
+from buildcompiler.protocols.methods.transformation import (
+    OpentronsTransformationProfile,
+    TransformationConfig,
     allocate_transformation,
-    lower_transformation,
+    plan_transformation,
 )
-from buildcompiler.protocols.backends.opentrons.program import OpentronsProgram
-from buildcompiler.protocols.backends.opentrons.rendering import render_python
-from buildcompiler.protocols.config import AssemblyConfig
-from buildcompiler.protocols.methods.assembly import plan_assembly
-from buildcompiler.protocols.methods.transformation import plan_transformation
-from buildcompiler.protocols.methods.transformation_config import TransformationConfig
-from buildcompiler.protocols.methods.plating import plan_plating
-from buildcompiler.protocols.methods.plating_config import PlatingConfig
-from buildcompiler.protocols.plans import ProtocolPlan
+from buildcompiler.protocols.models import OutputManifest, ProtocolPlan
+
+
+def _json(value: object) -> str:
+    """Use the same deterministic encoding for every JSON artifact."""
+    return json.dumps(value, indent=2, sort_keys=True, allow_nan=False) + "\n"
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class CompiledProtocol:
-    allocation: AllocatedProtocolPlan
-    program: OpentronsProgram
+    """A located plan and its files; compilation itself performs no file writes."""
+
+    plan: ProtocolPlan
     script: str
     markdown: str
     manifest: OutputManifest
-    artifacts: ArtifactBundle
+    files: Mapping[str, str]
+
+    def __post_init__(self) -> None:
+        for name in self.files:
+            if (
+                not name
+                or name in (".", "..")
+                or Path(name).name != name
+                or "\\" in name
+            ):
+                raise ValueError("Artifact names must be plain filenames.")
+        object.__setattr__(self, "files", MappingProxyType(dict(self.files)))
+
+    def write(
+        self, directory: str | Path, *, overwrite: bool = False
+    ) -> tuple[Path, ...]:
+        """Write the complete bundle, refusing existing files unless requested."""
+        directory = Path(directory)
+        paths = tuple(directory / name for name in self.files)
+        if not overwrite and any(path.exists() for path in paths):
+            raise FileExistsError("One or more output artifacts already exist.")
+        directory.mkdir(parents=True, exist_ok=True)
+        for path, content in zip(paths, self.files.values(), strict=True):
+            with path.open("w" if overwrite else "x", encoding="utf-8") as handle:
+                handle.write(content)
+        return paths
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class ProtocolCompiler:
+    """Select a method, place its samples and render both outputs from one plan."""
+
     assembly: AssemblyConfig = AssemblyConfig()
     transformation: TransformationConfig = TransformationConfig()
     plating: PlatingConfig = PlatingConfig()
 
     def plan(
-        self,
-        request: ProtocolRequest,
-        *,
-        inputs: OutputManifest | None = None,
+        self, request: ProtocolRequest, *, inputs: OutputManifest | None = None
     ) -> ProtocolPlan:
+        """Expand a request into operations without assigning hardware locations."""
         if isinstance(request, AssemblyRequest):
             if inputs is not None:
                 raise ValueError(
@@ -88,22 +111,19 @@ class ProtocolCompiler:
         self,
         request: ProtocolRequest,
         *,
-        profile: OpentronsAssemblyProfile
-        | OpentronsTransformationProfile
-        | OpentronsPlatingProfile
-        | None = None,
+        profile: TargetProfile | None = None,
         inputs: OutputManifest | None = None,
     ) -> CompiledProtocol:
+        """Return an allocated plan and files, leaving writing and simulation explicit."""
         plan = self.plan(request, inputs=inputs)
         if isinstance(request, AssemblyRequest):
             profile = profile or OpentronsAssemblyProfile()
             if not isinstance(profile, OpentronsAssemblyProfile):
                 raise TypeError("Assembly requires an OpentronsAssemblyProfile.")
             method, config = "assembly", self.assembly
-            allocated = allocate(plan, profile=profile)
-            program = lower(allocated, profile=profile)
+            plan = allocate_assembly(plan, profile=profile)
             handoff_name = "transformation_input.json"
-            handoff = allocated.output_manifest().plasmid_locations()
+            handoff = plan.output_manifest().plasmid_locations()
         elif isinstance(request, TransformationRequest):
             profile = profile or OpentronsTransformationProfile()
             if not isinstance(profile, OpentronsTransformationProfile):
@@ -111,11 +131,10 @@ class ProtocolCompiler:
                     "Transformation requires an OpentronsTransformationProfile."
                 )
             method, config = "transformation", self.transformation
-            allocated = allocate_transformation(plan, profile=profile, inputs=inputs)
-            program = lower_transformation(allocated, profile=profile)
+            plan = allocate_transformation(plan, profile=profile, inputs=inputs)
             handoff_name = "plating_input.json"
             handoff = {
-                "bacterium_locations": allocated.output_manifest().bacterium_locations()
+                "bacterium_locations": plan.output_manifest().bacterium_locations()
             }
         else:
             profile = profile or OpentronsPlatingProfile()
@@ -126,65 +145,34 @@ class ProtocolCompiler:
                 raise ValueError(
                     "Dilution volume exceeds the supported plate capacity."
                 )
-            allocated = allocate_plating(plan, profile=profile, inputs=inputs)
-            program = lower_plating(allocated, profile=profile)
+            plan = allocate_plating(plan, profile=profile, inputs=inputs)
             handoff_name = "plating_layout.json"
-            handoff = plating_layout(allocated, dilution_factor=config.dilution_factor)
-        script = render_python(program, name=request.id)
-        markdown = render_markdown(plan, allocation=allocated)
-        manifest = allocated.output_manifest()
-        artifacts = ArtifactBundle(
-            artifacts=(
-                ProtocolArtifact(
-                    name="protocol.py", media_type="text/x-python", content=script
-                ),
-                ProtocolArtifact(
-                    name="compilation.json",
-                    media_type="application/json",
-                    content=json.dumps(
-                        {
-                            "schema_version": "1.0",
-                            "method": method,
-                            "reference_revision": PUDU_REVISION,
-                            "configuration": asdict(config),
-                            "target_profile": asdict(profile),
-                            "plan": {
-                                **asdict(plan),
-                                "steps": [
-                                    {"kind": type(s).__name__, **asdict(s)}
-                                    for s in plan.steps
-                                ],
-                            },
-                            "containers": [asdict(c) for c in allocated.containers],
-                            "placements": [asdict(p) for p in allocated.placements],
-                        },
-                        indent=2,
-                        sort_keys=True,
-                        allow_nan=False,
-                    )
-                    + "\n",
-                ),
-                ProtocolArtifact(
-                    name="protocol.md", media_type="text/markdown", content=markdown
-                ),
-                ProtocolArtifact(
-                    name="manifest.json",
-                    media_type="application/json",
-                    content=json.dumps(manifest.to_dict(), indent=2, sort_keys=True)
-                    + "\n",
-                ),
-                ProtocolArtifact(
-                    name=handoff_name,
-                    media_type="application/json",
-                    content=json.dumps(handoff, indent=2, sort_keys=True) + "\n",
-                ),
-            )
-        )
+            handoff = plating_layout(plan, dilution_factor=config.dilution_factor)
+        script = render_python(plan, profile=profile)
+        markdown = render_markdown(plan)
+        manifest = plan.output_manifest()
+        metadata = {
+            "schema_version": "1.0",
+            "method": method,
+            "configuration": asdict(config),
+            "target_profile": asdict(profile),
+            "plan": {
+                **asdict(plan),
+                "steps": [
+                    {"kind": type(step).__name__, **asdict(step)} for step in plan.steps
+                ],
+            },
+        }
         return CompiledProtocol(
-            allocation=allocated,
-            program=program,
+            plan=plan,
             script=script,
             markdown=markdown,
             manifest=manifest,
-            artifacts=artifacts,
+            files={
+                "protocol.py": script,
+                "protocol.md": markdown,
+                "manifest.json": _json(manifest.to_dict()),
+                "compilation.json": _json(metadata),
+                handoff_name: _json(handoff),
+            },
         )

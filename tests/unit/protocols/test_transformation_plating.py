@@ -15,7 +15,7 @@ from buildcompiler.protocols import (
     plasmid_manifest_from_json,
     transformation_request_from_json,
 )
-from buildcompiler.protocols.steps import Distribute, RunTemperatureProgram
+from buildcompiler.protocols.models import Distribute, RunTemperatureProgram
 
 
 def request():
@@ -53,7 +53,7 @@ def test_source_replicates_lineage_and_explicit_locations():
         profile=OpentronsTransformationProfile(thermocycler_starting_well=8),
     )
     assert len(compiled.manifest.samples) == 6
-    assert [p.location.well_name for p in compiled.manifest.placements] == [
+    assert [p.location.well_name for p in compiled.manifest.samples] == [
         "A2",
         "B2",
         "C2",
@@ -61,7 +61,7 @@ def test_source_replicates_lineage_and_explicit_locations():
         "E2",
         "F2",
     ]
-    samples = {s.id: s for s in compiled.allocation.protocol.samples}
+    samples = {s.id: s for s in compiled.plan.samples}
     first_sources = compiled.manifest.samples[0].parent_ids[1:-1]
     second_sources = compiled.manifest.samples[3].parent_ids[1:-1]
     assert [samples[s].source_sample_id for s in first_sources] == [
@@ -72,9 +72,7 @@ def test_source_replicates_lineage_and_explicit_locations():
         upstream.samples[1].id,
         upstream.samples[3].id,
     ]
-    dna_locations = {
-        p.sample_id: p.location.well_name for p in compiled.allocation.placements
-    }
+    dna_locations = {p.id: p.location.well_name for p in compiled.plan.samples}
     assert [dna_locations[s] for s in first_sources] == ["D2", "F3"]
     assert [dna_locations[s] for s in second_sources] == ["A4", "G8"]
 
@@ -104,11 +102,7 @@ def test_duplicate_physical_sources_are_rejected():
 def test_transformation_thermal_steps_are_reviewable_but_simulation_guarded():
     compiler = ProtocolCompiler()
     compiled = compiler.compile(request())
-    programs = [
-        s
-        for s in compiled.allocation.protocol.steps
-        if isinstance(s, RunTemperatureProgram)
-    ]
+    programs = [s for s in compiled.plan.steps if isinstance(s, RunTemperatureProgram)]
     assert len(programs) == 2 and all(p.skip_during_simulation for p in programs)
     assert "Omitted during Opentrons simulation" in compiled.markdown
     assert "if not protocol.is_simulating():" in compiled.script
@@ -161,14 +155,14 @@ def test_plating_has_lineage_for_dilutions_and_each_replicate():
         inputs=transformed.manifest,
     )
     assert len(compiled.manifest.samples) == 8
-    samples = {s.id: s for s in compiled.allocation.protocol.samples}
+    samples = {s.id: s for s in compiled.plan.samples}
     for output in compiled.manifest.samples:
         parent = samples[output.parent_ids[0]]
         assert parent.role == "dilution" and parent.dilution == output.dilution
         while parent.role == "dilution":
             parent = samples[parent.parent_ids[0]]
         assert parent.source_sample_id in {s.id for s in transformed.manifest.samples}
-    broth = [s for s in compiled.allocation.protocol.steps if isinstance(s, Distribute)]
+    broth = [s for s in compiled.plan.steps if isinstance(s, Distribute)]
     assert all(s.new_tip == "never" and s.source.track_conical_height for s in broth)
 
 
@@ -205,13 +199,7 @@ def test_compilation_is_deterministic_and_has_no_file_or_sdk_effects(
             if isinstance(n, ast.ImportFrom)
         ]
         assert imports == ["opentrons"]
-        metadata = json.loads(
-            next(
-                a.content
-                for a in compiled.artifacts.artifacts
-                if a.name == "compilation.json"
-            )
-        )
+        metadata = json.loads(compiled.files["compilation.json"])
         assert all("kind" in operation for operation in metadata["plan"]["steps"])
 
 

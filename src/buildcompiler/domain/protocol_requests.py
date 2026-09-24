@@ -5,6 +5,8 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class MaterialRef:
+    """Stable material identity with a separate human-readable label."""
+
     identity: str
     label: str
 
@@ -15,6 +17,8 @@ class MaterialRef:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class AssemblyReaction:
+    """A product and the ordered components needed for one assembly."""
+
     id: str
     product: MaterialRef
     backbone: MaterialRef
@@ -30,6 +34,8 @@ class AssemblyReaction:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class AssemblyRequest:
+    """An ordered batch of assembly reactions from one build stage."""
+
     id: str
     reactions: tuple[AssemblyReaction, ...]
     source_stage_id: str | None = None
@@ -45,6 +51,8 @@ class AssemblyRequest:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class TransformationReaction:
+    """A target strain, its chassis and ordered input plasmids."""
+
     id: str
     strain: MaterialRef
     chassis: MaterialRef
@@ -59,6 +67,8 @@ class TransformationReaction:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class TransformationRequest:
+    """An ordered batch of strain transformations from one build stage."""
+
     id: str
     reactions: tuple[TransformationReaction, ...]
     source_stage_id: str | None = None
@@ -74,6 +84,8 @@ class TransformationRequest:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class PlatingRequest:
+    """The exact upstream sample IDs selected for dilution and plating."""
+
     id: str
     sample_ids: tuple[str, ...]
     source_stage_id: str | None = None

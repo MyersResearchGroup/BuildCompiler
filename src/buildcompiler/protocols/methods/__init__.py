@@ -1,1 +1,1 @@
-"""Pure protocol planners, grouped by scientific method."""
+"""Method-specific configurations, planners and well allocation."""

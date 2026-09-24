@@ -1,8 +1,9 @@
-"""Explicit conversion from existing assembly JSON to typed protocol inputs."""
+"""Decode protocol inputs and stage records without importing robot dependencies."""
 
 from collections.abc import Mapping, Sequence
 from urllib.parse import urlsplit
 
+from buildcompiler.domain import IndexedBackbone, IndexedPlasmid, IndexedReagent
 from buildcompiler.domain.protocol_requests import (
     AssemblyReaction,
     AssemblyRequest,
@@ -10,9 +11,12 @@ from buildcompiler.domain.protocol_requests import (
     TransformationReaction,
     TransformationRequest,
 )
+from buildcompiler.protocols.models import PLATE_96, OutputManifest, Sample, WellRef
 
 
 def material_ref(identity: str, label: str | None = None) -> MaterialRef:
+    """Keep the full identity and derive a display label when none is supplied."""
+
     if not isinstance(identity, str) or not identity:
         raise ValueError("Material identities must be nonempty strings.")
     if label is None:
@@ -31,7 +35,7 @@ def assembly_request_from_json(
     request_id: str,
     source_stage_id: str | None = None,
 ) -> AssemblyRequest:
-    """Decode this one format explicitly; never guess a method from its keys."""
+    """Decode products and ordered components into an assembly batch."""
     if isinstance(payload, (str, bytes)) or not isinstance(payload, Sequence):
         raise TypeError("Assembly JSON must be a sequence of reaction objects.")
     reactions = []
@@ -64,6 +68,8 @@ def transformation_request_from_json(
     request_id: str,
     source_stage_id: str | None = None,
 ) -> TransformationRequest:
+    """Decode strains, chassis and ordered plasmids into a transformation batch."""
+
     if isinstance(payload, (str, bytes)) or not isinstance(payload, Sequence):
         raise TypeError("Transformation JSON must be a sequence of reaction objects.")
     reactions = []
@@ -84,4 +90,96 @@ def transformation_request_from_json(
         )
     return TransformationRequest(
         id=request_id, reactions=tuple(reactions), source_stage_id=source_stage_id
+    )
+
+
+def plasmid_manifest_from_json(
+    payload: Mapping[str, list[str]], *, protocol_id: str = "imported-assembly"
+) -> OutputManifest:
+    """Import identity-to-well mappings as distinct physical source replicates."""
+
+    samples = []
+    for index, (identity, wells) in enumerate(payload.items()):
+        if not isinstance(wells, (list, tuple)) or not wells:
+            raise ValueError("Each plasmid requires a nonempty list of source wells.")
+        for replicate, well in enumerate(wells, 1):
+            PLATE_96.index(well)
+            sample = Sample(
+                id=f"{protocol_id}/{index}/{replicate}",
+                material=material_ref(identity),
+                replicate=replicate,
+                location=WellRef(container_id="source_plate", well_name=well),
+            )
+            samples.append(sample)
+    return OutputManifest(protocol_id=protocol_id, samples=tuple(samples))
+
+
+def bacterium_manifest_from_json(
+    payload: Mapping, *, protocol_id: str = "imported-transformation"
+) -> OutputManifest:
+    """Import culture-well labels, assigning local identities when none are present."""
+
+    locations = payload.get("bacterium_locations")
+    if not isinstance(locations, Mapping) or not locations:
+        raise ValueError("Plating JSON requires nonempty bacterium_locations.")
+    samples = []
+    for index, (well, contents) in enumerate(locations.items()):
+        PLATE_96.index(well)
+        if isinstance(contents, str):
+            labels = (contents,)
+        elif (
+            isinstance(contents, (list, tuple))
+            and contents
+            and all(isinstance(v, str) for v in contents)
+        ):
+            labels = tuple(contents)
+        else:
+            raise ValueError(
+                "Bacterium contents must be a string or nonempty list of strings."
+            )
+        # The legacy format has labels only: do not pretend they are SBOL identities.
+        sample = Sample(
+            id=f"{protocol_id}/{index}",
+            material=MaterialRef(
+                identity=f"urn:buildcompiler:imported:{protocol_id}:{index}",
+                label=", ".join(labels),
+            ),
+            contents=labels,
+            liquid_label=str(contents),
+            location=WellRef(container_id="source_plate", well_name=well),
+        )
+        samples.append(sample)
+    return OutputManifest(protocol_id=protocol_id, samples=tuple(samples))
+
+
+def assembly_request_from_route(
+    *,
+    stage_id: str,
+    products: Sequence[IndexedPlasmid],
+    parts: Sequence[IndexedPlasmid],
+    backbone: IndexedBackbone,
+    restriction_enzyme: IndexedReagent,
+) -> AssemblyRequest:
+    """Use actual produced identities and preserve the selected component order."""
+
+    def material(record) -> MaterialRef:
+        """Keep indexed identities and choose the most specific display label."""
+        return MaterialRef(
+            identity=record.identity,
+            label=record.name or record.display_id or record.identity,
+        )
+
+    return AssemblyRequest(
+        id=stage_id,
+        source_stage_id=stage_id,
+        reactions=tuple(
+            AssemblyReaction(
+                id=f"{stage_id}/product/{index}",
+                product=material(product),
+                backbone=material(backbone),
+                parts=tuple(material(part) for part in parts),
+                restriction_enzyme=material(restriction_enzyme),
+            )
+            for index, product in enumerate(products)
+        ),
     )

@@ -15,7 +15,7 @@ from buildcompiler.protocols import (
     assembly_request_from_json,
     transformation_request_from_json,
 )
-from buildcompiler.protocols.backends.opentrons.simulation import simulate_source
+from buildcompiler.protocols.backends.simulation import simulate_source
 
 pytestmark = pytest.mark.automation
 
@@ -107,11 +107,7 @@ def test_connected_workflow_equivalence(pudu_repository, tmp_path):
         plating,
     )
     assert expected_plating["plating_layout.json"] == json.loads(
-        next(
-            a.content
-            for a in plating.artifacts.artifacts
-            if a.name == "plating_layout.json"
-        )
+        plating.files["plating_layout.json"]
     )
     assert [len(p.manifest.samples) for p in (assembly, transformation, plating)] == [
         4,
@@ -119,12 +115,8 @@ def test_connected_workflow_equivalence(pudu_repository, tmp_path):
         32,
     ]
     assert {
-        s.source_sample_id
-        for s in transformation.allocation.protocol.samples
-        if s.role == "dna"
+        s.source_sample_id for s in transformation.plan.samples if s.role == "dna"
     } == {s.id for s in assembly.manifest.samples}
     assert {
-        s.source_sample_id
-        for s in plating.allocation.protocol.samples
-        if s.role == "bacteria"
+        s.source_sample_id for s in plating.plan.samples if s.role == "bacteria"
     } == {s.id for s in transformation.manifest.samples}

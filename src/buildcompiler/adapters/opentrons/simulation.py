@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from buildcompiler.api.options import ProtocolOptions
-from buildcompiler.protocols.backends.opentrons.simulation import simulate_source
+from buildcompiler.protocols.backends.simulation import simulate_source
 
 
 class OptionalAutomationDependencyError(ImportError):

@@ -1,43 +1,39 @@
-"""Render a review document directly from the same plan used by automation."""
+"""Readable review documents generated from the protocol plan."""
 
-from buildcompiler.protocols.allocation.models import AllocatedProtocolPlan
-from buildcompiler.protocols.plans import ProtocolPlan
-from buildcompiler.protocols.steps import (
+from buildcompiler.protocols.models import (
     DeactivateSourceModule,
+    Distribute,
     DropTip,
     LidAction,
+    Mix,
     OperatorAction,
+    PickUpTip,
+    ProtocolPlan,
     RunTemperatureProgram,
     SetTemperature,
     Transfer,
-    Distribute,
-    PickUpTip,
-    Mix,
 )
 
 
 def _escape(text: str) -> str:
+    """Keep labels on one Markdown line without breaking table syntax."""
+
     return text.replace("\\", "\\\\").replace("|", "\\|").replace("\n", " ")
 
 
-def render_markdown(
-    plan: ProtocolPlan, *, allocation: AllocatedProtocolPlan | None = None
-) -> str:
+def render_markdown(plan: ProtocolPlan) -> str:
     """Render planned operations, never claim that an experiment has run."""
-    if allocation is not None and allocation.protocol != plan:
-        raise ValueError("Allocation belongs to a different protocol plan.")
     samples = {sample.id: sample for sample in plan.samples}
-    locations = (
-        {p.sample_id: p.location for p in allocation.placements} if allocation else {}
-    )
 
     def describe(sample_id: str) -> str:
+        """Describe a sample with its replicate and assigned well when available."""
+
         sample = samples[sample_id]
         result = _escape(sample.material.label)
         if sample.replicate is not None:
             result += f" (replicate {sample.replicate})"
-        if sample_id in locations:
-            location = locations[sample_id]
+        if sample.location is not None:
+            location = sample.location
             result += f" [{location.container_id}/{location.well_name}]"
         return result
 
@@ -93,7 +89,7 @@ def render_markdown(
         else:
             raise TypeError(f"Unsupported operation: {type(step).__name__}")
         if getattr(step, "skip_during_simulation", False):
-            action += " Omitted during Opentrons simulation (PUDU behavior)."
+            action += " Omitted during Opentrons simulation."
         lines.append(f"{index}. {action}")
     lines.extend(("", "## Planned outputs", ""))
     for sample_id in plan.output_sample_ids:
