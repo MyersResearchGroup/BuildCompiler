@@ -68,6 +68,7 @@ def index_collections(
         common_metadata = {
             "collection_identities": provenance,
             "implementation_identities": implementation_ids,
+            "implementation_identity": implementation_ids[0],
         }
 
         if not isinstance(built, sbol2.ComponentDefinition):
@@ -98,10 +99,20 @@ def index_collections(
             "antibiotic": antibiotic,
             "fusion_sites": fusion_sites,
         }
-        if PLASMID_CLONING_VECTOR in roles or (
-            PLASMID_VECTOR in roles and ENGINEERED_PLASMID not in roles
+        if (
+            PLASMID_CLONING_VECTOR in roles
+            or (PLASMID_VECTOR in roles and ENGINEERED_PLASMID not in roles)
+            or _has_placeholder_cassette(built, document)
         ):
             material_metadata["stage"] = _backbone_stage(fusion_sites).value
+            sequence = _sequence(built, document)
+            if sequence is not None:
+                material_metadata["sequence"] = sequence
+            replacement = _replacement_coordinates(built, document)
+            if replacement is not None:
+                insertion_index, replacement_length = replacement
+                material_metadata["insertion_index"] = insertion_index
+                material_metadata["replacement_length"] = replacement_length
             backbones.append(
                 IndexedBackbone(
                     identity=built.identity,
@@ -190,6 +201,32 @@ def _fusion_sites(
     component: sbol2.ComponentDefinition, document: sbol2.Document
 ) -> tuple[str, ...]:
     sequence_to_name = {value: key for key, value in FUSION_SITES.items()}
+    positioned_sites: list[tuple[int, str]] = []
+    for annotation in component.sequenceAnnotations:
+        child = document.find(annotation.component)
+        definition = (
+            document.find(child.definition)
+            if isinstance(child, sbol2.Component)
+            else None
+        )
+        if not isinstance(definition, sbol2.ComponentDefinition):
+            continue
+        if RESTRICTION_ENZYME_ASSEMBLY_SCAR not in definition.roles:
+            continue
+        sequence = _sequence(definition, document)
+        if sequence not in sequence_to_name:
+            continue
+        positions = [
+            int(location.start)
+            for location in annotation.locations
+            if isinstance(location, sbol2.Range)
+        ]
+        if positions:
+            positioned_sites.append((min(positions), sequence_to_name[sequence]))
+    if positioned_sites:
+        sites = [name for _, name in sorted(positioned_sites)]
+        return (sites[0], sites[-1]) if len(sites) > 1 else tuple(sites)
+
     sites: list[str] = []
     for child in _walk_components(component, document):
         if RESTRICTION_ENZYME_ASSEMBLY_SCAR not in child.roles:
@@ -200,6 +237,17 @@ def _fusion_sites(
     if len(sites) > 1:
         return (sites[0], sites[-1])
     return tuple(sites)
+
+
+def _has_placeholder_cassette(
+    component: sbol2.ComponentDefinition, document: sbol2.Document
+) -> bool:
+    """Recognize implemented acceptors whose legacy SBOL omits a vector role."""
+
+    return any(
+        "lacz" in (child.displayId or "").lower()
+        for child in _children(component, document)
+    )
 
 
 def _antibiotic(
@@ -236,3 +284,28 @@ def _backbone_stage(fusion_sites: tuple[str, ...]) -> BuildStage:
         if list(fusion_sites) in LVL2_FUSION_SITE_ORDER
         else BuildStage.ASSEMBLY_LVL1
     )
+
+
+def _replacement_coordinates(
+    component: sbol2.ComponentDefinition, document: sbol2.Document
+) -> tuple[int, int] | None:
+    """Return the zero-based span bounded by the outer fusion-site annotations."""
+
+    ranges: list[tuple[int, int]] = []
+    for annotation in component.sequenceAnnotations:
+        child = document.find(annotation.component)
+        if not isinstance(child, sbol2.Component):
+            continue
+        definition = document.find(child.definition)
+        if not isinstance(definition, sbol2.ComponentDefinition):
+            continue
+        if RESTRICTION_ENZYME_ASSEMBLY_SCAR not in definition.roles:
+            continue
+        for location in annotation.locations:
+            if isinstance(location, sbol2.Range):
+                ranges.append((int(location.start), int(location.end)))
+    if len(ranges) < 2:
+        return None
+    start = min(item[0] for item in ranges)
+    end = max(item[1] for item in ranges)
+    return start - 1, end - start + 1

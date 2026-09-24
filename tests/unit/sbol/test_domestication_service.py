@@ -18,7 +18,7 @@ def test_domestication_service_returns_generated_plasmid_with_provenance() -> No
     source.addComponentDefinition(part)
     backbone = sbol2.ComponentDefinition("bb")
     backbone_sequence = sbol2.Sequence("bb_sequence")
-    backbone_sequence.elements = "CCCCGGGG"
+    backbone_sequence.elements = "CCCCAAAAGGGG"
     backbone_sequence.encoding = sbol2.SBOL_ENCODING_IUPAC
     source.addSequence(backbone_sequence)
     backbone.sequences = [backbone_sequence.identity]
@@ -34,8 +34,8 @@ def test_domestication_service_returns_generated_plasmid_with_provenance() -> No
                 backbone.identity,
                 metadata={
                     "stage": "domestication",
-                    "sequence": "TTTT",
                     "insertion_index": 4,
+                    "replacement_length": 4,
                 },
             ),
             restriction_enzyme=IndexedReagent(
@@ -70,7 +70,9 @@ def test_domestication_service_returns_generated_plasmid_with_provenance() -> No
     assert generated_insert[35:45] == "GGTCTCGGAG"
     assert generated_insert[45:59] == "AAAAGGTCTATTTT"
     assert generated_insert[59:69] == "TACTGAGACC"
-    assert result.product.metadata["backbone_sequence"] == "CCCCGGGG"
+    assert generated_insert.count("GGTCTC") == 1
+    assert generated_insert.count("GAGACC") == 1
+    assert result.product.metadata["backbone_sequence"] == "CCCCAAAAGGGG"
     assert result.product.metadata["fusion_site_sequences"] == ["GGAG", "TACT"]
     assert result.product.metadata["fusion_site_names"] == ["A", "B"]
     assert (
@@ -97,3 +99,49 @@ def test_domestication_service_returns_generated_plasmid_with_provenance() -> No
     assert isinstance(final_sequence, sbol2.Sequence)
     assert final_sequence.elements == "CCCCGGAGAAAAGGTCTATTTTTACTGGGG"
     assert result.logs
+
+
+def test_domestication_synthesis_insert_is_deterministic() -> None:
+    source = sbol2.Document()
+    part = sbol2.ComponentDefinition("part")
+    part.roles = ["http://identifiers.org/so/SO:0000167"]
+    sequence = sbol2.Sequence("part_sequence")
+    sequence.elements = "TTGACAGCTAGCTCAGTCCTAGGTATAATGCTAGC"
+    sequence.encoding = sbol2.SBOL_ENCODING_IUPAC
+    source.addSequence(sequence)
+    part.sequences = [sequence.identity]
+    source.addComponentDefinition(part)
+
+    backbone = IndexedBackbone(
+        "backbone",
+        metadata={
+            "sequence": "CCCCAAAAGGGG",
+            "insertion_index": 4,
+            "replacement_length": 4,
+        },
+    )
+    restriction = IndexedReagent("bsai", name="BsaI", reagent_type="restriction_enzyme")
+    ligase = IndexedReagent("ligase", name="T4_DNA_ligase", reagent_type="ligase")
+
+    def run_once() -> str:
+        result = DomesticationService().run(
+            DomesticationJob(
+                part_identity=part.identity,
+                part_display_id=part.displayId,
+                part_component=part,
+                backbone=backbone,
+                restriction_enzyme=restriction,
+                ligase=ligase,
+                source_document=source,
+                target_document=sbol2.Document(),
+                part_role="promoter",
+            )
+        )
+        return result.product.metadata["generated_insert_sequence"]
+
+    first = run_once()
+    second = run_once()
+
+    assert first == second
+    assert first.count("GGTCTC") == 1
+    assert first.count("GAGACC") == 1

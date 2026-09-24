@@ -49,6 +49,7 @@ class ProtocolOptions:
     mode: ProtocolMode = ProtocolMode.NONE
     simulate: bool = False
     results_dir: str | Path | None = None
+    overwrite: bool = False
 
 
 @dataclass

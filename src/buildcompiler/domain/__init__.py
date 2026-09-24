@@ -8,12 +8,19 @@ from .design import DesignKind
 from .material_state import MaterialState
 from .missing_input import MissingBuildInput
 from .plasmid import IndexedBackbone, IndexedPlasmid, IndexedStrain
+from .protocol import (
+    AssemblyProtocolSpec,
+    PlatingProtocolSpec,
+    Quantity,
+    TransformationProtocolSpec,
+)
 from .reagent import IndexedReagent
 from .status import BuildStatus, StageStatus
 from .warnings import BuildWarning
 
 __all__ = [
     "ApprovalStatus",
+    "AssemblyProtocolSpec",
     "BuildRequest",
     "BuildResult",
     "BuildStage",
@@ -27,9 +34,12 @@ __all__ = [
     "IndexedStrain",
     "MaterialState",
     "MissingBuildInput",
+    "PlatingProtocolSpec",
+    "Quantity",
     "RequiredApproval",
     "StageResult",
     "StageStatus",
+    "TransformationProtocolSpec",
 ]
 
 BuildResult = FullBuildResult

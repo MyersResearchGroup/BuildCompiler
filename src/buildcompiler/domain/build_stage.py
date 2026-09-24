@@ -11,3 +11,4 @@ class BuildStage(str, Enum):
     ASSEMBLY_LVL2 = "assembly_lvl2"
     TRANSFORMATION = "transformation"
     PLATING = "plating"
+    PROTOCOL = "protocol"

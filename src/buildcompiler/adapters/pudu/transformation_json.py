@@ -2,7 +2,7 @@
 
 from collections.abc import Sequence
 
-from buildcompiler.domain import IndexedPlasmid
+from buildcompiler.domain import IndexedPlasmid, TransformationProtocolSpec
 
 
 PUDU_96_WELL_ORDER = tuple(
@@ -28,10 +28,17 @@ def transformation_to_pudu_json(
 ) -> dict[str, object]:
     """Adapt a transformation record into legacy-compatible PUDU JSON keys."""
 
+    plasmid_ids = tuple(_plasmid_identifier(plasmid) for plasmid in plasmids)
+    spec = TransformationProtocolSpec(
+        strain_identity=strain_identity,
+        chassis_identity=chassis_identity,
+        plasmid_identities=plasmid_ids,
+    )
     return {
         "Strain": strain_identity,
         "Chassis": chassis_identity,
-        "Plasmids": [_plasmid_identifier(plasmid) for plasmid in plasmids],
+        "Plasmids": list(plasmid_ids),
+        "Parameters": spec.to_dict(),
     }
 
 

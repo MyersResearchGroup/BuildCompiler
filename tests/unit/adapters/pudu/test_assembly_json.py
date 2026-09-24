@@ -22,14 +22,17 @@ def test_assembly_route_to_pudu_json_shape_and_values():
         ),
     )
 
-    assert payload == {
-        "Product": "https://example.org/products/p1",
-        "Backbone": "https://example.org/backbones/b1",
-        "PartsList": [
-            "https://example.org/plasmids/part1",
-            "https://example.org/plasmids/part2",
-        ],
-        "Restriction Enzyme": "BsaI",
+    assert payload["Product"] == "https://example.org/products/p1"
+    assert payload["Backbone"] == "https://example.org/backbones/b1"
+    assert payload["PartsList"] == [
+        "https://example.org/plasmids/part1",
+        "https://example.org/plasmids/part2",
+    ]
+    assert payload["Restriction Enzyme"] == "BsaI"
+    assert payload["Ligase"] == "T4_DNA_ligase"
+    assert payload["Parameters"]["total_reaction"] == {
+        "value": 20,
+        "unit": "uL",
     }
 
 
@@ -112,10 +115,15 @@ def test_domestication_artifact_to_pudu_json_shape_and_values():
         }
     )
 
-    assert payload == {
-        "Product": "https://example.org/products/domesticated",
-        "Backbone": "https://example.org/backbones/dva_ab",
-        "PartsList": ["https://example.org/inserts/domesticated_insert"],
-        "Generated Insert Sequence": "NNNNGGTCTCGGAGAAAATACTGAGACCNNNN",
-        "Restriction Enzyme": "https://example.org/reagents/BsaI",
-    }
+    assert (
+        payload.items()
+        >= {
+            "Product": "https://example.org/products/domesticated",
+            "Backbone": "https://example.org/backbones/dva_ab",
+            "Generated Insert Sequence": "NNNNGGTCTCGGAGAAAATACTGAGACCNNNN",
+            "Restriction Enzyme": "https://example.org/reagents/BsaI",
+            "Ligase": "T4_DNA_ligase",
+        }.items()
+    )
+    assert payload["PartsList"] == ["https://example.org/inserts/domesticated_insert"]
+    assert payload["Parameters"]["total_reaction"] == {"value": 20, "unit": "uL"}

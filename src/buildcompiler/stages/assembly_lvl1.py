@@ -190,6 +190,7 @@ class AssemblyLvl1Stage:
             part_plasmids=route.selected_part_plasmids,
             backbone=route.backbone,
             restriction_enzyme=restriction_enzyme,
+            ligase=ligase,
         )
 
         logs = [
@@ -205,6 +206,7 @@ class AssemblyLvl1Stage:
             warnings=warnings,
             sbol_document=assembly_result.stage_document,
             json_intermediate=json_intermediate,
+            protocol_artifacts={"assembly_spec": json_intermediate["Parameters"]},
             logs=logs,
         )
 

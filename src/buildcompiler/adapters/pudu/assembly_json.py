@@ -5,7 +5,12 @@ import json
 from pathlib import Path
 from typing import Any
 
-from buildcompiler.domain import IndexedBackbone, IndexedPlasmid, IndexedReagent
+from buildcompiler.domain import (
+    AssemblyProtocolSpec,
+    IndexedBackbone,
+    IndexedPlasmid,
+    IndexedReagent,
+)
 
 
 def _stable_identifier(identity: str, display_id: str | None) -> str:
@@ -18,6 +23,7 @@ def assembly_route_to_pudu_json(
     part_plasmids: Sequence[IndexedPlasmid],
     backbone: IndexedBackbone,
     restriction_enzyme: IndexedReagent,
+    ligase: IndexedReagent | None = None,
 ) -> dict[str, object]:
     """Adapt a selected lvl1 route into legacy-compatible assembly JSON keys."""
 
@@ -25,19 +31,33 @@ def assembly_route_to_pudu_json(
         _stable_identifier(identity=part.identity, display_id=part.display_id)
         for part in part_plasmids
     ]
-    return {
-        "Product": product_identity,
-        "Backbone": _stable_identifier(
+    ligase_name = (
+        ligase.name
+        if ligase is not None and ligase.name
+        else (ligase.identity if ligase is not None else "T4_DNA_ligase")
+    )
+    spec = AssemblyProtocolSpec(
+        product_identity=product_identity,
+        backbone_identity=_stable_identifier(
             identity=backbone.identity, display_id=backbone.display_id
         ),
-        "PartsList": parts_list,
-        "Restriction Enzyme": (
+        part_identities=tuple(parts_list),
+        restriction_enzyme=(
             restriction_enzyme.name
             or _stable_identifier(
                 identity=restriction_enzyme.identity,
                 display_id=restriction_enzyme.display_id,
             )
         ),
+        ligase=ligase_name,
+    )
+    return {
+        "Product": product_identity,
+        "Backbone": spec.backbone_identity,
+        "PartsList": parts_list,
+        "Restriction Enzyme": spec.restriction_enzyme,
+        "Ligase": spec.ligase,
+        "Parameters": spec.to_dict(),
     }
 
 
@@ -47,21 +67,27 @@ def assembly_routes_to_pudu_json(
     part_plasmid_routes: Sequence[Sequence[IndexedPlasmid]],
     backbones: Sequence[IndexedBackbone],
     restriction_enzymes: Sequence[IndexedReagent],
+    ligases: Sequence[IndexedReagent] | None = None,
 ) -> list[dict[str, object]]:
     """Batch helper for deterministic in-memory assembly JSON payloads."""
 
+    active_ligases = (
+        list(ligases) if ligases is not None else [None] * len(product_identities)
+    )
     return [
         assembly_route_to_pudu_json(
             product_identity=product_identity,
             part_plasmids=part_plasmids,
             backbone=backbone,
             restriction_enzyme=restriction_enzyme,
+            ligase=ligase,
         )
-        for product_identity, part_plasmids, backbone, restriction_enzyme in zip(
+        for product_identity, part_plasmids, backbone, restriction_enzyme, ligase in zip(
             product_identities,
             part_plasmid_routes,
             backbones,
             restriction_enzymes,
+            active_ligases,
             strict=True,
         )
     ]
@@ -149,12 +175,23 @@ def domestication_artifact_to_pudu_json(
     )
     generated_insert_sequence = str(domestication["generated_insert_sequence"])
     generated_insert_identity = str(domestication["generated_insert_identity"])
+    ligase = domestication.get("ligase", {})
+    ligase_identity = ligase.get("identity") if isinstance(ligase, dict) else ligase
+    spec = AssemblyProtocolSpec(
+        product_identity=str(domestication["product_identity"]),
+        backbone_identity=str(domestication["backbone_identity"]),
+        part_identities=(generated_insert_identity,),
+        restriction_enzyme=str(restriction_enzyme_identity),
+        ligase=str(ligase_identity or "T4_DNA_ligase"),
+    )
     return {
-        "Product": str(domestication["product_identity"]),
-        "Backbone": str(domestication["backbone_identity"]),
+        "Product": spec.product_identity,
+        "Backbone": spec.backbone_identity,
         "PartsList": [generated_insert_identity],
         "Generated Insert Sequence": generated_insert_sequence,
-        "Restriction Enzyme": str(restriction_enzyme_identity),
+        "Restriction Enzyme": spec.restriction_enzyme,
+        "Ligase": spec.ligase,
+        "Parameters": spec.to_dict(),
     }
 
 

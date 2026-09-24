@@ -204,6 +204,7 @@ class AssemblyLvl2Stage:
             part_plasmids=route.selected_lvl1_plasmids,
             backbone=route.backbone,
             restriction_enzyme=restriction_enzyme,
+            ligase=ligase,
         )
 
         return StageResult(
@@ -214,7 +215,8 @@ class AssemblyLvl2Stage:
             products=assembly_result.products,
             sbol_document=assembly_result.stage_document,
             json_intermediate=json_intermediate,
-            protocol_artifacts=artifacts,
+            protocol_artifacts=artifacts
+            | {"assembly_spec": json_intermediate["Parameters"]},
             logs=[
                 f"Selected lvl2 route with {len(route.selected_lvl1_plasmids)} lvl1 plasmid(s).",
                 *assembly_result.logs,

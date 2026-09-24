@@ -43,8 +43,11 @@ class FullBuildResult:
     stage_results: list[StageResult] = field(default_factory=list)
     graph: Any = None
     final_products: list[IndexedPlasmid | IndexedStrain] = field(default_factory=list)
+    target_products: list[IndexedPlasmid | IndexedStrain] = field(default_factory=list)
+    all_products: list[IndexedPlasmid | IndexedStrain] = field(default_factory=list)
     missing_inputs: list[MissingBuildInput] = field(default_factory=list)
     required_approvals: list[RequiredApproval] = field(default_factory=list)
     warnings: list[BuildWarning] = field(default_factory=list)
     summary: Any = None
     report: Any | None = None
+    artifact_bundle: Any | None = None

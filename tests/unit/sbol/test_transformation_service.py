@@ -34,7 +34,11 @@ def test_transformation_service_returns_transformed_strain_with_sbol_provenance(
     )
 
     assert isinstance(result.product, IndexedStrain)
-    assert result.product.state == MaterialState.TRANSFORMED
+    assert result.product.state == MaterialState.GENERATED
+    assert result.product.metadata["projected_state"] == "transformed"
+    assert (
+        result.product.metadata["state_evidence"] == "protocol_generated_not_executed"
+    )
     assert result.product.metadata["plasmid_identity"] == plasmid.identity
     assert target.find(result.product.identity) is not None
     implementation = target.find(result.product.metadata["implementation_identity"])

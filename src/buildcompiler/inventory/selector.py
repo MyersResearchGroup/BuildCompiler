@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from itertools import permutations
+from itertools import permutations, product
 from typing import Any
 
 from buildcompiler.api.options import BuildOptions
@@ -75,6 +75,56 @@ class CompatibilitySelector:
 
         return sorted(filtered, key=_key)[0]
 
+    def _candidate_key(self, candidate: Any) -> tuple[int, int, str]:
+        prefer_existing = self.options.selection.prefer_existing_collection_material
+        prefer_state = self.options.selection.prefer_higher_material_state
+        generated_penalty = int(
+            prefer_existing and self._is_generated_or_planned(candidate)
+        )
+        state_penalty = -_STATE_RANK[candidate.state] if prefer_state else 0
+        return generated_penalty, state_penalty, candidate.identity
+
+    def _fusion_sites(self, item: Any) -> tuple[str, ...]:
+        return tuple((item.metadata or {}).get("fusion_sites", ()))
+
+    def _chain_is_compatible(self, chain: Sequence[Any]) -> bool:
+        annotated = [self._fusion_sites(item) for item in chain]
+        if not annotated or not any(annotated):
+            return True
+        if any(len(sites) != 2 for sites in annotated):
+            return False
+        return all(left[1] == right[0] for left, right in zip(annotated, annotated[1:]))
+
+    def _select_compatible_chain(
+        self, candidate_groups: Sequence[list[Any]]
+    ) -> tuple[Any, ...] | None:
+        compatible = self._compatible_chains(candidate_groups)
+        return compatible[0] if compatible else None
+
+    def _compatible_chains(
+        self, candidate_groups: Sequence[list[Any]]
+    ) -> list[tuple[Any, ...]]:
+        if not candidate_groups or any(not group for group in candidate_groups):
+            return []
+        compatible = [
+            tuple(chain)
+            for chain in product(*candidate_groups)
+            if self._chain_is_compatible(chain)
+        ]
+        return sorted(
+            compatible,
+            key=lambda chain: tuple(self._candidate_key(item) for item in chain),
+        )
+
+    def _route_fusion_sites(self, selected: Sequence[Any]) -> tuple[str, str] | None:
+        if not selected:
+            return None
+        first = self._fusion_sites(selected[0])
+        last = self._fusion_sites(selected[-1])
+        if len(first) == 2 and len(last) == 2:
+            return first[0], last[1]
+        return None
+
     def select_lvl1_route(
         self,
         *,
@@ -83,25 +133,49 @@ class CompatibilitySelector:
         constraints: Mapping[str, Any] | None = None,
     ) -> RouteSelection:
         active_constraints = constraints or {}
-        selected = []
+        candidate_groups: list[list[Any]] = []
         missing = []
         for part_identity in part_identities:
             candidates = self.inventory.find_single_part_plasmids(
                 part_identity, antibiotic=active_constraints.get("antibiotic")
             )
-            choice = self._best_candidate(candidates, active_constraints)
-            if choice is None:
+            filtered = self._constraint_filter(candidates, active_constraints)
+            candidate_groups.append(filtered)
+            if not filtered:
                 missing.append(part_identity)
-            else:
-                selected.append(choice)
 
-        backbone = self.inventory.find_backbone(
-            fusion_sites=tuple(active_constraints["fusion_sites"])
+        chains = self._compatible_chains(candidate_groups)
+        requested_sites = (
+            tuple(active_constraints["fusion_sites"])
             if "fusion_sites" in active_constraints
-            else None,
-            antibiotic=active_constraints.get("antibiotic"),
-            stage=BuildStage.ASSEMBLY_LVL1,
+            else None
         )
+        chain_backbones = [
+            (
+                chain,
+                self.inventory.find_backbone(
+                    fusion_sites=requested_sites or self._route_fusion_sites(chain),
+                    antibiotic=active_constraints.get("antibiotic"),
+                    stage=BuildStage.ASSEMBLY_LVL1,
+                ),
+            )
+            for chain in chains
+        ]
+        feasible = [
+            (chain, backbone) for chain, backbone in chain_backbones if backbone
+        ]
+        if feasible:
+            chain, backbone = feasible[0]
+        else:
+            chain = chains[0] if chains else None
+            backbone = None
+        compatibility_violation = not missing and chain is None
+        if compatibility_violation:
+            selected: list[Any] = []
+            missing = list(part_identities)
+        else:
+            selected = list(chain or ())
+
         score = RouteScore(
             missing_required_products=len(missing),
             missing_domestications=len(missing),
@@ -114,6 +188,7 @@ class CompatibilitySelector:
             )
             if self.options.selection.prefer_higher_material_state
             else 0,
+            constraint_violations=int(compatibility_violation),
             identity_tiebreak=tuple(sorted(p.identity for p in selected))
             + tuple(missing),
         )
@@ -177,15 +252,48 @@ class CompatibilitySelector:
 
         routes = []
         for order in orders:
-            selected = []
+            candidate_groups: list[list[Any]] = []
             missing = []
             for region in order:
                 candidates = self.inventory.find_lvl1_region_plasmids(region)
-                choice = self._best_candidate(candidates, active_constraints)
-                if choice is None:
+                filtered = self._constraint_filter(candidates, active_constraints)
+                candidate_groups.append(filtered)
+                if not filtered:
                     missing.append(region)
-                else:
-                    selected.append(choice)
+            chains = self._compatible_chains(candidate_groups)
+            requested_sites = (
+                tuple(active_constraints["fusion_sites"])
+                if "fusion_sites" in active_constraints
+                else None
+            )
+            chain_backbones = [
+                (
+                    candidate_chain,
+                    self.inventory.find_backbone(
+                        fusion_sites=requested_sites
+                        or self._route_fusion_sites(candidate_chain),
+                        antibiotic=active_constraints.get("antibiotic"),
+                        stage=BuildStage.ASSEMBLY_LVL2,
+                    ),
+                )
+                for candidate_chain in chains
+            ]
+            feasible = [
+                (candidate_chain, candidate_backbone)
+                for candidate_chain, candidate_backbone in chain_backbones
+                if candidate_backbone
+            ]
+            if feasible:
+                chain, backbone = feasible[0]
+            else:
+                chain = chains[0] if chains else None
+                backbone = None
+            compatibility_violation = not missing and chain is None
+            if compatibility_violation:
+                selected: list[Any] = []
+                missing = list(order)
+            else:
+                selected = list(chain or ())
             score = RouteScore(
                 missing_required_products=len(missing),
                 missing_lvl1_plasmids=len(missing),
@@ -199,14 +307,8 @@ class CompatibilitySelector:
                 if self.options.selection.prefer_higher_material_state
                 else 0,
                 total_assemblies=int(bool(missing)),
+                constraint_violations=int(compatibility_violation),
                 identity_tiebreak=tuple(p.identity for p in selected) + tuple(missing),
-            )
-            backbone = self.inventory.find_backbone(
-                fusion_sites=tuple(active_constraints["fusion_sites"])
-                if "fusion_sites" in active_constraints
-                else None,
-                antibiotic=active_constraints.get("antibiotic"),
-                stage=BuildStage.ASSEMBLY_LVL2,
             )
             routes.append(
                 Lvl2Route(

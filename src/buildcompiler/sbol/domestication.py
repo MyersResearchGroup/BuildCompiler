@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-import random
+import hashlib
 from typing import Any
 
 import sbol2
@@ -77,6 +77,7 @@ class DomesticationService:
                 fusion_site_sequences=fusion_site_sequences,
             ),
             insertion_index=self._backbone_insertion_index(job.backbone),
+            replacement_length=self._backbone_replacement_length(job.backbone),
         )
         source_display_id = (
             job.part_display_id
@@ -215,21 +216,56 @@ class DomesticationService:
             FUSION_SITE_SEQUENCE_TO_NAME[site] for site in fusion_site_sequences
         )
 
-    def _random_dna(self, length: int) -> str:
-        return "".join(random.choices("ACGT", k=length))
+    def _deterministic_dna(self, *, seed: str, length: int) -> str:
+        bases = "ACGT"
+        output: list[str] = []
+        counter = 0
+        while len(output) < length:
+            digest = hashlib.sha256(f"{seed}:{counter}".encode()).digest()
+            output.extend(bases[byte & 0b11] for byte in digest)
+            counter += 1
+        return "".join(output[:length])
 
     def _build_synthesis_insert_sequence(
         self, *, insert_sequence: str, fusion_site_sequences: tuple[str, str]
     ) -> str:
-        return (
-            self._random_dna(35)
-            + "GGTCTC"
-            + fusion_site_sequences[0]
-            + insert_sequence
-            + fusion_site_sequences[1]
-            + "GAGACC"
-            + self._random_dna(35)
+        seed = "|".join((insert_sequence, *fusion_site_sequences))
+        for attempt in range(10_000):
+            left = self._deterministic_dna(seed=f"{seed}:left:{attempt}", length=35)
+            right = self._deterministic_dna(seed=f"{seed}:right:{attempt}", length=35)
+            candidate = (
+                left
+                + "GGTCTC"
+                + fusion_site_sequences[0]
+                + insert_sequence
+                + fusion_site_sequences[1]
+                + "GAGACC"
+                + right
+            )
+            if self._has_only_designed_type_iis_sites(candidate, len(insert_sequence)):
+                return candidate
+        raise ValueError(
+            "Could not create deterministic domestication flanks without "
+            "unintended BsaI recognition sites."
         )
+
+    def _has_only_designed_type_iis_sites(
+        self, sequence: str, insert_length: int
+    ) -> bool:
+        expected = {
+            ("GGTCTC", 35),
+            ("GAGACC", 35 + 6 + 4 + insert_length + 4),
+        }
+        observed: set[tuple[str, int]] = set()
+        for site in ("GGTCTC", "GAGACC"):
+            start = 0
+            while True:
+                position = sequence.find(site, start)
+                if position < 0:
+                    break
+                observed.add((site, position))
+                start = position + 1
+        return observed == expected
 
     def _assembled_insert_sequence(
         self, *, insert_sequence: str, fusion_site_sequences: tuple[str, str]
@@ -288,18 +324,32 @@ class DomesticationService:
         index = backbone.metadata.get("insertion_index")
         return int(index) if index is not None else None
 
+    def _backbone_replacement_length(self, backbone: IndexedBackbone) -> int:
+        length = backbone.metadata.get("replacement_length", 0)
+        return int(length)
+
     def _assemble_final_plasmid_sequence(
         self,
         *,
         backbone_sequence: str | None,
         insert_sequence: str,
         insertion_index: int | None,
+        replacement_length: int,
     ) -> str:
         if backbone_sequence is None:
             return insert_sequence
         index = len(backbone_sequence) if insertion_index is None else insertion_index
-        if index < 0 or index > len(backbone_sequence):
+        replacement_end = index + replacement_length
+        if (
+            index < 0
+            or replacement_length < 0
+            or replacement_end > len(backbone_sequence)
+        ):
             raise ValueError(
-                "Backbone insertion_index is outside the backbone sequence."
+                "Backbone replacement coordinates are outside the backbone sequence."
             )
-        return backbone_sequence[:index] + insert_sequence + backbone_sequence[index:]
+        return (
+            backbone_sequence[:index]
+            + insert_sequence
+            + backbone_sequence[replacement_end:]
+        )

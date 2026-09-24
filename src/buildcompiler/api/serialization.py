@@ -266,6 +266,10 @@ def serialize_build_result(result: FullBuildResult) -> dict[str, Any]:
             "final_products": [
                 _serialize_product(item) for item in result.final_products
             ],
+            "target_products": [
+                _serialize_product(item) for item in result.target_products
+            ],
+            "all_products": [_serialize_product(item) for item in result.all_products],
             "missing_inputs": [
                 serialize_missing_input(item) for item in result.missing_inputs
             ],
@@ -280,6 +284,7 @@ def serialize_build_result(result: FullBuildResult) -> dict[str, Any]:
             if result.report is not None
             else None,
             "graph": _serialize_graph(result.graph),
+            "artifact_bundle": _json_safe(result.artifact_bundle),
         }
     )
 

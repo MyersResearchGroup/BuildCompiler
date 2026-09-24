@@ -52,6 +52,7 @@ class FullBuildExecutor:
         self.domestication_stage = domestication_stage or DomesticationStage(
             inventory=context.inventory, options=options
         )
+        self._transformation_stage_injected = transformation_stage is not None
         self.transformation_stage = transformation_stage
         if self.transformation_stage is None and options.transformation.enabled:
             self.transformation_stage = TransformationStage(options=options)
@@ -88,7 +89,7 @@ class FullBuildExecutor:
         self, plan: BuildPlan, *, options: BuildOptions | None = None
     ) -> FullBuildResult:
         if options is not None:
-            self.context.options = options
+            self._apply_options(options)
 
         pending = {
             BuildStage.ASSEMBLY_LVL2: OrderedDict(
@@ -179,9 +180,48 @@ class FullBuildExecutor:
             or self._promote(None, m).id not in completed
         ]
         products = list(final_products.values())
+        target_request_ids = {
+            request.id
+            for request in (
+                plan.lvl2_requests or plan.lvl1_requests or plan.domestication_requests
+            )
+        }
+        target_by_identity: dict[str, Any] = {}
+        for stage_result in stage_results:
+            if stage_result.status in (
+                StageStatus.SUCCESS,
+                StageStatus.PARTIAL_SUCCESS,
+            ) and target_request_ids.intersection(stage_result.request_ids):
+                for product in stage_result.products:
+                    target_by_identity[product.identity] = product
+
+        artifact_bundle = None
+        try:
+            from buildcompiler.adapters import build_protocol_bundle
+
+            artifact_bundle = build_protocol_bundle(
+                stage_results=stage_results,
+                options=self.context.options.protocol,
+            )
+        except Exception as exc:
+            stage_results.append(
+                StageResult(
+                    id="protocol:bundle",
+                    stage=BuildStage.PROTOCOL,
+                    status=StageStatus.FAILED,
+                    logs=[f"Protocol bundle generation failed: {exc}"],
+                )
+            )
+            if not self.context.options.execution.continue_on_error:
+                # Protocol failures are represented in the result contract so callers
+                # can inspect otherwise valid compiler artifacts.
+                artifact_bundle = None
+
+        failed = any(result.status == StageStatus.FAILED for result in stage_results)
+        incomplete = bool(unresolved or any(pending[s] for s in pending))
         status = (
             BuildStatus.SUCCESS
-            if (not unresolved and not any(pending[s] for s in pending))
+            if not failed and not incomplete
             else (BuildStatus.PARTIAL_SUCCESS if products else BuildStatus.FAILED)
         )
         from buildcompiler.reporting import build_graph, build_report, build_summary
@@ -193,11 +233,14 @@ class FullBuildExecutor:
             stage_results=stage_results,
             graph=None,
             final_products=products,
+            target_products=list(target_by_identity.values()),
+            all_products=products,
             missing_inputs=unresolved,
             required_approvals=list(approvals.values()),
             warnings=warnings,
             summary=None,
             report=None,
+            artifact_bundle=artifact_bundle,
         )
         graph = build_graph(preliminary_result)
         report = (
@@ -212,14 +255,35 @@ class FullBuildExecutor:
             stage_results=stage_results,
             graph=graph,
             final_products=products,
+            target_products=list(target_by_identity.values()),
+            all_products=products,
             missing_inputs=unresolved,
             required_approvals=list(approvals.values()),
             warnings=warnings,
             summary=None,
             report=report,
+            artifact_bundle=artifact_bundle,
         )
         final_result.summary = build_summary(final_result)
         return final_result
+
+    def _apply_options(self, options: BuildOptions) -> None:
+        self.context.options = options
+        for stage in (self.lvl2_stage, self.lvl1_stage, self.domestication_stage):
+            if hasattr(stage, "options"):
+                stage.options = options
+            selector = getattr(stage, "selector", None)
+            if selector is not None and hasattr(selector, "options"):
+                selector.options = options
+        if self._transformation_stage_injected:
+            if self.transformation_stage is not None and hasattr(
+                self.transformation_stage, "options"
+            ):
+                self.transformation_stage.options = options
+        elif options.transformation.enabled:
+            self.transformation_stage = TransformationStage(options=options)
+        else:
+            self.transformation_stage = None
 
     def _run_stage(self, stage: Any, request: BuildRequest) -> StageResult:
         source_document = (
@@ -327,7 +391,10 @@ class FullBuildExecutor:
         warnings: list[Any],
     ) -> bool:
         progress = False
-        if self.transformation_stage is None:
+        if (
+            self.transformation_stage is None
+            or not self.context.options.transformation.enabled
+        ):
             return False
         for product in products:
             if not isinstance(product, IndexedPlasmid):
@@ -339,11 +406,22 @@ class FullBuildExecutor:
             if str(transform_key) in transformed:
                 continue
             transformed.add(str(transform_key))
-            t_result = self.transformation_stage.run(
-                product,
-                source_document=self.context.build_document,
-                target_document=self.context.build_document,
-            )
+            try:
+                t_result = self.transformation_stage.run(
+                    product,
+                    source_document=self.context.build_document,
+                    target_document=self.context.build_document,
+                )
+            except Exception as exc:
+                if not self.context.options.execution.continue_on_error:
+                    raise
+                t_result = StageResult(
+                    id=f"transform:{product.identity}:failed",
+                    stage=BuildStage.TRANSFORMATION,
+                    status=StageStatus.FAILED,
+                    request_ids=[product.identity],
+                    logs=[f"Unexpected transformation error: {exc}"],
+                )
             stage_results.append(t_result)
             warnings.extend(t_result.warnings)
             for approval in t_result.required_approvals:
@@ -361,6 +439,18 @@ class FullBuildExecutor:
                 if out.identity in plated:
                     continue
                 plated.add(out.identity)
-                stage_results.append(self.plating_stage.run(out))
+                try:
+                    plating_result = self.plating_stage.run(out)
+                except Exception as exc:
+                    if not self.context.options.execution.continue_on_error:
+                        raise
+                    plating_result = StageResult(
+                        id=f"plate:{out.identity}:failed",
+                        stage=BuildStage.PLATING,
+                        status=StageStatus.FAILED,
+                        request_ids=[out.identity],
+                        logs=[f"Unexpected plating error: {exc}"],
+                    )
+                stage_results.append(plating_result)
                 progress = True
         return progress

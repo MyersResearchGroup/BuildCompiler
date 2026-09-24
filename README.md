@@ -167,6 +167,27 @@ plan = compiler.plan(abstract_designs)
 result = compiler.execute(plan)
 ```
 
+Protocol output is explicit and selected per run:
+
+```python
+from buildcompiler.api import BuildOptions, ProtocolMode
+
+options = BuildOptions()
+options.protocol.mode = ProtocolMode.MANUAL
+options.protocol.results_dir = "results/my_build"
+
+result = compiler.execute(plan, options=options)
+print(result.target_products)   # requested top-level products
+print(result.all_products)      # targets plus generated dependencies/downstream products
+print(result.artifact_bundle.manifest)
+```
+
+`MANUAL` writes canonical JSON, a human-readable procedure, and a hash manifest.
+`AUTOMATED` additionally generates PUDU Python protocols; setting
+`options.protocol.simulate = True` runs `opentrons_simulate` and treats a nonzero
+exit code as a protocol-stage failure. File-producing modes require an explicit
+`results_dir` and reject a nonempty directory unless `overwrite=True`.
+
 A convenience wrapper may exist:
 
 ```python
@@ -212,6 +233,13 @@ Automation-specific tests should be optional:
 ```bash
 python -m pip install -e '.[automation,test]'
 pytest tests/automation
+```
+
+The offline quickstart is executable with the notebook extra:
+
+```bash
+python -m pip install -e '.[notebook,test]'
+jupyter lab notebooks/buildcompiler_offline_quickstart.ipynb
 ```
 
 ## Container workflow
@@ -270,4 +298,3 @@ Run these bash commands to establish your SynBioHub account for collection acces
 Then run the tests with:
 
 `uv run python -m unittest discover -s tests`
-

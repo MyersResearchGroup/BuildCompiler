@@ -16,13 +16,19 @@ def test_transformation_to_pudu_json_shape_and_values():
         ],
     )
 
-    assert payload == {
-        "Strain": "https://example.org/strain/s1",
-        "Chassis": "https://example.org/chassis/c1",
-        "Plasmids": [
-            "https://example.org/plasmids/p1",
-            "https://example.org/plasmids/p2",
-        ],
+    assert payload["Strain"] == "https://example.org/strain/s1"
+    assert payload["Chassis"] == "https://example.org/chassis/c1"
+    assert payload["Plasmids"] == [
+        "https://example.org/plasmids/p1",
+        "https://example.org/plasmids/p2",
+    ]
+    assert payload["Parameters"]["competent_cells"] == {
+        "value": 20,
+        "unit": "uL",
+    }
+    assert payload["Parameters"]["heat_shock_duration"] == {
+        "value": 60,
+        "unit": "second",
     }
 
 
@@ -33,7 +39,10 @@ def test_transformations_to_pudu_json_batch_helper_is_deterministic():
         plasmid_sets=[["p1"], ["p2", "p3"]],
     )
 
-    assert payloads == [
+    assert [
+        {key: payload[key] for key in ("Strain", "Chassis", "Plasmids")}
+        for payload in payloads
+    ] == [
         {"Strain": "s1", "Chassis": "c1", "Plasmids": ["p1"]},
         {"Strain": "s2", "Chassis": "c2", "Plasmids": ["p2", "p3"]},
     ]

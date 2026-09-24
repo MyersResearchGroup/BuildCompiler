@@ -95,18 +95,22 @@ def test_assembly_lvl1_public_function_example(monkeypatch):
                 f"{part_id}_plasmid",
                 metadata={
                     "insert_identities": [part_id],
-                    "fusion_sites": ("A", "B"),
+                    "fusion_sites": fusion_sites,
                     "antibiotic": "Ampicillin",
                 },
             )
-            for part_id in part_ids
+            for part_id, fusion_sites in zip(
+                part_ids,
+                (("A", "B"), ("B", "C"), ("C", "D"), ("D", "E")),
+                strict=True,
+            )
         ],
         backbones=[
             IndexedBackbone(
                 "lvl1_bb",
                 metadata={
                     "stage": BuildStage.ASSEMBLY_LVL1.value,
-                    "fusion_sites": ("A", "B"),
+                    "fusion_sites": ("A", "E"),
                     "antibiotic": "Ampicillin",
                 },
             )
@@ -120,7 +124,7 @@ def test_assembly_lvl1_public_function_example(monkeypatch):
         source_document=doc,
         constraints={
             "ordered_part_identities": part_ids,
-            "fusion_sites": ("A", "B"),
+            "fusion_sites": ("A", "E"),
             "antibiotic": "Ampicillin",
         },
     )

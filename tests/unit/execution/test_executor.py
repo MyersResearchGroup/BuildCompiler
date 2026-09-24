@@ -1,4 +1,4 @@
-from buildcompiler.api import BuildOptions
+from buildcompiler.api import BuildOptions, ProtocolMode
 from buildcompiler.domain import (
     BuildRequest,
     BuildStage,
@@ -428,3 +428,121 @@ def test_executor_chains_transformation_when_enabled():
         product.metadata.get("source_stage") == "transformation"
         for product in result.final_products
     )
+
+
+def test_failed_chained_transformation_prevents_success():
+    options = BuildOptions()
+    options.transformation.enabled = True
+    assembly = FakeStage(
+        lambda request: StageResult(
+            id="assembly",
+            stage=BuildStage.ASSEMBLY_LVL1,
+            status=StageStatus.SUCCESS,
+            request_ids=[request.id],
+            products=[plasmid("https://x/plasmid/failure")],
+        )
+    )
+
+    class FailingTransformation:
+        def run(self, product, *, source_document, target_document):
+            return StageResult(
+                id="transformation",
+                stage=BuildStage.TRANSFORMATION,
+                status=StageStatus.FAILED,
+                request_ids=[product.identity],
+                logs=["failed"],
+            )
+
+    failing_transformation = FailingTransformation()
+    blocked = FakeStage(
+        lambda request: StageResult(
+            id="blocked",
+            stage=request.stage,
+            status=StageStatus.BLOCKED,
+            request_ids=[request.id],
+        )
+    )
+    doc = __import__("sbol2").Document()
+    executor = FullBuildExecutor(
+        context=BuildContext(
+            sbol=SbolResolver(doc),
+            inventory=Inventory(),
+            build_document=doc,
+            options=options,
+        ),
+        lvl2_stage=blocked,
+        lvl1_stage=assembly,
+        domestication_stage=blocked,
+        transformation_stage=failing_transformation,
+    )
+    plan = BuildPlan(
+        lvl1_requests=[
+            BuildRequest(
+                id="req",
+                stage=BuildStage.ASSEMBLY_LVL1,
+                source_identity="design",
+                source_display_id="design",
+                source_kind=DesignKind.COMPONENT_DEFINITION,
+            )
+        ]
+    )
+
+    result = executor.execute(plan)
+
+    assert result.status == BuildStatus.PARTIAL_SUCCESS
+    assert result.stage_results[-1].status == StageStatus.FAILED
+
+
+def test_protocol_mode_writes_bundle_and_exposes_target_and_all_products(tmp_path):
+    options = BuildOptions()
+    options.protocol.mode = ProtocolMode.MANUAL
+    options.protocol.results_dir = tmp_path
+    assembly = FakeStage(
+        lambda request: StageResult(
+            id="assembly",
+            stage=BuildStage.ASSEMBLY_LVL1,
+            status=StageStatus.SUCCESS,
+            request_ids=[request.id],
+            products=[plasmid("https://x/plasmid/protocol")],
+            json_intermediate={"Product": "product", "PartsList": []},
+        )
+    )
+    blocked = FakeStage(
+        lambda request: StageResult(
+            id="blocked",
+            stage=request.stage,
+            status=StageStatus.BLOCKED,
+            request_ids=[request.id],
+        )
+    )
+    doc = __import__("sbol2").Document()
+    executor = FullBuildExecutor(
+        context=BuildContext(
+            sbol=SbolResolver(doc),
+            inventory=Inventory(),
+            build_document=doc,
+            options=options,
+        ),
+        lvl2_stage=blocked,
+        lvl1_stage=assembly,
+        domestication_stage=blocked,
+    )
+
+    result = executor.execute(
+        BuildPlan(
+            lvl1_requests=[
+                BuildRequest(
+                    id="req",
+                    stage=BuildStage.ASSEMBLY_LVL1,
+                    source_identity="design",
+                    source_display_id="design",
+                    source_kind=DesignKind.COMPONENT_DEFINITION,
+                )
+            ]
+        )
+    )
+
+    assert result.artifact_bundle is not None
+    assert result.artifact_bundle.status == "success"
+    assert result.target_products == result.all_products
+    assert (tmp_path / "protocol_manifest.json").exists()

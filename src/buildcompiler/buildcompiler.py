@@ -1,7 +1,6 @@
 import sbol2
 import json
 import random
-import re
 import shutil
 import warnings
 import zipfile
@@ -54,7 +53,6 @@ from .constants import (
     ENGINEERED_PLASMID,
     PLASMID_CLONING_VECTOR,
     ORGANISM_STRAIN,
-    PLATING_ACTIVITY_ROLE,
 )
 
 
@@ -853,7 +851,7 @@ class BuildCompiler:
             },
         }
 
-    def transformation(
+    def transformation(  # noqa: F811 - retained legacy signature supersedes v0 draft
         self,
         assembly_products: List[Any],
         chassis_name: str = "E_coli_DH5alpha",

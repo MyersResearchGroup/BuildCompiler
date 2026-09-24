@@ -5,7 +5,7 @@ import tempfile
 import unittest
 import zipfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import sbol2
 
@@ -256,7 +256,14 @@ class TestFullBuild(unittest.TestCase):
             )
 
         self.assertEqual(
-            payload,
+            [
+                {
+                    "Strain": item["Strain"],
+                    "Chassis": item["Chassis"],
+                    "Plasmids": item["Plasmids"],
+                }
+                for item in payload
+            ],
             [
                 {
                     "Strain": "strain_a",
@@ -270,6 +277,7 @@ class TestFullBuild(unittest.TestCase):
                 },
             ],
         )
+        self.assertEqual(payload[0]["Parameters"]["dna"], {"value": 2, "unit": "uL"})
 
     def test_full_build_lvl2_example_packages_pudu_protocols_for_recovery_stack(self):
         lvl2_doc, _ = self._make_lvl2_document()

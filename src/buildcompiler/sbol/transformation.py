@@ -106,6 +106,8 @@ class TransformationService:
 
         metadata = {
             "source_stage": "transformation",
+            "projected_state": MaterialState.TRANSFORMED.value,
+            "state_evidence": "protocol_generated_not_executed",
             "implementation_identity": transformed_impl.identity,
             "chassis_identity": chassis_module.identity,
             "chassis_implementation_identity": chassis_impl.identity,
@@ -117,7 +119,7 @@ class TransformationService:
             identity=transformed_module.identity,
             display_id=product_display_id,
             name=transformed_module.name,
-            state=MaterialState.TRANSFORMED,
+            state=MaterialState.GENERATED,
             roles=list(transformed_module.roles),
             metadata=metadata,
             sbol_module=transformed_module,
@@ -127,7 +129,7 @@ class TransformationService:
             stage_document=job.target_document,
             activity_identity=activity.identity,
             artifacts={"transformation": metadata},
-            logs=[f"Generated transformed strain {transformed_module.identity}."],
+            logs=[f"Generated transformation plan for {transformed_module.identity}."],
         )
 
     def _plasmid_component(self, job: TransformationJob) -> sbol2.ComponentDefinition:

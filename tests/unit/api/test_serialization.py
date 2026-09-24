@@ -148,6 +148,9 @@ def test_representative_stage_and_build_results_are_json_safe_and_redacted():
     assert result_dto["summary"]["status"] == "partial_success"
     assert result_dto["report"]["status"] == "partial_success"
     assert result_dto["graph"]["nodes"]
+    assert result_dto["target_products"] == []
+    assert result_dto["all_products"] == []
+    assert result_dto["artifact_bundle"] is None
 
 
 def test_reagent_serialization_uses_stable_fields_and_omits_credentials():
