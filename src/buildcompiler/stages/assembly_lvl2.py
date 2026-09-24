@@ -8,7 +8,6 @@ from typing import Any
 import sbol2
 
 from buildcompiler.adapters.pudu import assembly_route_to_pudu_json
-from buildcompiler.protocols.inputs import assembly_request_from_route
 from buildcompiler.api.options import BuildOptions
 from buildcompiler.domain import (
     BuildRequest,
@@ -19,6 +18,7 @@ from buildcompiler.domain import (
 )
 from buildcompiler.inventory import CompatibilitySelector, Inventory
 from buildcompiler.inventory.compatibility import Lvl2Route
+from buildcompiler.protocols.methods.assembly import assembly_request_from_route
 from buildcompiler.sbol import AssemblyJob, AssemblyService
 
 

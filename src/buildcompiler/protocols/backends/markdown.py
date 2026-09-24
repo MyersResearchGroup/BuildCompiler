@@ -89,7 +89,7 @@ def render_markdown(plan: ProtocolPlan) -> str:
         else:
             raise TypeError(f"Unsupported operation: {type(step).__name__}")
         if getattr(step, "skip_during_simulation", False):
-            action += " Omitted during Opentrons simulation."
+            action += " Omitted during Opentrons simulation of the Python artifact; included in JSON analysis."
         lines.append(f"{index}. {action}")
     lines.extend(("", "## Planned outputs", ""))
     for sample_id in plan.output_sample_ids:

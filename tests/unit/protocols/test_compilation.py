@@ -14,8 +14,10 @@ from buildcompiler.protocols import (
     OpentronsAssemblyProfile,
     ProtocolCompiler,
     assembly_request_from_json,
+    transformation_request_from_json,
 )
 from buildcompiler.protocols.backends.markdown import render_markdown
+from buildcompiler.protocols.methods import sequential_wells
 from buildcompiler.protocols.models import BLOCK_24, PLATE_96, Transfer
 
 
@@ -35,6 +37,39 @@ def payload():
 
 def request():
     return assembly_request_from_json(payload(), request_id="example")
+
+
+@pytest.mark.parametrize(
+    "decode", [assembly_request_from_json, transformation_request_from_json]
+)
+@pytest.mark.parametrize(
+    "data,error,message",
+    [
+        ({}, TypeError, "sequence of reaction objects"),
+        ("[]", TypeError, "sequence of reaction objects"),
+        ([None], TypeError, "entry must be an object"),
+        ([{}], ValueError, "0 is missing"),
+    ],
+)
+def test_reaction_decoders_reject_invalid_envelopes(decode, data, error, message):
+    with pytest.raises(error, match=message):
+        decode(data, request_id="invalid")
+
+
+@pytest.mark.parametrize("grid,last_well", [(PLATE_96, "H12"), (BLOCK_24, "D6")])
+def test_sequential_wells_respect_remaining_capacity(grid, last_well):
+    locations = sequential_wells(
+        ("last",), container_id="plate", grid=grid, start=grid.capacity - 1
+    )
+    assert locations["last"].well_name == last_well
+    assert locations["last"].container_id == "plate"
+    with pytest.raises(ValueError, match="outside this grid"):
+        sequential_wells(
+            ("last", "overflow"),
+            container_id="plate",
+            grid=grid,
+            start=grid.capacity - 1,
+        )
 
 
 def test_compile_is_deterministic_and_never_writes(tmp_path, monkeypatch):

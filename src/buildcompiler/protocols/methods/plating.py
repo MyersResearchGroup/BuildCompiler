@@ -1,9 +1,17 @@
-"""Plating method: configuration, planning and well allocation."""
+"""Plan dilution chains and plated replicates, then allocate their wells.
+
+Each selected upstream culture remains a distinct source. Dilutions form a
+lineage chain from that source, while plated replicates branch from each dilution.
+Dilution wells and agar spots are allocated independently because only the latter
+multiply with the plating replicate count.
+"""
 
 from collections import Counter
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 from buildcompiler.domain.protocol_requests import MaterialRef, PlatingRequest
+from buildcompiler.protocols.methods import bind_source_wells
 from buildcompiler.protocols.models import (
     PLATE_96,
     ConfigOverrides,
@@ -29,7 +37,12 @@ from buildcompiler.protocols.models import (
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class PlatingConfig(ConfigOverrides):
-    """Dilution volumes, spotting replicates and liquid-handling rates."""
+    """Volumes in microliters, spots per dilution and pipette speed multipliers.
+
+    ``volume_total_reaction`` declares the starting volume of each source culture;
+    dilution volumes are derived separately from the transfer and dilution factor.
+    ``max_colonies`` bounds planned spots across all sources and dilutions.
+    """
 
     volume_total_reaction: float = 20
     volume_bacteria_transfer: float = 2
@@ -61,6 +74,8 @@ class PlatingConfig(ConfigOverrides):
             )
         if self.dilution_factor <= 1 or self.dilution_volume <= 1:
             raise ValueError("Dilution factor and dilution volume must exceed one.")
+        # The first dilution must supply its own spots and, when present, seed
+        # the second dilution. Each dilution supplies all of its plated replicates.
         required = self.volume_colony * self.replicates
         if self.number_dilutions == 2:
             required += self.volume_bacteria_transfer
@@ -90,7 +105,12 @@ class PlatingConfig(ConfigOverrides):
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class OpentronsPlatingProfile:
-    """Plating source labware, deck slots and starting tip/tube positions."""
+    """Plating source labware, deck slots and starting tip/tube positions.
+
+    The source labware definition is explicit: a manifest's well names do not
+    identify its physical plate model. ``lb_tube_position`` is a zero-based,
+    column-major rack index; starting tips use well names.
+    """
 
     api_level: str = "2.21"
     thermocycler_labware: str = "biorad_96_wellplate_200ul_pcr"
@@ -134,10 +154,54 @@ class OpentronsPlatingProfile:
         )
 
 
+def bacterium_manifest_from_json(
+    payload: Mapping, *, protocol_id: str = "imported-transformation"
+) -> OutputManifest:
+    """Import culture-well labels, assigning local identities when none are present."""
+
+    locations = payload.get("bacterium_locations")
+    if not isinstance(locations, Mapping) or not locations:
+        raise ValueError("Plating JSON requires nonempty bacterium_locations.")
+    samples = []
+    for index, (well, contents) in enumerate(locations.items()):
+        PLATE_96.index(well)
+        if isinstance(contents, str):
+            labels = (contents,)
+        elif (
+            isinstance(contents, (list, tuple))
+            and contents
+            and all(isinstance(v, str) for v in contents)
+        ):
+            labels = tuple(contents)
+        else:
+            raise ValueError(
+                "Bacterium contents must be a string or nonempty list of strings."
+            )
+        # The legacy format has labels only: do not pretend they are SBOL identities.
+        sample = Sample(
+            id=f"{protocol_id}/{index}",
+            material=MaterialRef(
+                identity=f"urn:buildcompiler:imported:{protocol_id}:{index}",
+                label=", ".join(labels),
+            ),
+            contents=labels,
+            liquid_label=str(contents),
+            location=WellRef(container_id="source_plate", well_name=well),
+        )
+        samples.append(sample)
+    return OutputManifest(protocol_id=protocol_id, samples=tuple(samples))
+
+
 def plan_plating(
     request: PlatingRequest, *, config: PlatingConfig, inputs: tuple[Sample, ...]
 ) -> ProtocolPlan:
-    """Build dilution intermediates and plated replicates with explicit lineage."""
+    """Build dilution intermediates and plated replicates with explicit lineage.
+
+    Request sample IDs select exact upstream aliquots in the requested order;
+    cultures sharing a material identity are still handled separately. All broth
+    fills precede culture transfers. Each culture's dilution chain is completed
+    before its spots are dispensed, with tip ownership explicit in the steps.
+    """
 
     available = {s.id: s for s in inputs}
     if set(request.sample_ids) - available.keys():
@@ -171,6 +235,8 @@ def plan_plating(
         )
         sources.append(source)
         parent = source
+        # Each dilution points to its immediate culture parent and the broth.
+        # Spots branch from that dilution, so replicates share its preparation.
         for dilution in range(1, config.number_dilutions + 1):
             diluted = Sample(
                 id=f"{request.id}/dilution/{index}/{dilution}",
@@ -197,11 +263,15 @@ def plan_plating(
         LidAction(id="open-lid", action="open"),
         PickUpTip(id="broth-tip", instrument="large"),
     ]
+    # Fill one dilution level across all cultures before moving to the next.
+    # This matches plate allocation even though lineage was built per culture.
     ordered_dilutions = [
         dilutions[index, dilution]
         for dilution in range(1, config.number_dilutions + 1)
         for index in range(len(sources))
     ]
+    # Distribution groups share the explicitly acquired broth tip. Source height
+    # is resolved at runtime as the broth volume changes between groups.
     for start in range(0, len(ordered_dilutions), 8):
         steps.append(
             Distribute(
@@ -220,7 +290,7 @@ def plan_plating(
     steps.append(DropTip(id="broth-tip-drop", instrument="large"))
 
     def transfer(id, source, destination, volume, *, agar=False):
-        """Keep the current tip and use the agar offset only for spotting."""
+        """Use shared rates and caller-owned tips, adding offset/blow-out for agar."""
         return Transfer(
             id=id,
             source=SamplePoint(sample_id=source.id),
@@ -294,12 +364,17 @@ def plan_plating(
 def allocate_plating(
     plan: ProtocolPlan, *, profile: OpentronsPlatingProfile, inputs: OutputManifest
 ) -> ProtocolPlan:
-    """Place each dilution in a plate half or on its own plate when needed."""
+    """Preserve source wells and pack new samples by role and dilution level.
 
-    upstream = {p.id: p.location for p in inputs.samples}
+    Each pair of dilution levels shares one plate when both fit in a half plate;
+    otherwise each level gets a separate plate. Dilution and agar plate counts
+    can differ because agar wells also expand with the number of replicates.
+    """
+
     selected = [s for s in plan.samples if s.role == "bacteria"]
-    if len({upstream[s.source_sample_id].container_id for s in selected}) != 1:
-        raise ValueError("The plating target accepts one source plate.")
+    sources = bind_source_wells(
+        selected, inputs, container_id="reactions", grid=PLATE_96
+    )
     containers = [
         ContainerSpec(
             id="reactions",
@@ -324,9 +399,7 @@ def allocate_plating(
             if sample.initial_volume_ul > 15000:
                 raise ValueError("Broth loading exceeds tube capacity.")
         elif sample.role == "bacteria":
-            well = upstream[sample.source_sample_id].well_name
-            PLATE_96.index(well)
-            location = WellRef(container_id="reactions", well_name=well)
+            location = sources[sample.id]
         elif sample.role in ("dilution", "agar"):
             per_dilution = counts[sample.role, sample.dilution]
             if per_dilution > 96:
@@ -338,6 +411,7 @@ def allocate_plating(
             index = indices[sample.role, sample.dilution]
             indices[sample.role, sample.dilution] += 1
             if sample.dilution == 2 and not two_plates:
+                # Column-major index 48 is A7, the start of the second half.
                 index += 48
             name = f"{sample.role}_{plate}"
             if name not in {c.id for c in containers}:
@@ -356,7 +430,11 @@ def allocate_plating(
 
 
 def plating_layout(plan: ProtocolPlan, *, dilution_factor: float) -> dict:
-    """Export agar wells by tracing each spot back to its source culture."""
+    """Export agar wells with their original culture wells and cumulative ratios.
+
+    Lineage resolves the source even for spots taken from later dilutions. Stable
+    grouping by dilution retains the request's culture and replicate order.
+    """
 
     samples = {s.id: s for s in plan.samples}
     locations = {s.id: s.location for s in plan.samples}
@@ -365,6 +443,7 @@ def plating_layout(plan: ProtocolPlan, *, dilution_factor: float) -> dict:
     # Group by dilution while preserving source and replicate order.
     for sample in sorted(outputs, key=lambda s: s.dilution):
         source = samples[sample.parent_ids[0]]
+        # The first parent follows the culture chain; the other parent is broth.
         while source.role == "dilution":
             source = samples[source.parent_ids[0]]
         location = locations[sample.id]

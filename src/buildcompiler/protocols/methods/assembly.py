@@ -1,9 +1,21 @@
-"""Assembly method: configuration, planning and well allocation."""
+"""Plan assembly reactions from shared stocks, then place them on the deck.
+
+Sources have a deterministic stock order, while reactions and their components
+retain request order. Keeping those orders separate makes shared stocks reusable
+without changing the sequence of additions within a reaction.
+"""
 
 import math
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
-from buildcompiler.domain.protocol_requests import AssemblyRequest, MaterialRef
+from buildcompiler.domain import IndexedBackbone, IndexedPlasmid, IndexedReagent
+from buildcompiler.domain.protocol_requests import (
+    AssemblyReaction,
+    AssemblyRequest,
+    MaterialRef,
+)
+from buildcompiler.protocols.methods import reaction_entries, sequential_wells
 from buildcompiler.protocols.models import (
     BLOCK_24,
     PLATE_96,
@@ -22,7 +34,6 @@ from buildcompiler.protocols.models import (
     TemperatureProgram,
     TemperatureStep,
     Transfer,
-    WellRef,
     positive,
     positive_integer,
     validate_slots,
@@ -31,7 +42,12 @@ from buildcompiler.protocols.models import (
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class AssemblyConfig(ConfigOverrides):
-    """Reaction volumes, replicate count and assembly incubation programs."""
+    """Reaction volumes in microliters, replicate count and incubation programs.
+
+    Rates are pipette speed multipliers. Water testing retains liquid-handling
+    steps but omits temperature control. Program block volumes are explicit
+    thermocycler settings, independent of the calculated reaction volume.
+    """
 
     volume_total_reaction: float = 20
     volume_part: float = 2
@@ -107,7 +123,12 @@ class AssemblyConfig(ConfigOverrides):
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class OpentronsAssemblyProfile:
-    """Assembly deck slots, pipette mount and starting well/tip offsets."""
+    """Assembly deck slots, pipette mount and starting well/tip offsets.
+
+    Reaction offsets are zero-based, column-major indices; tips use well names.
+    Tiprack positions are the slots available at once. The renderer schedules
+    rack replacements when the batch needs more tips than fit on deck.
+    """
 
     api_level: str = "2.21"
     temperature_module_position: str = "1"
@@ -145,8 +166,78 @@ BUFFER = MaterialRef(
 LIGASE = MaterialRef(identity="urn:buildcompiler:ligase", label="T4 DNA Ligase")
 
 
+def assembly_request_from_json(
+    payload: Sequence[Mapping[str, object]],
+    *,
+    request_id: str,
+    source_stage_id: str | None = None,
+) -> AssemblyRequest:
+    """Decode products and ordered components into an assembly batch."""
+    reactions = []
+    for index, entry in reaction_entries(
+        payload,
+        method="assembly",
+        required={"Product", "Backbone", "PartsList", "Restriction Enzyme"},
+    ):
+        parts = entry["PartsList"]
+        if not isinstance(parts, (list, tuple)):
+            raise TypeError("PartsList must be an ordered list.")
+        reactions.append(
+            AssemblyReaction(
+                id=f"{request_id}/reaction/{index}",
+                product=MaterialRef.from_identity(entry["Product"]),
+                backbone=MaterialRef.from_identity(entry["Backbone"]),
+                parts=tuple(MaterialRef.from_identity(part) for part in parts),
+                restriction_enzyme=MaterialRef.from_identity(
+                    entry["Restriction Enzyme"]
+                ),
+            )
+        )
+    return AssemblyRequest(
+        id=request_id, reactions=tuple(reactions), source_stage_id=source_stage_id
+    )
+
+
+def assembly_request_from_route(
+    *,
+    stage_id: str,
+    products: Sequence[IndexedPlasmid],
+    parts: Sequence[IndexedPlasmid],
+    backbone: IndexedBackbone,
+    restriction_enzyme: IndexedReagent,
+) -> AssemblyRequest:
+    """Use actual produced identities and preserve the selected component order."""
+
+    def material(record) -> MaterialRef:
+        """Keep indexed identities and choose the most specific display label."""
+        return MaterialRef(
+            identity=record.identity,
+            label=record.name or record.display_id or record.identity,
+        )
+
+    return AssemblyRequest(
+        id=stage_id,
+        source_stage_id=stage_id,
+        reactions=tuple(
+            AssemblyReaction(
+                id=f"{stage_id}/product/{index}",
+                product=material(product),
+                backbone=material(backbone),
+                parts=tuple(material(part) for part in parts),
+                restriction_enzyme=material(restriction_enzyme),
+            )
+            for index, product in enumerate(products)
+        ),
+    )
+
+
 def plan_assembly(request: AssemblyRequest, *, config: AssemblyConfig) -> ProtocolPlan:
-    """Expand ordered reactions into a logical plan with stable sample lineage."""
+    """Expand each requested reaction into complete, consecutive replicates.
+
+    Each stock material has one input sample shared by all reactions that use
+    it. Output parent IDs describe the DNA components; reagent additions remain
+    explicit transfers in the plan. Locations are assigned separately.
+    """
     enzymes = {}
     parts = {}
     for reaction in request.reactions:
@@ -156,7 +247,9 @@ def plan_assembly(request: AssemblyRequest, *, config: AssemblyConfig) -> Protoc
             if previous is not None and previous != material:
                 raise ValueError(f"Conflicting labels for {material.identity}.")
             parts[material.identity] = material
-    # Sort labels for stable source positions; retain identities for lookups.
+    # Deduplicate stocks by identity, then sort within each reagent group for
+    # stable source positions. Identical display labels still denote distinct
+    # stocks when their identities differ.
     ordered = (
         WATER,
         BUFFER,
@@ -202,6 +295,8 @@ def plan_assembly(request: AssemblyRequest, *, config: AssemblyConfig) -> Protoc
             + config.volume_t4_dna_ligase
             + config.volume_restriction_enzyme
         )
+        # The backbone consumes the same per-component volume as each part;
+        # water fills the balance after all components and reagents are counted.
         water_volume = (
             config.volume_total_reaction
             - fixed_volume
@@ -211,6 +306,8 @@ def plan_assembly(request: AssemblyRequest, *, config: AssemblyConfig) -> Protoc
             raise ValueError(
                 f"Reaction {reaction.id} has no remaining volume for water."
             )
+        # Tuple order is execution order; the final flag requests source mixing.
+        # Component order follows the request, independently of stock positions.
         additions = (
             (WATER, water_volume, False),
             (BUFFER, config.volume_t4_dna_ligase_buffer, True),
@@ -240,7 +337,9 @@ def plan_assembly(request: AssemblyRequest, *, config: AssemblyConfig) -> Protoc
                         drop_tip=addition_index != len(additions) - 1,
                     )
                 )
-            # Finish mixing with the tip retained from the final addition.
+            # Retain the final addition's tip for these explicit movements.
+            # Their bottom offsets and finishing actions differ from an SDK
+            # mix call; the renderer caps each movement to pipette capacity.
             for mix_index in range(int(config.volume_total_reaction / 10)):
                 steps.append(
                     Transfer(
@@ -291,7 +390,12 @@ def plan_assembly(request: AssemblyRequest, *, config: AssemblyConfig) -> Protoc
 def allocate_assembly(
     plan: ProtocolPlan, *, profile: OpentronsAssemblyProfile
 ) -> ProtocolPlan:
-    """Assign sources and reactions in column-major order on their plates."""
+    """Assign sources and reactions in column-major order on separate labware.
+
+    Source order comes from stock sorting; output order comes from reaction and
+    replicate expansion. The starting offset reserves earlier reaction wells
+    without shifting sources or changing sample identities.
+    """
     if len(plan.input_sample_ids) > BLOCK_24.capacity:
         raise ValueError("Assembly source block capacity exceeded.")
     if (
@@ -299,18 +403,16 @@ def allocate_assembly(
         > PLATE_96.capacity
     ):
         raise ValueError("Assembly reaction plate capacity exceeded.")
-    locations = {
-        sample_id: WellRef(container_id="sources", well_name=BLOCK_24.name(i))
-        for i, sample_id in enumerate(plan.input_sample_ids)
-    }
+    locations = sequential_wells(
+        plan.input_sample_ids, container_id="sources", grid=BLOCK_24
+    )
     locations.update(
-        {
-            sample_id: WellRef(
-                container_id="reactions",
-                well_name=PLATE_96.name(i + profile.thermocycler_starting_well),
-            )
-            for i, sample_id in enumerate(plan.output_sample_ids)
-        }
+        sequential_wells(
+            plan.output_sample_ids,
+            container_id="reactions",
+            grid=PLATE_96,
+            start=profile.thermocycler_starting_well,
+        )
     )
     return plan.with_locations(
         (

@@ -1,11 +1,26 @@
-"""Transformation method: configuration, planning and well allocation."""
+"""Plan transformation batches with explicit source aliquots and tube usage.
+
+The planner first expands samples and their lineage, then emits cell additions,
+DNA additions and incubation/recovery operations. The allocator binds those
+samples to wells, preserving upstream DNA locations when a manifest is supplied.
+"""
 
 from collections import Counter
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from itertools import groupby
 from math import ceil
 
-from buildcompiler.domain.protocol_requests import MaterialRef, TransformationRequest
+from buildcompiler.domain.protocol_requests import (
+    MaterialRef,
+    TransformationReaction,
+    TransformationRequest,
+)
+from buildcompiler.protocols.methods import (
+    bind_source_wells,
+    reaction_entries,
+    sequential_wells,
+)
 from buildcompiler.protocols.models import (
     BLOCK_24,
     PLATE_96,
@@ -31,7 +46,13 @@ from buildcompiler.protocols.models import (
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class TransformationConfig(ConfigOverrides):
-    """Transfer volumes, source tube volumes, replicates and incubations."""
+    """Source loading, transfer volumes in microliters, and incubation settings.
+
+    ``volume_dna`` is the declared loading of each DNA source, whereas
+    ``transfer_volume_dna`` is drawn for each output. ``replicates`` applies
+    separately to every set of upstream source locations. Rates are pipette
+    speed multipliers; temperature-step durations are in minutes.
+    """
 
     volume_dna: float = 20
     transfer_volume_dna: float = 2
@@ -79,7 +100,12 @@ class TransformationConfig(ConfigOverrides):
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class OpentronsTransformationProfile:
-    """Transformation deck slots and source, reaction and tip offsets."""
+    """Transformation deck slots and source, reaction and tip offsets.
+
+    DNA and reaction offsets are zero-based, column-major indices; tips use well
+    names. ``initial_dna_well`` applies only to fresh sources in the source block.
+    With an input manifest, DNA keeps its existing wells on ``dna_plate_position``.
+    """
 
     api_level: str = "2.21"
     temperature_module_position: str = "1"
@@ -111,14 +137,69 @@ class OpentronsTransformationProfile:
         )
 
 
+def transformation_request_from_json(
+    payload: Sequence[Mapping[str, object]],
+    *,
+    request_id: str,
+    source_stage_id: str | None = None,
+) -> TransformationRequest:
+    """Decode strains, chassis and ordered plasmids into a transformation batch."""
+
+    reactions = []
+    for index, entry in reaction_entries(
+        payload, method="transformation", required={"Strain", "Chassis", "Plasmids"}
+    ):
+        if not isinstance(entry["Plasmids"], (list, tuple)):
+            raise TypeError("Plasmids must be an ordered list.")
+        reactions.append(
+            TransformationReaction(
+                id=f"{request_id}/reaction/{index}",
+                strain=MaterialRef.from_identity(entry["Strain"]),
+                chassis=MaterialRef.from_identity(entry["Chassis"]),
+                plasmids=tuple(MaterialRef.from_identity(p) for p in entry["Plasmids"]),
+            )
+        )
+    return TransformationRequest(
+        id=request_id, reactions=tuple(reactions), source_stage_id=source_stage_id
+    )
+
+
+def plasmid_manifest_from_json(
+    payload: Mapping[str, list[str]], *, protocol_id: str = "imported-assembly"
+) -> OutputManifest:
+    """Import identity-to-well mappings as distinct physical source replicates."""
+
+    samples = []
+    for index, (identity, wells) in enumerate(payload.items()):
+        if not isinstance(wells, (list, tuple)) or not wells:
+            raise ValueError("Each plasmid requires a nonempty list of source wells.")
+        for replicate, well in enumerate(wells, 1):
+            PLATE_96.index(well)
+            sample = Sample(
+                id=f"{protocol_id}/{index}/{replicate}",
+                material=MaterialRef.from_identity(identity),
+                replicate=replicate,
+                location=WellRef(container_id="source_plate", well_name=well),
+            )
+            samples.append(sample)
+    return OutputManifest(protocol_id=protocol_id, samples=tuple(samples))
+
+
 def plan_transformation(
     request: TransformationRequest,
     *,
     config: TransformationConfig,
     inputs: tuple[Sample, ...] | None = None,
 ) -> ProtocolPlan:
-    """Expand source and method replicates, grouping transfers by source tube."""
+    """Expand reactions into outputs and record every contributing source.
 
+    For each reaction, source sets follow manifest order and each set produces
+    ``config.replicates`` outputs. Multiple plasmids are paired by source index,
+    not combined as a Cartesian product. Without upstream samples, each plasmid
+    gets one fresh source. Allocation later supplies all physical locations.
+    """
+
+    # Stock sorting makes source IDs stable without reordering requested outputs.
     plasmids = {p.identity: p for r in request.reactions for p in r.plasmids}
     chassis = {r.chassis.identity: r.chassis for r in request.reactions}
     ordered_plasmids = sorted(plasmids.values(), key=lambda p: (p.label, p.identity))
@@ -142,6 +223,8 @@ def plan_transformation(
         location_replicates = 1
     samples = []
     dna = {}
+    # Give each aliquot a local ID while retaining the upstream ID for handoffs.
+    # A material identity alone cannot distinguish its physical source replicates.
     for index, plasmid in enumerate(ordered_plasmids):
         dna[plasmid.identity] = []
         for location_index in range(location_replicates):
@@ -160,6 +243,8 @@ def plan_transformation(
             )
             samples.append(sample)
             dna[plasmid.identity].append(sample)
+    # Count whole transfers per tube. Any remainder stays in that tube; ceil
+    # below allocates another tube when the last group needs fewer transfers.
     per_cell_tube = int(
         config.tube_volume_competent_cell // config.transfer_volume_competent_cell
     )
@@ -198,10 +283,14 @@ def plan_transformation(
         samples.append(sample)
         media.append(sample)
     input_ids = tuple(s.id for s in samples)
+    # Record source/output pairs before emitting operations so all cell additions
+    # precede DNA additions while both phases retain the same output order.
     outputs = []
     cell_transfers = []
     dna_transfers = []
     cell_counts = Counter()
+    # Cell consumption is tracked per chassis across interleaved reactions.
+    # Media consumption instead follows the global output index.
     for reaction in request.reactions:
         for location_index in range(location_replicates):
             for replicate in range(config.replicates):
@@ -230,6 +319,8 @@ def plan_transformation(
                 cell_transfers.append((cell, output))
                 dna_transfers.extend((parent, output) for parent in parents)
     steps = [LidAction(id="open-lid", action="open")]
+    # Water testing removes temperature commands from the plan. Ordinary plans
+    # retain them with a simulation guard, so review documents still show them.
     if not config.water_testing:
         steps.extend(
             (
@@ -247,8 +338,8 @@ def plan_transformation(
                 ),
             )
         )
-    # Combine consecutive transfers from the same tube without reordering
-    # reactions. A chassis can recur later after another chassis was handled.
+    # groupby combines consecutive uses of one physical tube, not all uses of
+    # a chassis. Sorting first would change reaction order and tip boundaries.
     for index, (source_id, group) in enumerate(
         groupby(cell_transfers, key=lambda pair: pair[0].id)
     ):
@@ -279,7 +370,8 @@ def plan_transformation(
                 drop_tip=False,
             )
         )
-        # Reuse the DNA tip for the finishing movements, then discard it.
+        # The DNA transfer owns the tip through both finishing movements. Only
+        # the second movement performs touch-tip and cleanup before the next DNA.
         for movement in range(2):
             steps.append(
                 Transfer(
@@ -357,7 +449,27 @@ def allocate_transformation(
     profile: OpentronsTransformationProfile,
     inputs: OutputManifest | None = None,
 ) -> ProtocolPlan:
-    """Bind mapped DNA wells or allocate fresh sources, tubes and reactions."""
+    """Return a located plan using fresh DNA stocks or one upstream DNA plate.
+
+    Manifest wells are rebound to this protocol's DNA plate without moving the
+    aliquots within it. Cell and media tubes share a separate rack; reactions
+    occupy consecutive wells beginning at the configured reaction offset.
+    """
+
+    # Preserve plan order within each physical resource. In particular, cell and
+    # media tubes share a rack and must be allocated together.
+    dna, tubes, reactions = [], [], []
+    for sample in plan.samples:
+        if sample.role == "dna":
+            dna.append(sample)
+        elif sample.role in ("cells", "media"):
+            if sample.initial_volume_ul > 1500:
+                raise ValueError("Reagent loading exceeds tube capacity.")
+            tubes.append(sample)
+        elif sample.role == "reaction":
+            reactions.append(sample)
+        else:
+            raise ValueError(f"Unknown transformation sample role {sample.role!r}.")
 
     containers = [
         ContainerSpec(
@@ -371,8 +483,9 @@ def allocate_transformation(
             parent="reaction_module",
         ),
     ]
-    upstream = {}
     if inputs is not None:
+        # This target reserves one plate for the complete DNA handoff, including
+        # any manifest samples not selected by the current request.
         if len({p.location.container_id for p in inputs.samples}) != 1:
             raise ValueError("The transformation target accepts one source DNA plate.")
         containers.append(
@@ -382,7 +495,16 @@ def allocate_transformation(
                 parent=profile.dna_plate_position,
             )
         )
-        upstream = {p.id: p.location for p in inputs.samples}
+        locations = bind_source_wells(
+            dna, inputs, container_id="dna_plate", grid=PLATE_96
+        )
+    else:
+        locations = sequential_wells(
+            (s.id for s in dna),
+            container_id="sources",
+            grid=BLOCK_24,
+            start=profile.initial_dna_well,
+        )
     containers.append(
         ContainerSpec(
             id="tube_rack",
@@ -390,38 +512,16 @@ def allocate_transformation(
             parent=profile.tube_rack_position,
         )
     )
-    locations = {}
-    dna_index, tube_index, reaction_index = (
-        profile.initial_dna_well,
-        0,
-        profile.thermocycler_starting_well,
+    # Tube placement always begins at rack A1; only reactions have an offset here.
+    locations.update(
+        sequential_wells((s.id for s in tubes), container_id="tube_rack", grid=BLOCK_24)
     )
-    for sample in plan.samples:
-        if sample.role == "dna":
-            if inputs is None:
-                location = WellRef(
-                    container_id="sources", well_name=BLOCK_24.name(dna_index)
-                )
-                dna_index += 1
-            else:
-                # The plate changes its deck role, but the source well and
-                # upstream sample identity remain the same.
-                well = upstream[sample.source_sample_id].well_name
-                PLATE_96.index(well)
-                location = WellRef(container_id="dna_plate", well_name=well)
-        elif sample.role in ("cells", "media"):
-            location = WellRef(
-                container_id="tube_rack", well_name=BLOCK_24.name(tube_index)
-            )
-            tube_index += 1
-            if sample.initial_volume_ul > 1500:
-                raise ValueError("Reagent loading exceeds tube capacity.")
-        elif sample.role == "reaction":
-            location = WellRef(
-                container_id="reactions", well_name=PLATE_96.name(reaction_index)
-            )
-            reaction_index += 1
-        else:
-            raise ValueError(f"Unknown transformation sample role {sample.role!r}.")
-        locations[sample.id] = location
+    locations.update(
+        sequential_wells(
+            (s.id for s in reactions),
+            container_id="reactions",
+            grid=PLATE_96,
+            start=profile.thermocycler_starting_well,
+        )
+    )
     return plan.with_locations(tuple(containers), locations)

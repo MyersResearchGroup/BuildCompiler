@@ -18,7 +18,8 @@ from buildcompiler.protocols import (
     ProtocolCompiler,
     TransformationConfig,
 )
-from buildcompiler.protocols.inputs import bacterium_manifest_from_json
+from buildcompiler.protocols.backends import ProtocolBackend
+from buildcompiler.protocols.methods.plating import bacterium_manifest_from_json
 from buildcompiler.protocols.models import OutputManifest
 
 
@@ -27,6 +28,7 @@ def compile_assembly(
     *,
     config: AssemblyConfig = AssemblyConfig(),
     profile: OpentronsAssemblyProfile = OpentronsAssemblyProfile(),
+    backend: ProtocolBackend = "opentrons_ot2_python",
 ) -> CompiledProtocol:
     """Allocate the stage's complete batch once and return in-memory artifacts."""
     if result.status not in (StageStatus.SUCCESS, StageStatus.PARTIAL_SUCCESS):
@@ -45,7 +47,9 @@ def compile_assembly(
     request = AssemblyRequest(
         id=result.id, reactions=reactions, source_stage_id=result.id
     )
-    return ProtocolCompiler(assembly=config).compile(request, profile=profile)
+    return ProtocolCompiler(assembly=config).compile(
+        request, profile=profile, backend=backend
+    )
 
 
 def compile_transformation(
@@ -54,6 +58,7 @@ def compile_transformation(
     config: TransformationConfig = TransformationConfig(),
     profile: OpentronsTransformationProfile = OpentronsTransformationProfile(),
     inputs: OutputManifest | None = None,
+    backend: ProtocolBackend = "opentrons_ot2_python",
 ) -> CompiledProtocol:
     """Compile the complete transformation batch against an optional assembly manifest."""
     if result.status not in (StageStatus.SUCCESS, StageStatus.PARTIAL_SUCCESS):
@@ -75,7 +80,7 @@ def compile_transformation(
         ),
     )
     return ProtocolCompiler(transformation=config).compile(
-        request, profile=profile, inputs=inputs
+        request, profile=profile, inputs=inputs, backend=backend
     )
 
 
@@ -85,6 +90,7 @@ def compile_plating(
     request_id: str = "plating",
     config: PlatingConfig = PlatingConfig(),
     profile: OpentronsPlatingProfile = OpentronsPlatingProfile(),
+    backend: ProtocolBackend = "opentrons_ot2_python",
 ) -> CompiledProtocol:
     """Compile plating for the exact physical samples in a transformation manifest."""
     request = PlatingRequest(
@@ -93,11 +99,13 @@ def compile_plating(
         sample_ids=tuple(sample.id for sample in inputs.samples),
     )
     return ProtocolCompiler(plating=config).compile(
-        request, profile=profile, inputs=inputs
+        request, profile=profile, inputs=inputs, backend=backend
     )
 
 
-def compile_plating_json(payload, *, advanced_params=None):
+def compile_plating_json(
+    payload, *, advanced_params=None, backend: ProtocolBackend = "opentrons_ot2_python"
+):
     """Compile a JSON plating payload with explicitly supplied overrides."""
 
     parameters = dict(payload)
@@ -118,4 +126,6 @@ def compile_plating_json(payload, *, advanced_params=None):
         raise ValueError(
             f"Unsupported native plating parameters: {sorted(unknown)}. Use a supported target profile."
         )
-    return compile_plating(inputs, request_id=name, config=config, profile=profile)
+    return compile_plating(
+        inputs, request_id=name, config=config, profile=profile, backend=backend
+    )

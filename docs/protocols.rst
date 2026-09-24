@@ -2,19 +2,19 @@ Native protocol compilation
 ===========================
 
 ``buildcompiler.protocols`` compiles assembly, transformation and plating requests
-into review documents, structured handoffs and standalone robot scripts. Planning
-and rendering require no robot SDK. Generated scripts import only Opentrons.
+into review documents, structured handoffs and standalone OT-2 protocols. Planning
+and rendering require no robot SDK. Python protocols import only Opentrons; JSON
+protocols embed their labware definitions and require no Python entrypoint.
 
 Structure and ownership
 -----------------------
 
-The package has two small subpackages. Each method keeps its configuration,
-hardware profile, planner and well allocation in one file::
+The package has two small subpackages. Each method keeps its input decoding,
+configuration, hardware profile, planner and well allocation in one file::
 
    protocols/
        __init__.py
        compiler.py
-       inputs.py
        models.py
        methods/
            __init__.py
@@ -24,26 +24,74 @@ hardware profile, planner and well allocation in one file::
        backends/
            __init__.py
            markdown.py
-           opentrons.py
+           opentrons_ot2_python.py
+           opentrons_ot2_json.py
            simulation.py
            _simulation_worker.py
 
 ``domain.protocol_requests`` defines immutable requests shared with build stages.
-``inputs.py`` converts existing JSON and indexed stage records into those requests.
+Each method module converts its JSON or indexed stage records into those requests.
+``MaterialRef.from_identity`` supplies shared identity and display-label handling.
+``methods.__init__`` shares reaction-list validation, sequential well placement and
+upstream well binding. Methods retain their field decoding, sample selection,
+allocation policy and operation order.
 ``models.py`` holds ``Sample``, shared operations such as ``Transfer`` and
 ``Distribute``, ``ProtocolPlan`` and ``OutputManifest``. A sample keeps its material
 identity and parent sample IDs independently of its label and physical location.
 
 ``ProtocolCompiler.plan(request)`` calls the appropriate method planner and returns
 a plan with unassigned sample locations. ``compile(request, profile=...)`` also
-allocates wells, then sends that same plan to both renderers. The Opentrons renderer
-emits Python directly from the operations and checks tip use and pipette capacity.
-There is no second command representation between the plan and the script.
+allocates wells, then sends that same plan to Markdown and the selected robot
+backend. Both robot backends check tip use and pipette capacity. The Python backend
+emits SDK calls; the JSON builder expands operations into validated vendor commands,
+including refills, mixing, air gaps, trash movements and module waits.
 
-``CompiledProtocol`` contains ``plan``, ``script``, ``markdown``, ``manifest`` and a
-read-only ``files`` mapping. ``write(directory)`` is the explicit filesystem
+``CompiledProtocol`` exposes ``plan``, ``source``, ``backend``, ``protocol_filename``,
+``markdown``, ``manifest`` and a read-only ``files`` mapping. ``script`` remains an
+alias for the serialized source for existing callers. ``write(directory)`` is the explicit filesystem
 boundary. Compilation does not write files, simulate or mutate SBOL documents.
-``backends.simulation.simulate_source`` runs the optional SDK in a subprocess.
+``backends.simulation.analyze_source`` runs either format through the optional
+Protocol Engine simulator in a subprocess. ``simulate_source`` retains the
+Python SDK trace used by the original acceptance tests.
+
+Choosing the robot format
+------------------------
+
+Install ``.[automation]`` for JSON compilation, simulation and inventory integration.
+This includes ``opentrons-shared-data==8.8.2`` for offline schemas and labware
+definitions. The default backend remains ``opentrons_ot2_python``.
+Select ``opentrons_ot2_json`` on ``ProtocolCompiler.compile`` or any of
+``compile_assembly``, ``compile_transformation`` and ``compile_plating``:
+
+.. code-block:: python
+
+   from buildcompiler.protocols import ProtocolCompiler
+
+   compiled = ProtocolCompiler().compile(
+       request,
+       backend="opentrons_ot2_json",
+   )
+   compiled.write("results/protocol")  # Includes protocol.json.
+
+Both formats use the same allocated plan, review document and output manifest.
+The JSON backend uses protocol schema 8, command schema 10 and labware schema 2,
+qualified against Opentrons 8.8.2. It pins labware versions, pipette flow rates and
+tip overlap to the Python API 2.21 behavior used by the hardware profiles.
+Conical-source heights are computed from planned volume changes at each
+distribution boundary, including disposal volumes consumed by refills.
+
+Simulation remains an explicit action, separate from compilation:
+
+.. code-block:: python
+
+   from buildcompiler.protocols.backends.simulation import analyze_source
+
+   analysis = analyze_source(compiled.source, format="json")
+
+The equivalent CLI is ``python -m opentrons.cli analyze protocol.json --check
+--json-output analysis.json``. Use Python 3.10 with ``.[automation]`` for either
+simulation entrypoint. ``opentrons.simulate.simulate`` does not accept modern JSON
+protocols.
 
 Compiling stage results
 -----------------------
@@ -117,9 +165,9 @@ that format contains labels rather than material identities, the adapter assigns
 local import identities instead of claiming those labels are SBOL URIs. Native
 manifests retain identity and lineage throughout a workflow.
 
-Each compilation returns ``protocol.py``, ``protocol.md``, ``manifest.json``,
+Each compilation returns ``protocol.py`` or ``protocol.json``, plus ``protocol.md``, ``manifest.json``,
 ``compilation.json`` and a method-specific JSON handoff. ``compilation.json``
-records the resolved configuration, target profile and plan, including operation
+records the selected backend, resolved configuration, target profile and plan, including operation
 kinds and sample locations. These files are also available in memory, for example
 ``compiled.files["manifest.json"]``. Writing refuses existing files unless
 ``overwrite=True`` is supplied explicitly.
@@ -140,18 +188,22 @@ arbitrary instrument substitution. Transformation and
 plating each use one rack per pipette and reject batches that exhaust those racks.
 Assembly retains its explicit rack replacement schedule.
 
-Transformation's temperature operations carry an explicit simulation condition:
-they appear in the plan and review document but are skipped during ordinary
-simulation. ``water_testing=True`` omits those operations altogether.
+Transformation's temperature operations retain the Python simulation condition:
+they appear in the plan and review document but are skipped during ordinary Python
+simulation. JSON always contains the execution temperature program, and its
+analysis exercises it. ``water_testing=True`` omits these operations in both formats.
 
 Validation and migration boundary
 ----------------------------------
 
-Install ``.[test,simulation]`` in Python 3.10 to run the pinned Opentrons 8.8.2
+Install ``.[test,automation]`` in Python 3.10 to run the pinned Opentrons 8.8.2
 acceptance suite described in ``tests/automation/README.md``. The suite compares
-the independent PUDU implementation with native output and tests the connected
-three-stage handoff. It separately exercises transformation's temperature path
-inside the simulator. Hardware and experimental outcomes are not tested.
+the independent PUDU implementation with both native formats and tests the connected
+three-stage handoff. Protocol Engine comparisons retain resource geometry, positions,
+volumes, flow rates, tip boundaries and temperature programs. Transformation's full
+temperature path is enabled in both Python references for these comparisons.
+The original Python SDK comparisons remain in place. Hardware and experimental
+outcomes are not tested.
 
 The compiler returns structured artifacts explicitly; it does not produce Excel
 workbooks or write handoff files during simulation. Legacy orchestration, notebook

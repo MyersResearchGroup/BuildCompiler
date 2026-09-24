@@ -148,6 +148,10 @@ def test_assembly_lvl1_success_returns_products_json_and_indexes_generated():
         part.identity for part in result.protocol_requests[0].reactions[0].parts
     ] == result.json_intermediate["PartsList"]
     assert result.sbol_document is not None
+    assert (
+        result.protocol_artifacts["assembly_spec"]
+        == result.json_intermediate["Parameters"]
+    )
     assert inv.find_lvl1_region_plasmids("https://example.org/designs/d1")
     assert result.logs
     assert result.warnings and isinstance(result.warnings[0], BuildWarning)

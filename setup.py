@@ -37,10 +37,6 @@ setup(
         "pydna",
     ],
     extras_require={
-        "simulation": [
-            "opentrons==8.8.2 ; python_version == '3.10'",
-            "xlsxwriter>=3.2.5",
-        ],
         "test": [
             "pytest>=7,<9",
             "pytest-cov[all]",
@@ -54,9 +50,17 @@ setup(
         ],
         "automation": [
             "opentrons==8.8.2 ; python_version == '3.10'",
+            "opentrons-shared-data==8.8.2",
+            "xlsxwriter>=3.2.5",
             "SBOLInventory @ "
             "git+https://github.com/DRAGGON-Lab/SBOLInventory.git ; "
             "python_version >= '3.10'",
+        ],
+        "notebook": [
+            "jupyterlab>=4,<5",
+            "nbclient>=0.10,<1",
+            "nbformat>=5,<6",
+            "ipykernel>=6,<8",
         ],
     },
     keywords=["SBOL", "genetic", "automation", "build", "synthetic biology"],

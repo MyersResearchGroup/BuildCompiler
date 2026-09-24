@@ -234,7 +234,7 @@ class TemperatureProgram:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class RunTemperatureProgram:
-    """Run an incubation program, optionally skipping it during simulation."""
+    """Run a program, optionally skipping it during Python protocol simulation."""
 
     id: str
     program: TemperatureProgram
@@ -243,7 +243,7 @@ class RunTemperatureProgram:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class SetTemperature:
-    """Set a module or lid temperature without a timed hold."""
+    """Set a temperature; the simulation guard applies to Python protocols only."""
 
     id: str
     module: Literal["source", "reaction", "lid"]

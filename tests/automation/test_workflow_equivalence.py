@@ -20,7 +20,9 @@ from buildcompiler.protocols.backends.simulation import simulate_source
 pytestmark = pytest.mark.automation
 
 
-def test_connected_workflow_equivalence(pudu_repository, tmp_path):
+def test_connected_workflow_equivalence(
+    pudu_repository, tmp_path, compare_json_backend
+):
     assemblies = [
         {
             "Product": f"https://example.org/plasmid_{i}/1",
@@ -45,7 +47,8 @@ def test_connected_workflow_equivalence(pudu_repository, tmp_path):
     )
     reference_preamble = "metadata={'apiLevel':'2.21'}\ndef run(protocol):\n"
 
-    def compare(name, reference_source, compiled):
+    def compare(name, reference_source, compiled, json_compiled):
+        compare_json_backend(reference_source, compiled, json_compiled)
         expected = simulate_source(
             reference_source, python_paths=(pudu_repository / "src",)
         )
@@ -62,12 +65,17 @@ def test_connected_workflow_equivalence(pudu_repository, tmp_path):
     assembly = compiler.compile(
         assembly_request_from_json(assemblies, request_id="assembly")
     )
+    json_assembly = compiler.compile(
+        assembly_request_from_json(assemblies, request_id="assembly"),
+        backend="opentrons_ot2_json",
+    )
     expected_assembly = compare(
         "assembly",
         "from pudu.assembly import SBOLLoopAssembly\n"
         + reference_preamble
         + f"    SBOLLoopAssembly(assemblies={assemblies!r}, replicates=2, output_xlsx=False).run(protocol)\n",
         assembly,
+        json_assembly,
     )
     assert (
         expected_assembly["transformation_input.json"]
@@ -77,12 +85,18 @@ def test_connected_workflow_equivalence(pudu_repository, tmp_path):
         transformation_request_from_json(transformations, request_id="transformation"),
         inputs=assembly.manifest,
     )
+    json_transformation = compiler.compile(
+        transformation_request_from_json(transformations, request_id="transformation"),
+        inputs=json_assembly.manifest,
+        backend="opentrons_ot2_json",
+    )
     expected_transformation = compare(
         "transformation",
         "from pudu.transformation import HeatShockTransformation\n"
         + reference_preamble
         + f"    HeatShockTransformation(transformation_data={transformations!r}, plasmid_locations={expected_assembly['transformation_input.json']!r}, replicates=2).run(protocol)\n",
         transformation,
+        json_transformation,
     )
     assert expected_transformation["plating_input.json"] == {
         "bacterium_locations": transformation.manifest.bacterium_locations()
@@ -99,12 +113,22 @@ def test_connected_workflow_equivalence(pudu_repository, tmp_path):
         inputs=transformation.manifest,
         profile=plating_profile,
     )
+    json_plating = compiler.compile(
+        PlatingRequest(
+            id="plating",
+            sample_ids=tuple(s.id for s in json_transformation.manifest.samples),
+        ),
+        inputs=json_transformation.manifest,
+        profile=plating_profile,
+        backend="opentrons_ot2_json",
+    )
     expected_plating = compare(
         "plating",
         "from pudu.plating import Plating\n"
         + reference_preamble
         + f"    Plating(plating_data={expected_transformation['plating_input.json']!r}, replicates=2, thermocycler_labware={plating_profile.thermocycler_labware!r}).run(protocol)\n",
         plating,
+        json_plating,
     )
     assert expected_plating["plating_layout.json"] == json.loads(
         plating.files["plating_layout.json"]

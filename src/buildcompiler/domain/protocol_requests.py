@@ -1,6 +1,7 @@
 """Immutable protocol inputs shared by build stages and protocol compilers."""
 
 from dataclasses import dataclass
+from urllib.parse import urlsplit
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -13,6 +14,21 @@ class MaterialRef:
     def __post_init__(self) -> None:
         if not self.identity or not self.label:
             raise ValueError("Material identity and label must be nonempty.")
+
+    @classmethod
+    def from_identity(cls, identity: str, label: str | None = None) -> "MaterialRef":
+        """Keep the full identity and derive a display label when none is supplied."""
+        if not isinstance(identity, str) or not identity:
+            raise ValueError("Material identities must be nonempty strings.")
+        if label is None:
+            segments = [part for part in urlsplit(identity).path.split("/") if part]
+            # Treat a trailing numeric path segment as an SBOL version for display.
+            label = (
+                segments[-2]
+                if len(segments) > 1 and segments[-1].isdigit()
+                else (segments[-1] if segments else identity)
+            )
+        return cls(identity=identity, label=label)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

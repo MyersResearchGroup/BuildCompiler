@@ -1,4 +1,4 @@
-"""Compile requests into plans, review documents and standalone robot scripts."""
+"""Compile requests into plans, review documents and standalone robot protocols."""
 
 import json
 from collections.abc import Mapping
@@ -12,8 +12,9 @@ from buildcompiler.domain.protocol_requests import (
     ProtocolRequest,
     TransformationRequest,
 )
+from buildcompiler.protocols.backends import ProtocolBackend, TargetProfile
 from buildcompiler.protocols.backends.markdown import render_markdown
-from buildcompiler.protocols.backends.opentrons import TargetProfile, render_python
+from buildcompiler.protocols.backends.opentrons_ot2_python import render_python
 from buildcompiler.protocols.methods.assembly import (
     AssemblyConfig,
     OpentronsAssemblyProfile,
@@ -50,6 +51,19 @@ class CompiledProtocol:
     markdown: str
     manifest: OutputManifest
     files: Mapping[str, str]
+    backend: ProtocolBackend = "opentrons_ot2_python"
+
+    @property
+    def protocol_filename(self) -> str:
+        """Name of the robot artifact in this bundle."""
+        return (
+            "protocol.json" if self.backend == "opentrons_ot2_json" else "protocol.py"
+        )
+
+    @property
+    def source(self) -> str:
+        """Serialized robot protocol, in the selected backend's format."""
+        return self.script
 
     def __post_init__(self) -> None:
         for name in self.files:
@@ -113,8 +127,11 @@ class ProtocolCompiler:
         *,
         profile: TargetProfile | None = None,
         inputs: OutputManifest | None = None,
+        backend: ProtocolBackend = "opentrons_ot2_python",
     ) -> CompiledProtocol:
         """Return an allocated plan and files, leaving writing and simulation explicit."""
+        if backend not in ("opentrons_ot2_python", "opentrons_ot2_json"):
+            raise ValueError(f"Unsupported protocol backend: {backend!r}")
         plan = self.plan(request, inputs=inputs)
         if isinstance(request, AssemblyRequest):
             profile = profile or OpentronsAssemblyProfile()
@@ -148,12 +165,20 @@ class ProtocolCompiler:
             plan = allocate_plating(plan, profile=profile, inputs=inputs)
             handoff_name = "plating_layout.json"
             handoff = plating_layout(plan, dilution_factor=config.dilution_factor)
-        script = render_python(plan, profile=profile)
+        if backend == "opentrons_ot2_json":
+            from buildcompiler.protocols.backends.opentrons_ot2_json import render_json
+
+            script = render_json(plan, profile=profile)
+            protocol_filename = "protocol.json"
+        else:
+            script = render_python(plan, profile=profile)
+            protocol_filename = "protocol.py"
         markdown = render_markdown(plan)
         manifest = plan.output_manifest()
         metadata = {
             "schema_version": "1.0",
             "method": method,
+            "backend": backend,
             "configuration": asdict(config),
             "target_profile": asdict(profile),
             "plan": {
@@ -168,8 +193,9 @@ class ProtocolCompiler:
             script=script,
             markdown=markdown,
             manifest=manifest,
+            backend=backend,
             files={
-                "protocol.py": script,
+                protocol_filename: script,
                 "protocol.md": markdown,
                 "manifest.json": _json(manifest.to_dict()),
                 "compilation.json": _json(metadata),

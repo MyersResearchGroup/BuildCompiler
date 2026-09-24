@@ -24,13 +24,20 @@ Install test dependencies:
 Optional automation dependencies
 --------------------------------
 
-Native protocol compilation and PUDU-compatible JSON generation are included in
-the core package. To run the pinned simulator or equivalence tests, use Python
-3.10 and install:
+Python protocol compilation and structured handoffs are included in the core
+package. The ``automation`` extra includes JSON protocol compilation, the
+Opentrons simulator and inventory integration:
 
 .. code-block:: bash
 
-   python -m pip install -e ".[simulation,test]"
+   python -m pip install -e ".[automation]"
+
+To run the pinned simulator and equivalence tests, use Python 3.10 and add the
+test dependencies:
+
+.. code-block:: bash
+
+   python -m pip install -e ".[test,automation]"
 
 The equivalence suite additionally needs a PUDU reference checkout, as described
 in ``tests/automation/README.md``. Generated native scripts do not need PUDU.

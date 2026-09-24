@@ -94,12 +94,20 @@ def reference_script(payload, config, profile):
     ],
 )
 def test_assembly_simulator_equivalence(
-    pudu_repository, tmp_path, count, config, profile
+    pudu_repository, tmp_path, count, config, profile, compare_json_backend
 ):
     payload = assemblies(count)
     compiled = ProtocolCompiler(assembly=config).compile(
         assembly_request_from_json(payload, request_id="acceptance"),
         profile=profile,
+    )
+    json_protocol = ProtocolCompiler(assembly=config).compile(
+        assembly_request_from_json(payload, request_id="acceptance"),
+        profile=profile,
+        backend="opentrons_ot2_json",
+    )
+    compare_json_backend(
+        reference_script(payload, config, profile), compiled, json_protocol
     )
     expected = simulate_source(
         reference_script(payload, config, profile),

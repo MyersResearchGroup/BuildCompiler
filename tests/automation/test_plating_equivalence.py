@@ -64,13 +64,24 @@ def reference_script(payload, config, profile):
         "conical-height-threshold",
     ],
 )
-def test_plating_equivalence(pudu_repository, tmp_path, count, config, profile):
+def test_plating_equivalence(
+    pudu_repository, tmp_path, count, config, profile, compare_json_backend
+):
     payload = plating_data(count)
     inputs = bacterium_manifest_from_json(payload)
     compiled = ProtocolCompiler(plating=config).compile(
         PlatingRequest(id="plating", sample_ids=tuple(s.id for s in inputs.samples)),
         inputs=inputs,
         profile=profile,
+    )
+    json_protocol = ProtocolCompiler(plating=config).compile(
+        PlatingRequest(id="plating", sample_ids=tuple(s.id for s in inputs.samples)),
+        inputs=inputs,
+        profile=profile,
+        backend="opentrons_ot2_json",
+    )
+    compare_json_backend(
+        reference_script(payload, config, profile), compiled, json_protocol
     )
     expected = simulate_source(
         reference_script(payload, config, profile),

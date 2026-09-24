@@ -1,12 +1,13 @@
 """Private simulator worker, launched as a file so core imports never load the SDK.
 
-The trace adapter is qualified against Opentrons 8.8.2. SDK calls are
-observed, not substituted; the official simulate() entry point runs both sides.
+Both entry points are qualified against Opentrons 8.8.2. The SDK trace observes
+real calls through simulate(); engine analysis invokes the official analyzer.
 """
 
 import functools
 import inspect
 import json
+import runpy
 import sys
 from importlib.metadata import version
 from pathlib import Path
@@ -140,7 +141,20 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    # Resolve the installed SDK, not the sibling opentrons.py source renderer.
+    # Resolve installed packages without exposing sibling backend modules.
     if sys.path[0] == str(Path(__file__).resolve().parent):
         del sys.path[0]
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] == "analyze":
+        if version("opentrons") != "8.8.2":
+            raise RuntimeError("Protocol analysis requires opentrons==8.8.2.")
+        sys.argv = [
+            "opentrons",
+            "analyze",
+            sys.argv[2],
+            "--check",
+            "--json-output",
+            "analysis.json",
+        ]
+        runpy.run_module("opentrons.cli", run_name="__main__")
+    else:
+        main()

@@ -46,9 +46,9 @@ def test_simulate_captures_evidence(monkeypatch, tmp_path):
     monkeypatch.setattr(importlib.util, "find_spec", lambda _: object())
     monkeypatch.setattr(
         simulation,
-        "simulate_source",
-        lambda source: SimpleNamespace(
-            actions=[{"command": "test"}],
+        "analyze_source",
+        lambda source, **kwargs: SimpleNamespace(
+            data={"commands": [{"command": "test"}]},
             simulator_version="8.8.2",
             stdout="ok\n",
             stderr="",
@@ -71,10 +71,10 @@ def test_simulation_failure_is_not_reported_as_success(monkeypatch, tmp_path):
     protocol.write_text("broken", encoding="utf-8")
     monkeypatch.setattr(importlib.util, "find_spec", lambda _: object())
 
-    def fail(source):
+    def fail(source, **kwargs):
         raise RuntimeError("Opentrons simulation failed with exit code 2: invalid")
 
-    monkeypatch.setattr(simulation, "simulate_source", fail)
+    monkeypatch.setattr(simulation, "analyze_source", fail)
 
     with pytest.raises(ProtocolSimulationError, match="exit code 2"):
         OpentronsSimulationAdapter().simulate(

@@ -14,8 +14,10 @@ from buildcompiler.domain import (
     StageResult,
     StageStatus,
 )
+from buildcompiler.protocols.methods.transformation import (
+    transformation_request_from_json,
+)
 from buildcompiler.sbol.transformation import TransformationJob, TransformationService
-from buildcompiler.protocols.inputs import transformation_request_from_json
 
 
 class TransformationStage:

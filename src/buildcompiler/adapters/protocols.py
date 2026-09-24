@@ -6,12 +6,14 @@ import hashlib
 import importlib.metadata
 import json
 import platform
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from buildcompiler.api.options import ProtocolMode, ProtocolOptions
 from buildcompiler.domain.build_result import StageResult
+from buildcompiler.protocols.compiler import CompiledProtocol, ProtocolCompiler
 
 
 @dataclass
@@ -139,37 +141,34 @@ def _package_version(name: str) -> str | None:
         return None
 
 
-def _generate_automated_protocol(*, stage: str, payload: object) -> str:
-    try:
-        from pudu.generate_protocol import generate_protocol
-    except ImportError as exc:
-        from buildcompiler.adapters.opentrons import OptionalAutomationDependencyError
+def _compile_protocol(result: StageResult) -> CompiledProtocol:
+    """Compile typed stage requests, with JSON fallback for older stage producers."""
+    from buildcompiler.api.protocols import (
+        compile_assembly,
+        compile_plating_json,
+        compile_transformation,
+    )
+    from buildcompiler.protocols.methods.assembly import assembly_request_from_json
+    from buildcompiler.protocols.methods.transformation import (
+        transformation_request_from_json,
+    )
 
-        raise OptionalAutomationDependencyError(
-            "Install synbio-buildcompiler[automation] to generate automated protocols."
-        ) from exc
-
-    protocol_type = {
-        "assembly_lvl1": "assembly",
-        "assembly_lvl2": "assembly",
-        "domestication": "assembly",
-        "transformation": "transformation",
-        "plating": "plating",
-    }.get(stage)
-    if protocol_type is None:
+    stage = result.stage.value
+    payload = result.json_intermediate
+    entries = [payload] if isinstance(payload, Mapping) else payload
+    if stage in {"assembly_lvl1", "assembly_lvl2", "domestication"}:
+        if result.protocol_requests:
+            return compile_assembly(result)
+        request = assembly_request_from_json(entries, request_id=result.id)
+    elif stage == "transformation":
+        if result.protocol_requests:
+            return compile_transformation(result)
+        request = transformation_request_from_json(entries, request_id=result.id)
+    elif stage == "plating":
+        return compile_plating_json(payload)
+    else:
         raise ValueError(f"No automated protocol mapping exists for stage: {stage}")
-    kwargs: dict[str, object] = {
-        "protocol_data": payload,
-        "protocol_type": protocol_type,
-        "metadata": {
-            "protocolName": f"BuildCompiler {stage.replace('_', ' ').title()}",
-            "author": "BuildCompiler",
-            "description": "Generated from a canonical BuildCompiler protocol specification.",
-        },
-    }
-    if protocol_type == "assembly":
-        kwargs["assembly_subtype"] = "SBOL"
-    return generate_protocol(**kwargs)
+    return ProtocolCompiler().compile(request)
 
 
 def _write_text(path: Path, content: str) -> ProtocolArtifact:
@@ -185,10 +184,10 @@ def _write_text(path: Path, content: str) -> ProtocolArtifact:
 def build_protocol_bundle(
     *, stage_results: list[StageResult], options: ProtocolOptions
 ) -> ProtocolBundle:
-    """Build canonical JSON/manual artifacts at the orchestration boundary."""
+    """Write requested stage artifacts and a manifest at the orchestration boundary."""
 
-    payloads = [
-        (result.stage.value, result.json_intermediate)
+    successful_results = [
+        result
         for result in stage_results
         if result.json_intermediate is not None
         and result.status.value in {"success", "partial_success"}
@@ -202,13 +201,13 @@ def build_protocol_bundle(
         "software": {
             "python": platform.python_version(),
             "synbio-buildcompiler": _package_version("synbio-buildcompiler"),
-            "pudupy": _package_version("pudupy"),
             "opentrons": _package_version("opentrons"),
         },
         "artifacts": manifest_entries,
     }
     if options.mode == ProtocolMode.NONE:
-        for index, (stage, payload) in enumerate(payloads, start=1):
+        for index, result in enumerate(successful_results, start=1):
+            stage, payload = result.stage.value, result.json_intermediate
             key = f"{stage}_{index:03d}_json"
             content = _canonical_json(payload)
             artifacts[key] = ProtocolArtifact(
@@ -231,7 +230,13 @@ def build_protocol_bundle(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     stage_counts: dict[str, int] = {}
-    for stage, payload in payloads:
+    for result in successful_results:
+        stage, payload = result.stage.value, result.json_intermediate
+        compiled = (
+            _compile_protocol(result)
+            if options.mode == ProtocolMode.AUTOMATED
+            else None
+        )
         stage_counts[stage] = stage_counts.get(stage, 0) + 1
         basename = f"{stage}_{stage_counts[stage]:03d}"
         json_content = _canonical_json(payload)
@@ -240,15 +245,24 @@ def build_protocol_bundle(
         artifacts[f"{basename}_json"] = json_artifact
         manual_artifact = _write_text(
             output_dir / f"{basename}.md",
-            _manual_protocol(stage=stage, payload=payload),
+            compiled.markdown
+            if compiled is not None
+            else _manual_protocol(stage=stage, payload=payload),
         )
         artifacts[f"{basename}_manual"] = manual_artifact
-        if options.mode == ProtocolMode.AUTOMATED:
+        if compiled is not None:
             script_artifact = _write_text(
                 output_dir / f"{basename}.py",
-                _generate_automated_protocol(stage=stage, payload=payload),
+                compiled.source,
             )
             artifacts[f"{basename}_automated"] = script_artifact
+            # Native protocols carry their expected handoffs as explicit artifacts.
+            for name, content in compiled.files.items():
+                if name in {compiled.protocol_filename, "protocol.md"}:
+                    continue
+                artifacts[f"{basename}_{Path(name).stem}"] = _write_text(
+                    output_dir / f"{basename}_{name}", content
+                )
             if options.simulate:
                 from buildcompiler.adapters.opentrons import OpentronsSimulationAdapter
 
@@ -256,7 +270,7 @@ def build_protocol_bundle(
                     script_artifact.path,
                     options=options,
                 )
-                log_content = "".join(simulation.logs)
+                log_content = "\n".join(simulation.logs) + "\n"
                 log_artifact = _write_text(
                     output_dir / f"{basename}.simulate.log", log_content
                 )

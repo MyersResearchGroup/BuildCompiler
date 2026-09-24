@@ -99,6 +99,64 @@ def test_duplicate_physical_sources_are_rejected():
         plasmid_manifest_from_json({"first": ["A1"], "second": ["A1"]})
 
 
+def test_transformation_requires_one_plate_for_the_complete_handoff():
+    upstream = plasmid_manifest_from_json(
+        {
+            "https://example.org/first/1": ["A1"],
+            "https://example.org/second/1": ["B1"],
+            "unused": ["C1"],
+        }
+    )
+    unused = upstream.samples[-1]
+    upstream = dataclasses.replace(
+        upstream,
+        samples=(
+            *upstream.samples[:-1],
+            dataclasses.replace(
+                unused,
+                location=dataclasses.replace(unused.location, container_id="other"),
+            ),
+        ),
+    )
+    with pytest.raises(ValueError, match="one source DNA plate"):
+        ProtocolCompiler().compile(request(), inputs=upstream)
+
+
+def test_plating_binds_selected_aliquots_by_id_and_preserves_their_wells():
+    upstream = sources()
+    # Keep two aliquots of the same material on one plate; the unselected
+    # material occupies another plate and must not affect the selected batch.
+    upstream = dataclasses.replace(
+        upstream,
+        samples=(
+            *upstream.samples[:2],
+            *(
+                dataclasses.replace(
+                    sample,
+                    location=dataclasses.replace(sample.location, container_id="other"),
+                )
+                for sample in upstream.samples[2:]
+            ),
+        ),
+    )
+    selected = tuple(s.id for s in reversed(upstream.samples[:2]))
+    compiled = ProtocolCompiler().compile(
+        PlatingRequest(id="selected", sample_ids=selected), inputs=upstream
+    )
+    cultures = [s for s in compiled.plan.samples if s.role == "bacteria"]
+    assert tuple(s.source_sample_id for s in cultures) == selected
+    assert [s.location.well_name for s in cultures] == ["A4", "D2"]
+    assert {s.location.container_id for s in cultures} == {"reactions"}
+    with pytest.raises(ValueError, match="one source plate"):
+        ProtocolCompiler().compile(
+            PlatingRequest(
+                id="mixed-plates",
+                sample_ids=(upstream.samples[0].id, upstream.samples[-1].id),
+            ),
+            inputs=upstream,
+        )
+
+
 def test_transformation_thermal_steps_are_reviewable_but_simulation_guarded():
     compiler = ProtocolCompiler()
     compiled = compiler.compile(request())

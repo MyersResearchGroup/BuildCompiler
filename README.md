@@ -185,7 +185,7 @@ print(result.artifact_bundle.manifest)
 ```
 
 `MANUAL` writes canonical JSON, a human-readable procedure, and a hash manifest.
-`AUTOMATED` additionally generates PUDU Python protocols; setting
+`AUTOMATED` additionally generates standalone OT-2 Python protocols and their handoff artifacts; setting
 `options.protocol.simulate = True` runs `opentrons_simulate` and treats a nonzero
 exit code as a protocol-stage failure. File-producing modes require an explicit
 `results_dir` and reject a nonempty directory unless `overwrite=True`.

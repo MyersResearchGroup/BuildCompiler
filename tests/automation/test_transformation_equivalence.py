@@ -128,12 +128,28 @@ def force_thermal_path(source):
     ],
 )
 def test_transformation_equivalence(
-    pudu_repository, tmp_path, payload, config, profile, locations, thermal
+    pudu_repository,
+    tmp_path,
+    payload,
+    config,
+    profile,
+    locations,
+    thermal,
+    compare_json_backend,
 ):
     compiled = ProtocolCompiler(transformation=config).compile(
         transformation_request_from_json(payload, request_id="transformation"),
         profile=profile,
         inputs=plasmid_manifest_from_json(locations) if locations is not None else None,
+    )
+    json_protocol = ProtocolCompiler(transformation=config).compile(
+        transformation_request_from_json(payload, request_id="transformation"),
+        profile=profile,
+        backend="opentrons_ot2_json",
+        inputs=plasmid_manifest_from_json(locations) if locations is not None else None,
+    )
+    compare_json_backend(
+        reference_script(payload, config, profile, locations), compiled, json_protocol
     )
     expected_source = reference_script(payload, config, profile, locations)
     actual_source = compiled.script
