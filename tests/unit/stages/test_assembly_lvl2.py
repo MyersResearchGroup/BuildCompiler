@@ -210,8 +210,8 @@ def test_assembly_lvl2_incomplete_region_order_blocks_as_hard_constraint():
 def test_buildcompiler_assembly_lvl2_respects_supplied_backbone(monkeypatch):
     from types import SimpleNamespace
 
-    from buildcompiler.buildcompiler import BuildCompiler
     import buildcompiler.buildcompiler as buildcompiler_module
+    from buildcompiler.buildcompiler import BuildCompiler
 
     compiler = BuildCompiler.from_local_documents([])
     compiler.BbsI_impl = SimpleNamespace(built="https://example.org/reagents/BbsI")

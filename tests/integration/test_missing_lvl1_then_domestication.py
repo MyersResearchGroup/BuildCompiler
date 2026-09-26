@@ -12,8 +12,8 @@ from buildcompiler.domain import (
     StageStatus,
 )
 from buildcompiler.execution import BuildContext, FullBuildExecutor
-from buildcompiler.planning import BuildPlan
 from buildcompiler.inventory import Inventory
+from buildcompiler.planning import BuildPlan
 from buildcompiler.sbol import SbolResolver
 
 

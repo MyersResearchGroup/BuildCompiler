@@ -1,4 +1,5 @@
 import sbol2
+
 from buildcompiler.planning.validation import (
     ordered_lvl1_parts,
     validate_lvl1_cardinality,
@@ -35,7 +36,7 @@ def test_validate_cardinality_and_order_fallback_and_warning():
     ok, warnings = validate_lvl1_cardinality(lvl1)
     assert ok is True
     assert warnings == []
-    ordered, ow = ordered_lvl1_parts(lvl1)
+    ordered, _warnings = ordered_lvl1_parts(lvl1)
     assert len(ordered) == 4
 
 

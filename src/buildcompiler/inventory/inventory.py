@@ -12,7 +12,6 @@ from buildcompiler.domain import (
     MaterialState,
 )
 
-
 _MATERIAL_ORDER = {
     MaterialState.PLANNED: 0,
     MaterialState.GENERATED: 1,

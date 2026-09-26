@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import hashlib
+from dataclasses import dataclass, field
 from typing import Any
 
 import sbol2
@@ -15,7 +15,6 @@ from buildcompiler.domain import (
     IndexedReagent,
     MaterialState,
 )
-
 
 ROLE_TO_FUSION_SITE_SEQUENCES = {
     "promoter": ("GGAG", "TACT"),
@@ -163,7 +162,8 @@ class DomesticationService:
 
     def _ensure_component(self, component: Any) -> sbol2.ComponentDefinition:
         if not isinstance(component, sbol2.ComponentDefinition):
-            raise ValueError(
+            # Preserve the existing ValueError contract for invalid jobs.
+            raise ValueError(  # noqa: TRY004
                 "DomesticationJob.part_component must be an sbol2.ComponentDefinition"
             )
         return component
@@ -185,9 +185,9 @@ class DomesticationService:
             key=lambda item: int(getattr(item, "position", 0)),
             reverse=True,
         ):
-            position = int(getattr(proposal, "position"))
-            original = str(getattr(proposal, "original_sequence")).upper()
-            proposed = str(getattr(proposal, "proposed_sequence")).upper()
+            position = int(proposal.position)
+            original = str(proposal.original_sequence).upper()
+            proposed = str(proposal.proposed_sequence).upper()
             if sequence[position : position + len(original)] != original:
                 raise ValueError(
                     "Sequence edit proposal does not match source sequence at "

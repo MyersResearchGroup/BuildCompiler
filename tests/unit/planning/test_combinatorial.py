@@ -1,4 +1,5 @@
 import sbol2
+
 from buildcompiler.api import BuildOptions
 from buildcompiler.planning.combinatorial import expand_combinatorial_derivation
 
@@ -29,7 +30,7 @@ def _build_comb(valid=True):
 
 def test_expansion_and_blocking_behaviors():
     comb = _build_comb(valid=True)
-    reqs, unsupported, warnings = expand_combinatorial_derivation(
+    reqs, unsupported, _warnings = expand_combinatorial_derivation(
         comb, options=BuildOptions()
     )
     assert len(reqs) == 1 and unsupported == [] and reqs[0].variant_index == 0
@@ -77,7 +78,7 @@ def test_part_order_follows_template_sequence_not_variable_ids():
         doc.add(part)
         expected_order.append(part.identity)
         vc.variants = [part.identity]
-    reqs, unsupported, warnings = expand_combinatorial_derivation(
+    reqs, unsupported, _warnings = expand_combinatorial_derivation(
         comb, options=BuildOptions()
     )
     assert len(reqs) == 1 and unsupported == []

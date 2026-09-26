@@ -1,5 +1,5 @@
-import sbol2
 import pytest
+import sbol2
 
 from buildcompiler.sbol import PullPolicy, SbolResolver
 

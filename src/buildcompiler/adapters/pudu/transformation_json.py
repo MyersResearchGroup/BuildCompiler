@@ -4,7 +4,6 @@ from collections.abc import Sequence
 
 from buildcompiler.domain import IndexedPlasmid, TransformationProtocolSpec
 
-
 PUDU_96_WELL_ORDER = tuple(
     f"{row}{column}" for column in range(1, 13) for row in "ABCDEFGH"
 )

@@ -262,6 +262,14 @@ buildcompiler.domain.plasmid
    :undoc-members:
    :show-inheritance:
 
+buildcompiler.domain.protocol
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: buildcompiler.domain.protocol
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 buildcompiler.domain.reagent
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -23,8 +23,8 @@ __all__ = [
     "DomesticationService",
     "PullPolicy",
     "SbolResolver",
-    "load_synbiohub_collections",
     "TransformationJob",
     "TransformationSbolResult",
     "TransformationService",
+    "load_synbiohub_collections",
 ]

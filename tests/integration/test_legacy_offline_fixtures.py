@@ -7,7 +7,6 @@ from buildcompiler.buildcompiler import BuildCompiler
 from buildcompiler.domain import IndexedBackbone, IndexedReagent, StageStatus
 from buildcompiler.inventory import Inventory
 
-
 COLLECTION_PATHS = [
     "tests/test_files/CIDARMoCloParts_collection.xml",
     "tests/test_files/CIDARMoCloPlasmidsKit_collection.xml",

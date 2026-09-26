@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pytest
 
-
 nbformat = pytest.importorskip("nbformat")
 nbclient = pytest.importorskip("nbclient")
 
