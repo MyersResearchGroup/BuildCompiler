@@ -11,7 +11,6 @@ BuildCompiler should act like a compiler: inspect abstract designs, resolve depe
 - Synthetic biology researchers designing constructs in SBOL/SBOLCanvas/SynBioSuite.
 - Lab automation users generating manual or Opentrons-ready protocols through PUDU.
 - Developers extending BuildCompiler's planning, inventory, SBOL, or protocol-generation behavior.
-- AI coding agents such as Codex implementing scoped refactor tasks from an approved plan.
 
 ## Jobs to be done
 
@@ -29,7 +28,7 @@ BuildCompiler should act like a compiler: inspect abstract designs, resolve depe
 - Minimize new build work by searching inventory before generating new requests.
 - Keep compiler-only mode lightweight and testable.
 - Make optional automation outputs explicit, not default side effects.
-- Provide a clean architecture that Codex can implement in small, safe increments.
+- Provide a clean architecture that contributors can evolve in small, safe increments.
 
 ## Non-goals
 

@@ -26,12 +26,12 @@ Build docs locally:
    python -m pip install -r docs/requirements.txt
    sphinx-build -b html docs docs/_build/html
 
-Agent handoff
--------------
+Project documentation
+---------------------
 
-Repository-specific agent instructions are in ``AGENTS.md``. Recent handoff
-notes for the PUDU integration and notebook artifacts are in
-``AGENTS_log.md``.
+The repository root contains ``PRODUCT.md`` for product scope,
+``ARCHITECTURE.md`` for module boundaries and implementation contracts, and
+``ADR-001.md`` for the clean-architecture decision and its tradeoffs.
 
 Read the Docs deployment
 ------------------------

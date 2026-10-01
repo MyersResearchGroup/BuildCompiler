@@ -246,7 +246,7 @@ jupyter lab notebooks/buildcompiler_offline_quickstart.ipynb
 
 ## Container workflow
 
-A Docker Compose workflow is recommended for reliable Codex and contributor development, but it does not need to block the first implementation PR.
+A Docker Compose workflow is recommended for reliable contributor development, but it does not need to block the first implementation PR.
 
 Target commands after Docker support exists:
 
@@ -282,13 +282,14 @@ Testing priorities:
 9. Summary/report/graph generation.
 10. Optional PUDU/Opentrons adapter smoke tests.
 
-## How ChatGPT and Codex should use these docs
+## Project documentation
 
 - `PRODUCT.md` defines the product intent, v1 scope, and non-goals.
 - `ARCHITECTURE.md` defines module boundaries and implementation contracts.
-- `AGENT.md` defines how Codex should take tasks, report progress, and escalate decisions.
 - `ADR-001.md` records the clean-architecture rewrite decision and its tradeoffs.
-Codex should treat these files as the source of truth for implementation unless the user or ChatGPT explicitly revises them.
+
+Contributors should keep these documents aligned with changes to product scope,
+architecture, or public behavior.
 
 #### Running tests locally:
 Run these bash commands to establish your SynBioHub account for collection access. These are saved in GitHub secrets for the automated test suite.
