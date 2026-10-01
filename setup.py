@@ -44,7 +44,7 @@ setup(
         "dev": [
             "pytest>=7,<9",
             "pytest-cov[all]",
-            "ruff>=0.14.0",
+            "ruff==0.16.8",
             "build>=1.2",
             "twine>=5.0",
         ],

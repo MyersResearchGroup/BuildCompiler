@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from itertools import permutations, product
+from itertools import pairwise, permutations, product
 from typing import Any
 
 from buildcompiler.api.options import BuildOptions
@@ -15,7 +15,6 @@ from buildcompiler.inventory.compatibility import (
     RouteSelection,
 )
 from buildcompiler.inventory.inventory import Inventory
-
 
 _STATE_RANK = {
     MaterialState.PLANNED: 0,
@@ -73,7 +72,7 @@ class CompatibilitySelector:
             state_penalty = -_STATE_RANK[p.state] if prefer_state else 0
             return (generated_penalty, state_penalty, p.identity)
 
-        return sorted(filtered, key=_key)[0]
+        return min(filtered, key=_key)
 
     def _candidate_key(self, candidate: Any) -> tuple[int, int, str]:
         prefer_existing = self.options.selection.prefer_existing_collection_material
@@ -93,7 +92,7 @@ class CompatibilitySelector:
             return True
         if any(len(sites) != 2 for sites in annotated):
             return False
-        return all(left[1] == right[0] for left, right in zip(annotated, annotated[1:]))
+        return all(left[1] == right[0] for left, right in pairwise(annotated))
 
     def _select_compatible_chain(
         self, candidate_groups: Sequence[list[Any]]

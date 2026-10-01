@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from collections.abc import Sequence
+from dataclasses import dataclass, field
 from typing import Any
 
 import sbol2
@@ -43,7 +43,7 @@ class BuildCompiler:
         auth_token: str | None = None,
         sbol_doc: sbol2.Document | None = None,
         options: BuildOptions | None = None,
-    ) -> "BuildCompiler":
+    ) -> BuildCompiler:
         """Create a compiler from token-authenticated SynBioHub collections.
 
         The token is assigned only to a transient ``sbol2.PartShop`` while the
@@ -321,7 +321,8 @@ def _resolve_component(
         value if isinstance(value, sbol2.ComponentDefinition) else document.find(value)
     )
     if not isinstance(component, sbol2.ComponentDefinition):
-        raise ValueError(f"ComponentDefinition not found: {value}")
+        # Invalid document references use the public ValueError contract.
+        raise ValueError(f"ComponentDefinition not found: {value}")  # noqa: TRY004
     return component
 
 
@@ -332,5 +333,6 @@ def _resolve_module(
         value if isinstance(value, sbol2.ModuleDefinition) else document.find(value)
     )
     if not isinstance(module, sbol2.ModuleDefinition):
-        raise ValueError(f"ModuleDefinition not found: {value}")
+        # Invalid document references use the public ValueError contract.
+        raise ValueError(f"ModuleDefinition not found: {value}")  # noqa: TRY004
     return module

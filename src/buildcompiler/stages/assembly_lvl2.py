@@ -84,8 +84,10 @@ class AssemblyLvl2Stage:
                 request_ids=[request.id],
                 protocol_artifacts=artifacts,
                 logs=[
-                    "No lvl2 route selected by CompatibilitySelector. Provide explicit region_order "
-                    "or enable large-order search for large designs.",
+                    (
+                        "No lvl2 route selected by CompatibilitySelector. Provide explicit region_order "
+                        "or enable large-order search for large designs."
+                    ),
                 ],
             )
 

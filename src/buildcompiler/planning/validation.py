@@ -97,7 +97,7 @@ def ordered_lvl1_parts(
 
     try:
         ordered_components = list(component_definition.getInSequentialOrder())
-    except Exception:
+    except Exception:  # noqa: BLE001 - Fall back to role order if SBOL ordering fails.
         ordered_components = []
 
     if len(ordered_components) == 4:

@@ -29,7 +29,7 @@ def load_synbiohub_collections(
     try:
         shop = sbol2.PartShop(sbh_registry)
         shop.key = auth_token
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - Sanitize all client errors to protect tokens.
         raise _normalized_error(
             exc,
             operation="client initialization",
@@ -93,7 +93,7 @@ def _pull(
 ) -> None:
     try:
         shop.pull(identity, document)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - Sanitize all download errors to protect tokens.
         raise _normalized_error(
             exc,
             operation=operation,
@@ -141,7 +141,7 @@ def _sbol_error_code(exc: Exception) -> Any:
         return None
     try:
         return exc.error_code()
-    except Exception:
+    except Exception:  # noqa: BLE001 - Unreadable SDK codes fall back to message matching.
         return None
 
 

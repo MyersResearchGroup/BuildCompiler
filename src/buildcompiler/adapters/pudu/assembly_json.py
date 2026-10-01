@@ -1,7 +1,7 @@
 """In-memory adapter for compiler-level PUDU assembly JSON payloads."""
 
-from collections.abc import Sequence
 import json
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 

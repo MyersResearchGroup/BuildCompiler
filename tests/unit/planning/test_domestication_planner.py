@@ -1,5 +1,5 @@
-import sbol2
 import pytest
+import sbol2
 
 from buildcompiler.constants import PART_ROLES
 from buildcompiler.planning import (
@@ -26,7 +26,7 @@ def _part(
 
 def test_supported_role_produces_plan() -> None:
     planner = DomesticationPlanner()
-    part = _part("https://example.org/p", sorted(PART_ROLES)[0], "ATGCGT")
+    part = _part("https://example.org/p", min(PART_ROLES), "ATGCGT")
     plan = planner.plan(part)
     assert plan.part_identity == part.identity
     assert plan.part_role in {"promoter", "rbs", "cds", "terminator"}
@@ -41,7 +41,7 @@ def test_unsupported_role_fails_structurally() -> None:
 
 def test_missing_sequence_fails() -> None:
     planner = DomesticationPlanner()
-    part = _part("https://example.org/p2", sorted(PART_ROLES)[0])
+    part = _part("https://example.org/p2", min(PART_ROLES))
     with pytest.raises(ValueError, match="missing a usable DNA sequence"):
         planner.plan(part)
 
@@ -49,7 +49,7 @@ def test_missing_sequence_fails() -> None:
 def test_bsai_sites_create_edit_proposals_without_mutating_sequence() -> None:
     planner = DomesticationPlanner()
     original = "AAAGGTCTCTTT"
-    part = _part("https://example.org/p3", sorted(PART_ROLES)[0], original)
+    part = _part("https://example.org/p3", min(PART_ROLES), original)
     plan = planner.plan(part)
     assert len(plan.sequence_edit_proposals) == 1
     assert plan.sequence_edit_proposals[0].site_sequence == "GGTCTC"

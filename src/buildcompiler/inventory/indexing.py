@@ -273,7 +273,7 @@ def _insert_identities(
     identities = {
         child.identity
         for child in _children(component, document)
-        if insert_roles & set(str(role) for role in child.roles)
+        if insert_roles & {str(role) for role in child.roles}
     }
     return sorted(identities)
 

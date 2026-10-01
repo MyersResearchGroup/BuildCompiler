@@ -70,7 +70,7 @@ class FullBuildExecutor:
         logger: Any = None,
         resolver: SbolResolver | None = None,
         **stage_overrides: Any,
-    ) -> "FullBuildExecutor":
+    ) -> FullBuildExecutor:
         active_resolver = resolver or SbolResolver(sbol_document)
         return cls(
             context=BuildContext(
@@ -203,7 +203,7 @@ class FullBuildExecutor:
                 stage_results=stage_results,
                 options=self.context.options.protocol,
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - Report backend failures as stage results.
             stage_results.append(
                 StageResult(
                     id="protocol:bundle",

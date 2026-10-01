@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import sbol2
 import pytest
+import sbol2
 
 from buildcompiler.api import BuildOptions
 from buildcompiler.domain import BuildRequest, BuildStage, DesignKind

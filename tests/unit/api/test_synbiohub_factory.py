@@ -1,5 +1,6 @@
 import subprocess
 import sys
+from typing import ClassVar
 
 import pytest
 import sbol2
@@ -16,9 +17,9 @@ from buildcompiler.planning import BuildPlan
 
 
 class FakePartShop:
-    resources = {}
-    calls = []
-    instances = []
+    resources: ClassVar[dict] = {}
+    calls: ClassVar[list] = []
+    instances: ClassVar[list] = []
     failure = None
 
     def __init__(self, registry):

@@ -1,6 +1,9 @@
 from __future__ import annotations
+
 import itertools
+
 import sbol2
+
 from buildcompiler.api.options import BuildOptions
 from buildcompiler.domain import BuildRequest, BuildStage, BuildWarning, DesignKind
 from buildcompiler.planning.classifier import request_id_for
@@ -13,7 +16,7 @@ def _collect_variant_sets(derivation):
     variables.sort(
         key=lambda variable: (str(getattr(variable, "variable", "")), variable.identity)
     )
-    return variables, [sorted(list(vc.variants), key=str) for vc in variables]
+    return variables, [sorted(vc.variants, key=str) for vc in variables]
 
 
 def expand_combinatorial_derivation(
@@ -22,7 +25,7 @@ def expand_combinatorial_derivation(
     warnings = []
     unsupported = []
     requests = []
-    variables, variant_sets = _collect_variant_sets(derivation)
+    _variables, variant_sets = _collect_variant_sets(derivation)
     if not variant_sets or any(len(v) == 0 for v in variant_sets):
         unsupported.append(
             UnsupportedPlanningRecord(

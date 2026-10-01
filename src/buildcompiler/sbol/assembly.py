@@ -130,7 +130,8 @@ class AssemblyService:
                 f"Missing SBOL ComponentDefinition for {field_name} record {record.identity}"
             )
         if not isinstance(component, sbol2.ComponentDefinition):
-            raise ValueError(
+            # Preserve the ValueError contract for invalid record references.
+            raise ValueError(  # noqa: TRY004
                 f"{field_name} record {record.identity} must resolve to sbol2.ComponentDefinition"
             )
         return component
@@ -166,7 +167,8 @@ class AssemblyService:
         )
         implementation = source_document.find(impl_identity)
         if not isinstance(implementation, sbol2.Implementation):
-            raise ValueError(
+            # A missing or invalid document reference is a record value error.
+            raise ValueError(  # noqa: TRY004
                 "Missing SBOL Implementation for reagent "
                 f"{record.identity}; expected metadata['implementation_identity'] or identity to resolve"
             )
