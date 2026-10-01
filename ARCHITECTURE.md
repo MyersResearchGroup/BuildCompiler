@@ -482,6 +482,8 @@ Responsibilities:
 
 ## SBOL assembly service
 
+The [SBOL provenance guide](docs/sbol_provenance.rst) documents the implemented entity/activity/agent relationships, stage differences, document ownership, and export limitations. Use it when interpreting or extending SBOL build artifacts.
+
 Port the current working `Assembly` behavior mostly intact into `sbol/assembly.py`, behind a cleaner service interface. Refactor internals only after tests protect the new contract.
 
 ```python

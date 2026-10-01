@@ -16,6 +16,8 @@ abstract SBOL design + inventory -> build plan -> SBOL build artifacts -> PUDU J
 
 The Read the Docs site is available at [buildcompiler.readthedocs.io](https://buildcompiler.readthedocs.io/en/latest/) and is built from the Sphinx documentation in `docs/`.
 
+The [SBOL provenance guide](docs/sbol_provenance.rst) explains how biological entities, activities, agents, plans, and generated results are connected, including stage coverage, graph traversal, and the distinction between compiler records and physical execution.
+
 The compiler should answer:
 
 - Can this design be built from current inventory?

@@ -43,6 +43,7 @@ Representative use cases
 
    installation
    quickstart
+   sbol_provenance
    examples/offline_lvl1
    examples/transformation_pudu
    examples/full_build
