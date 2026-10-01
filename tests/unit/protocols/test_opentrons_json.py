@@ -193,6 +193,6 @@ else:
 assert 'opentrons' not in sys.modules
 """
     process = subprocess.run(
-        [sys.executable, "-c", code], capture_output=True, text=True
+        [sys.executable, "-c", code], capture_output=True, text=True, check=False
     )
     assert process.returncode == 0, process.stderr

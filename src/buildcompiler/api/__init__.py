@@ -1,5 +1,10 @@
 """Public API contracts, options, and compiler facade for BuildCompiler."""
 
+from buildcompiler.api.protocols import (
+    compile_assembly,
+    compile_plating,
+    compile_transformation,
+)
 from buildcompiler.errors import (
     BuildCompilerError,
     SynBioHubAuthenticationError,
@@ -10,11 +15,6 @@ from buildcompiler.errors import (
     SynBioHubResponseError,
 )
 from buildcompiler.inventory import index_collections
-from buildcompiler.api.protocols import (
-    compile_assembly,
-    compile_transformation,
-    compile_plating,
-)
 
 from .compiler import (
     BuildCompiler,

@@ -1,8 +1,8 @@
 import sbol2
 
-from buildcompiler.api import BuildOptions, compile_transformation, compile_plating
-from buildcompiler.protocols import TransformationConfig
+from buildcompiler.api import BuildOptions, compile_plating, compile_transformation
 from buildcompiler.domain import IndexedPlasmid, StageStatus
+from buildcompiler.protocols import TransformationConfig
 from buildcompiler.stages import TransformationStage
 
 

@@ -55,7 +55,7 @@ Protocol Engine simulator in a subprocess. ``simulate_source`` retains the
 Python SDK trace used by the original acceptance tests.
 
 Choosing the robot format
-------------------------
+-------------------------
 
 Install ``.[automation]`` for JSON compilation, simulation and inventory integration.
 This includes ``opentrons-shared-data==8.8.2`` for offline schemas and labware

@@ -4,6 +4,7 @@ import copy
 import json
 
 import pytest
+from conftest import engine_actions
 
 from buildcompiler.adapters.opentrons import OpentronsSimulationAdapter
 from buildcompiler.api import ProtocolOptions
@@ -14,8 +15,6 @@ from buildcompiler.protocols import (
     transformation_request_from_json,
 )
 from buildcompiler.protocols.backends.simulation import SimulationError, analyze_source
-
-from conftest import engine_actions
 
 pytestmark = pytest.mark.automation
 

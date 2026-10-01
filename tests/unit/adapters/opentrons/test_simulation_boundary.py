@@ -8,9 +8,9 @@ from buildcompiler.adapters.opentrons import (
     OpentronsSimulationAdapter,
     OptionalAutomationDependencyError,
     ProtocolSimulationError,
+    simulation,
 )
 from buildcompiler.api import ProtocolOptions
-from buildcompiler.adapters.opentrons import simulation
 
 
 def test_opentrons_import_is_lazy():
