@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import shutil
-import subprocess
+import importlib.util
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from buildcompiler.api import ProtocolOptions
+from buildcompiler.api.options import ProtocolOptions
+from buildcompiler.protocols.backends.simulation import analyze_source
 
 
 class OptionalAutomationDependencyError(ImportError):
@@ -36,36 +36,30 @@ class OpentronsSimulationAdapter:
                 metadata={"protocol_source": str(protocol_source)},
             )
 
-        executable = shutil.which("opentrons_simulate")
-        if executable is None:
+        if importlib.util.find_spec("opentrons") is None:
             raise OptionalAutomationDependencyError(
-                "Install synbio-buildcompiler[automation] and ensure "
-                "opentrons_simulate is on PATH."
+                "Install synbio-buildcompiler[automation] in a Python 3.10 environment to use Opentrons simulation."
             )
 
         source = Path(protocol_source)
         if not source.is_file():
             raise FileNotFoundError(f"Protocol source does not exist: {source}")
-        completed = subprocess.run(
-            [executable, source.name],
-            check=False,
-            capture_output=True,
-            cwd=source.parent,
-            text=True,
-        )
-        logs = [line for line in (completed.stdout, completed.stderr) if line]
-        if completed.returncode:
-            raise ProtocolSimulationError(
-                f"Opentrons simulation failed with exit code {completed.returncode}: "
-                + "\n".join(logs)
+        try:
+            trace = analyze_source(
+                source.read_text(encoding="utf-8"),
+                format="json" if source.suffix.lower() == ".json" else "python",
             )
+        except RuntimeError as exc:
+            raise ProtocolSimulationError(str(exc)) from exc
 
         return SimulationResult(
             ran=True,
-            logs=logs,
+            logs=["Opentrons simulation completed.", *trace.stdout.splitlines()],
             metadata={
-                "protocol_source": str(source),
-                "command": [executable, source.name],
-                "returncode": completed.returncode,
+                "protocol_source": str(protocol_source),
+                "simulator_version": trace.simulator_version,
+                "returncode": 0,
+                "command_count": len(trace.data["commands"]),
+                "stderr": trace.stderr,
             },
         )

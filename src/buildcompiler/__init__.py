@@ -10,3 +10,8 @@ from .api import (
     full_build as full_build,
     transformation as transformation,
 )
+from buildcompiler.api.protocols import (
+    compile_assembly,
+    compile_transformation,
+    compile_plating,
+)

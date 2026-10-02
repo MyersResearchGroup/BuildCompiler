@@ -14,6 +14,9 @@ from buildcompiler.domain import (
     StageResult,
     StageStatus,
 )
+from buildcompiler.protocols.methods.transformation import (
+    transformation_request_from_json,
+)
 from buildcompiler.sbol.transformation import TransformationJob, TransformationService
 
 
@@ -98,6 +101,13 @@ class TransformationStage:
             json_intermediate=json_intermediate,
             protocol_artifacts=result.artifacts,
             logs=result.logs,
+            protocol_requests=(
+                transformation_request_from_json(
+                    [json_intermediate],
+                    request_id=f"{request_id}:{BuildStage.TRANSFORMATION.value}",
+                    source_stage_id=f"{request_id}:{BuildStage.TRANSFORMATION.value}",
+                ),
+            ),
         )
 
     def _plasmid_from_input(

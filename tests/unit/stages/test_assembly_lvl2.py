@@ -122,7 +122,18 @@ def test_assembly_lvl2_success_routes_and_indexes_generated_product():
         result.json_intermediate
         and result.json_intermediate["Product"] == module.identity
     )
+    assert (
+        result.protocol_requests[0].reactions[0].product.identity
+        == result.products[0].identity
+    )
+    assert [
+        part.identity for part in result.protocol_requests[0].reactions[0].parts
+    ] == result.json_intermediate["PartsList"]
     assert result.protocol_artifacts["selected_route"] is not None
+    assert (
+        result.protocol_artifacts["assembly_spec"]
+        == result.json_intermediate["Parameters"]
+    )
     assert inv.find_lvl1_region_plasmids(module.identity)
 
 

@@ -39,7 +39,7 @@ The compiler should answer:
 - Produce in-memory PUDU-compatible JSON intermediates in compiler-only mode.
 - Chain successful assembly/domestication products to transformation and plating, deduplicated by product identity.
 - Return structured statuses, missing inputs, required approvals, warnings, summaries, and optional detailed reports.
-- Keep PUDU protocol generation and Opentrons simulation optional.
+- Compile assembly, transformation and plating protocols natively; keep Opentrons simulation optional. See the [protocol compiler guide](docs/protocols.rst).
 
 ## Non-goals for v1
 
@@ -185,7 +185,7 @@ print(result.artifact_bundle.manifest)
 ```
 
 `MANUAL` writes canonical JSON, a human-readable procedure, and a hash manifest.
-`AUTOMATED` additionally generates PUDU Python protocols; setting
+`AUTOMATED` additionally generates standalone OT-2 Python protocols and their handoff artifacts; setting
 `options.protocol.simulate = True` runs `opentrons_simulate` and treats a nonzero
 exit code as a protocol-stage failure. File-producing modes require an explicit
 `results_dir` and reject a nonempty directory unless `overwrite=True`.
@@ -257,7 +257,7 @@ docker compose run --rm app ruff format --check .
 docker compose run --rm app pytest
 ```
 
-Core CI should not require PUDU or Opentrons. Those dependencies are optional and should live behind optional test jobs or manual workflows.
+Core CI does not require PUDU or Opentrons. A separate acceptance job compares native protocols against a pinned PUDU checkout using Opentrons 8.8.2.
 
 ## Testing and quality checks
 
@@ -280,7 +280,7 @@ Testing priorities:
 7. SBOL assembly service port using existing fixtures.
 8. Transformation and plating deduplication.
 9. Summary/report/graph generation.
-10. Optional PUDU/Opentrons adapter smoke tests.
+10. PUDU equivalence in the real Opentrons simulator, including the connected assembly/transformation/plating workflow.
 
 ## How ChatGPT and Codex should use these docs
 

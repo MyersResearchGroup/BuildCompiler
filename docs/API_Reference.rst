@@ -23,6 +23,14 @@ buildcompiler.api.options
    :undoc-members:
    :show-inheritance:
 
+buildcompiler.api.protocols
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: buildcompiler.api.protocols
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 buildcompiler.api.serialization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -266,6 +274,14 @@ buildcompiler.domain.protocol
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: buildcompiler.domain.protocol
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+buildcompiler.domain.protocol_requests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: buildcompiler.domain.protocol_requests
    :members:
    :undoc-members:
    :show-inheritance:
