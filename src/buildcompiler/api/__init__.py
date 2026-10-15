@@ -1,5 +1,10 @@
 """Public API contracts, options, and compiler facade for BuildCompiler."""
 
+from buildcompiler.api.protocols import (
+    compile_assembly,
+    compile_plating,
+    compile_transformation,
+)
 from buildcompiler.errors import (
     BuildCompilerError,
     SynBioHubAuthenticationError,
@@ -82,6 +87,9 @@ __all__ = [
     "TransformationOptions",
     "assembly_lvl1",
     "assembly_lvl2",
+    "compile_assembly",
+    "compile_plating",
+    "compile_transformation",
     "deserialize_build_plan",
     "domestication",
     "dumps_json_dto",

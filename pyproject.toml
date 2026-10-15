@@ -47,8 +47,9 @@ dev = [
   "twine>=5.0",
 ]
 automation = [
-  "pudupy",
-  "opentrons",
+  "opentrons==8.8.2 ; python_version == '3.10'",
+  "opentrons-shared-data==8.8.2",
+  "xlsxwriter>=3.2.5",
   "SBOLInventory @ git+https://github.com/DRAGGON-Lab/SBOLInventory.git ; python_version >= '3.10'",
 ]
 notebook = [
@@ -77,6 +78,22 @@ dev = [
 
 [tool.ruff]
 required-version = "==0.16.8"
+
+[tool.ruff.lint.flake8-bugbear]
+# These frozen dataclasses contain immutable values and are safe shared defaults.
+extend-immutable-calls = [
+  "buildcompiler.protocols.AssemblyConfig",
+  "buildcompiler.protocols.OpentronsAssemblyProfile",
+  "buildcompiler.protocols.OpentronsPlatingProfile",
+  "buildcompiler.protocols.OpentronsTransformationProfile",
+  "buildcompiler.protocols.PlatingConfig",
+  "buildcompiler.protocols.TransformationConfig",
+  "buildcompiler.protocols.methods.assembly.AssemblyConfig",
+  "buildcompiler.protocols.methods.plating.PlatingConfig",
+  "buildcompiler.protocols.methods.transformation.TransformationConfig",
+  "buildcompiler.protocols.models.TemperatureProgram",
+  "buildcompiler.protocols.models.TemperatureStep",
+]
 
 
 [tool.pytest.ini_options]

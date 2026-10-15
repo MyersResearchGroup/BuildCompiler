@@ -8,6 +8,8 @@ import zipfile
 from pathlib import Path
 from typing import Any, Dict, List
 
+from buildcompiler.api.protocols import compile_plating_json
+
 
 def load_json_or_dict(value):
     """Load a JSON file path/string into a dict, or return dict-like input as-is."""
@@ -170,24 +172,8 @@ def write_manual_plating_protocol(path, plate_id, plate_rows, advanced_params):
 
 def write_plating_protocol_script(path, plating_data, advanced_params):
     path = Path(path)
-    script = (
-        "from pudu.plating import Plating\n"
-        "from opentrons import protocol_api\n\n"
-        "metadata = {\n"
-        '    "protocolName": "BuildCompiler Plating",\n'
-        '    "author": "BuildCompiler",\n'
-        '    "description": "Automated plating protocol generated from BuildCompiler transformation results",\n'
-        '    "apiLevel": "2.21",\n'
-        "}\n\n"
-        f"PLATING_DATA = {json.dumps(plating_data, indent=4)}\n"
-        f"ADVANCED_PARAMS = {json.dumps(advanced_params or {}, indent=4)}\n\n"
-        "def run(protocol: protocol_api.ProtocolContext):\n"
-        "    plating = Plating(\n"
-        "        plating_data=PLATING_DATA,\n"
-        "        json_params=ADVANCED_PARAMS,\n"
-        "    )\n"
-        "    plating.run(protocol)\n"
-    )
+    compiled = compile_plating_json(plating_data, advanced_params=advanced_params)
+    script = compiled.script
     path.write_text(script, encoding="utf-8")
     return path
 

@@ -3,6 +3,8 @@
 from dataclasses import dataclass, field
 from typing import Any
 
+from buildcompiler.domain.protocol_requests import ProtocolRequest
+
 from .approvals import RequiredApproval
 from .build_stage import BuildStage
 from .missing_input import MissingBuildInput
@@ -27,6 +29,7 @@ class StageResult:
     json_intermediate: dict[str, Any] | list[Any] | None = None
     protocol_artifacts: dict[str, Any] = field(default_factory=dict)
     logs: list[str] = field(default_factory=list)
+    protocol_requests: tuple[ProtocolRequest, ...] = ()
 
 
 @dataclass

@@ -1,5 +1,6 @@
+import importlib.util
 import sys
-from subprocess import CompletedProcess
+from types import SimpleNamespace
 
 import pytest
 
@@ -7,6 +8,7 @@ from buildcompiler.adapters.opentrons import (
     OpentronsSimulationAdapter,
     OptionalAutomationDependencyError,
     ProtocolSimulationError,
+    simulation,
 )
 from buildcompiler.api import ProtocolOptions
 
@@ -26,18 +28,31 @@ def test_simulate_false_does_not_import_opentrons():
 
 def test_simulate_true_missing_dependency_raises(monkeypatch):
     adapter = OpentronsSimulationAdapter()
-    monkeypatch.setattr("shutil.which", lambda _: None)
+    real_find_spec = importlib.util.find_spec
+
+    def fake_find_spec(name, *args, **kwargs):
+        if name == "opentrons":
+            return None
+        return real_find_spec(name, *args, **kwargs)
+
+    monkeypatch.setattr(importlib.util, "find_spec", fake_find_spec)
     with pytest.raises(OptionalAutomationDependencyError):
         adapter.simulate("protocol.py", options=ProtocolOptions(simulate=True))
 
 
-def test_simulate_runs_cli_and_captures_evidence(monkeypatch, tmp_path):
+def test_simulate_captures_evidence(monkeypatch, tmp_path):
     protocol = tmp_path / "protocol.py"
     protocol.write_text("from opentrons import protocol_api\n", encoding="utf-8")
-    monkeypatch.setattr("shutil.which", lambda _: "/usr/bin/opentrons_simulate")
+    monkeypatch.setattr(importlib.util, "find_spec", lambda _: object())
     monkeypatch.setattr(
-        "subprocess.run",
-        lambda *args, **kwargs: CompletedProcess(args[0], 0, "ok\n", ""),
+        simulation,
+        "analyze_source",
+        lambda source, **kwargs: SimpleNamespace(
+            data={"commands": [{"command": "test"}]},
+            simulator_version="8.8.2",
+            stdout="ok\n",
+            stderr="",
+        ),
     )
 
     result = OpentronsSimulationAdapter().simulate(
@@ -46,18 +61,20 @@ def test_simulate_runs_cli_and_captures_evidence(monkeypatch, tmp_path):
 
     assert result.ran is True
     assert result.metadata["returncode"] == 0
-    assert result.metadata["command"][-1] == "protocol.py"
-    assert result.logs == ["ok\n"]
+    assert result.metadata["command_count"] == 1
+    assert result.metadata["simulator_version"] == "8.8.2"
+    assert "ok" in result.logs
 
 
 def test_simulation_failure_is_not_reported_as_success(monkeypatch, tmp_path):
     protocol = tmp_path / "protocol.py"
     protocol.write_text("broken", encoding="utf-8")
-    monkeypatch.setattr("shutil.which", lambda _: "/usr/bin/opentrons_simulate")
-    monkeypatch.setattr(
-        "subprocess.run",
-        lambda *args, **kwargs: CompletedProcess(args[0], 2, "", "invalid\n"),
-    )
+    monkeypatch.setattr(importlib.util, "find_spec", lambda _: object())
+
+    def fail(source, **kwargs):
+        raise RuntimeError("Opentrons simulation failed with exit code 2: invalid")
+
+    monkeypatch.setattr(simulation, "analyze_source", fail)
 
     with pytest.raises(ProtocolSimulationError, match="exit code 2"):
         OpentronsSimulationAdapter().simulate(

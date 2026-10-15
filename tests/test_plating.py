@@ -120,7 +120,8 @@ class TestPlating(unittest.TestCase):
             script = script_path.read_text(encoding="utf-8")
             self.assertIn("def run(protocol: protocol_api.ProtocolContext):", script)
             self.assertIn("from opentrons import protocol_api", script)
-            self.assertIn("json_params=ADVANCED_PARAMS", script)
+            self.assertNotIn("from pudu", script)
+            self.assertIn(".distribute(", script)
             self.assertNotIn("advanced_params=ADVANCED_PARAMS", script)
             self.assertTrue(Path(result["protocol_artifacts"]["simulation_zip"]).exists())
 

@@ -1,3 +1,7 @@
+import json
+
+import pytest
+
 from buildcompiler.api import BuildOptions, ProtocolMode
 from buildcompiler.domain import (
     BuildRequest,
@@ -13,6 +17,7 @@ from buildcompiler.domain import (
 from buildcompiler.execution import BuildContext, FullBuildExecutor
 from buildcompiler.inventory import Inventory
 from buildcompiler.planning import BuildPlan
+from buildcompiler.protocols.methods.assembly import assembly_request_from_json
 from buildcompiler.sbol import SbolResolver
 
 
@@ -493,10 +498,22 @@ def test_failed_chained_transformation_prevents_success():
     assert result.stage_results[-1].status == StageStatus.FAILED
 
 
-def test_protocol_mode_writes_bundle_and_exposes_target_and_all_products(tmp_path):
+@pytest.mark.parametrize("mode", [ProtocolMode.MANUAL, ProtocolMode.AUTOMATED])
+def test_protocol_mode_writes_bundle_and_exposes_target_and_all_products(
+    tmp_path, mode
+):
     options = BuildOptions()
-    options.protocol.mode = ProtocolMode.MANUAL
+    options.protocol.mode = mode
     options.protocol.results_dir = tmp_path
+    payload = {
+        "Product": "design",
+        "Backbone": "backbone",
+        "PartsList": ["part"],
+        "Restriction Enzyme": "BsaI",
+    }
+    protocol_request = assembly_request_from_json(
+        [{**payload, "Product": "https://x/plasmid/protocol"}], request_id="assembly"
+    )
     assembly = FakeStage(
         lambda request: StageResult(
             id="assembly",
@@ -504,7 +521,8 @@ def test_protocol_mode_writes_bundle_and_exposes_target_and_all_products(tmp_pat
             status=StageStatus.SUCCESS,
             request_ids=[request.id],
             products=[plasmid("https://x/plasmid/protocol")],
-            json_intermediate={"Product": "product", "PartsList": []},
+            json_intermediate=payload,
+            protocol_requests=(protocol_request,),
         )
     )
     blocked = FakeStage(
@@ -546,3 +564,10 @@ def test_protocol_mode_writes_bundle_and_exposes_target_and_all_products(tmp_pat
     assert result.artifact_bundle.status == "success"
     assert result.target_products == result.all_products
     assert (tmp_path / "protocol_manifest.json").exists()
+    if mode == ProtocolMode.AUTOMATED:
+        assert (tmp_path / "assembly_lvl1_001.py").exists()
+        handoff = json.loads(
+            (tmp_path / "assembly_lvl1_001_transformation_input.json").read_text()
+        )
+        assert "https://x/plasmid/protocol" in handoff
+        assert "design" not in handoff

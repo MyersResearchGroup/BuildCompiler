@@ -1,5 +1,6 @@
+import hashlib
+import json
 import sys
-import types
 
 import pytest
 
@@ -72,51 +73,105 @@ def test_protocol_bundle_writes_json_manual_and_deterministic_manifest(tmp_path)
     assert all("sha256" in item for item in bundle.manifest["artifacts"])
 
 
-def test_automated_bundle_generates_pudu_script_lazily(monkeypatch, tmp_path):
-    calls = []
-
-    def generate_protocol(**kwargs):
-        calls.append(kwargs)
-        return "from opentrons import protocol_api\n"
-
-    pudu_module = types.ModuleType("pudu")
-    generate_module = types.ModuleType("pudu.generate_protocol")
-    generate_module.generate_protocol = generate_protocol
-    monkeypatch.setitem(sys.modules, "pudu", pudu_module)
-    monkeypatch.setitem(sys.modules, "pudu.generate_protocol", generate_module)
-    stage_result = StageResult(
-        id="assembly-result",
-        stage=BuildStage.ASSEMBLY_LVL1,
-        status=StageStatus.SUCCESS,
-        json_intermediate={"Product": "product", "PartsList": ["part"]},
-    )
-
-    bundle = build_protocol_bundle(
-        stage_results=[stage_result],
-        options=ProtocolOptions(mode=ProtocolMode.AUTOMATED, results_dir=tmp_path),
-    )
-
-    assert (tmp_path / "assembly_lvl1_001.py").exists()
-    assert bundle.artifacts["assembly_lvl1_001_automated"].metadata["written"] is True
-    assert calls[0]["protocol_type"] == "assembly"
-    assert calls[0]["assembly_subtype"] == "SBOL"
-
-
-def test_automated_bundle_missing_pudu_fails_explicitly(monkeypatch, tmp_path):
+@pytest.mark.parametrize(
+    ("stage", "payload", "handoff"),
+    [
+        (
+            BuildStage.ASSEMBLY_LVL1,
+            {
+                "Product": "product",
+                "Backbone": "backbone",
+                "PartsList": ["part"],
+                "Restriction Enzyme": "BsaI",
+            },
+            "transformation_input.json",
+        ),
+        (
+            BuildStage.ASSEMBLY_LVL2,
+            [
+                {
+                    "Product": "product",
+                    "Backbone": "backbone",
+                    "PartsList": ["part"],
+                    "Restriction Enzyme": "BsaI",
+                }
+            ],
+            "transformation_input.json",
+        ),
+        (
+            BuildStage.DOMESTICATION,
+            {
+                "Product": "product",
+                "Backbone": "backbone",
+                "PartsList": ["insert"],
+                "Restriction Enzyme": "BsaI",
+                "Generated Insert Sequence": "ACGT",
+            },
+            "transformation_input.json",
+        ),
+        (
+            BuildStage.TRANSFORMATION,
+            {"Strain": "strain", "Chassis": "chassis", "Plasmids": ["plasmid"]},
+            "plating_input.json",
+        ),
+        (
+            BuildStage.PLATING,
+            {"bacterium_locations": {"A1": ["strain"]}},
+            "plating_layout.json",
+        ),
+    ],
+)
+def test_automated_bundle_uses_native_compiler_without_pudu_or_sdk(
+    monkeypatch, tmp_path, stage, payload, handoff
+):
     monkeypatch.setitem(sys.modules, "pudu", None)
     monkeypatch.setitem(sys.modules, "pudu.generate_protocol", None)
-    stage_result = StageResult(
+    monkeypatch.setitem(sys.modules, "opentrons", None)
+    result = StageResult(
+        id="stage-result",
+        stage=stage,
+        status=StageStatus.SUCCESS,
+        json_intermediate=payload,
+    )
+    options = ProtocolOptions(mode=ProtocolMode.AUTOMATED, results_dir=tmp_path)
+
+    bundle = build_protocol_bundle(stage_results=[result], options=options)
+
+    basename = f"{stage.value}_001"
+    script = (tmp_path / f"{basename}.py").read_text()
+    compile(script, f"{basename}.py", "exec")
+    assert "def run(" in script
+    assert "pudu" not in script
+    assert bundle.artifacts[f"{basename}_automated"].metadata["written"] is True
+    assert json.loads((tmp_path / f"{basename}_{handoff}").read_text())
+    compilation = json.loads((tmp_path / f"{basename}_compilation.json").read_text())
+    assert compilation["backend"] == "opentrons_ot2_python"
+    for artifact in bundle.manifest["artifacts"]:
+        assert (
+            artifact["sha256"]
+            == hashlib.sha256((tmp_path / artifact["path"]).read_bytes()).hexdigest()
+        )
+
+    before = {path.name: path.read_bytes() for path in tmp_path.iterdir()}
+    with pytest.raises(FileExistsError):
+        build_protocol_bundle(stage_results=[result], options=options)
+    options.overwrite = True
+    repeated = build_protocol_bundle(stage_results=[result], options=options)
+    assert repeated.manifest == bundle.manifest
+    assert before == {path.name: path.read_bytes() for path in tmp_path.iterdir()}
+
+
+def test_automated_bundle_rejects_incomplete_input_before_writing(tmp_path):
+    result = StageResult(
         id="transformation-result",
         stage=BuildStage.TRANSFORMATION,
         status=StageStatus.SUCCESS,
         json_intermediate={"Strain": "strain", "Plasmids": ["plasmid"]},
     )
 
-    with pytest.raises(ImportError, match="automation"):
+    with pytest.raises(ValueError, match="Chassis"):
         build_protocol_bundle(
-            stage_results=[stage_result],
-            options=ProtocolOptions(
-                mode=ProtocolMode.AUTOMATED,
-                results_dir=tmp_path,
-            ),
+            stage_results=[result],
+            options=ProtocolOptions(mode=ProtocolMode.AUTOMATED, results_dir=tmp_path),
         )
+    assert not any(tmp_path.iterdir())

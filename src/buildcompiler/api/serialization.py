@@ -245,6 +245,7 @@ def serialize_stage_result(result: StageResult) -> dict[str, Any]:
             ],
             "warnings": [serialize_warning(item) for item in result.warnings],
             "json_intermediate": _json_safe(result.json_intermediate),
+            "protocol_requests": _json_safe(result.protocol_requests),
             "protocol_artifacts": _json_safe(result.protocol_artifacts),
             "logs": list(result.logs),
         }
